@@ -112,7 +112,7 @@ class AudioService:
             return None
 
     @staticmethod
-    def upload_audio(path: str, user_id: str, user_word_service, word_service):
+    def upload_audio(path: str, user_id: str, user_word_service, word_service, topic_service, subtopic_service):
         try:
 
             logger.info(f'[AUDIO UPLOAD] {path}')
@@ -142,7 +142,9 @@ class AudioService:
                 translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian")
 
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(user_word_service.upload_user_words(translated_words, user_id, word_service))
+            loop.run_until_complete(
+                user_word_service.upload_user_words(translated_words, user_id, word_service, topic_service,
+                                                    subtopic_service))
 
             logger.info(f'[AUDIO UPLOAD] Upload ended successfully!')
 

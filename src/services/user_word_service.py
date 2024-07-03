@@ -5,6 +5,7 @@ from src.config.instance import MINIO_BUCKET_VOICEOVER, MINIO_BUCKET_PICTURE
 from src.database.models import UserWord
 from src.services.minio_uploader import MinioUploader
 from src.services.services_config import mc
+from src.services.topic_service import TopicService
 from src.services.word_service import WordService
 from src.utils.repository import AbstractRepository
 
@@ -21,7 +22,7 @@ class UserWordService:
 
     async def get_user_word(self, user_id: str, word_id: int) -> UserWord:
         try:
-            user_word = await self.repo.get_one([UserWord.user_id == user_id, UserWord.word_id == word_id])
+            user_word: UserWord = await self.repo.get_one([UserWord.user_id == user_id, UserWord.word_id == word_id])
             return user_word
 
         except BaseException as e:
@@ -65,18 +66,22 @@ class UserWordService:
         except BaseException as e:
             logger.info(f'[UPLOAD USER WORD] ERROR: {e}')
 
-    async def upload_user_word(self, new_word: dict, user_id: str, word_service: WordService) -> bool:
+    async def upload_user_word(self, new_word: dict, user_id: str, word_service: WordService,
+                               topic_service: TopicService, subtopic_service: TopicService) -> bool:
         try:
-            enValue = new_word.get('enValue', None)
-            ruValue = new_word.get('ruValue', None)
+            en_value = new_word.get('enValue', None)
+            ru_value = new_word.get('ruValue', None)
             frequency = new_word.get('frequency', 0)
 
             is_new = False
 
-            word = await word_service.get_word(enValue=enValue)
+            word = await word_service.get_word(en_value=en_value)
 
             if not word:
-                word = await word_service.upload_new_word(enValue=enValue, ruValue=ruValue)
+                topic_title = await topic_service.check_word(en_value)
+                subtopic_title = await subtopic_service.check_word(en_value)
+                word = await word_service.upload_new_word(en_value=en_value, ru_value=ru_value, topic_title=topic_title,
+                                                          subtopic_title=subtopic_title)
                 is_new = True
             user_word = await self.get_user_word(user_id=user_id, word_id=word.id)
             if not user_word:
@@ -90,7 +95,8 @@ class UserWordService:
         except BaseException as e:
             logger.info(f'[UPLOAD USER WORD] ERROR: {e}')
 
-    async def upload_user_words(self, user_words: list[dict], user_id: str, word_service: WordService) -> bool:
+    async def upload_user_words(self, user_words: list[dict], user_id: str, word_service: WordService,
+                                topic_service: TopicService, subtopic_service: TopicService) -> bool:
         try:
             found_voiceover_bucket = mc.bucket_exists(MINIO_BUCKET_VOICEOVER)
             if not found_voiceover_bucket:
@@ -104,7 +110,7 @@ class UserWordService:
             all_words = len(user_words)
 
             for user_word in user_words:
-                is_new = await self.upload_user_word(user_word, user_id, word_service)
+                is_new = await self.upload_user_word(user_word, user_id, word_service, topic_service, subtopic_service)
                 if is_new:
                     new_words += 1
 

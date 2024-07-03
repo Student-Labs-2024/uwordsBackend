@@ -9,23 +9,23 @@ from src.database.db_config import async_session_maker
 class AbstractRepository(ABC):
 
     @abc.abstractmethod
-    async def add_one(self, data, path=None):
+    def add_one(self, data, path=None):
         raise NotImplemented()
 
     @abc.abstractmethod
-    async def get_one(self, filters):
+    def get_one(self, filters):
         raise NotImplemented()
 
     @abc.abstractmethod
-    async def delete_one(self, filters):
+    def delete_one(self, filters):
         raise NotImplemented()
 
     @abc.abstractmethod
-    async def update_one(self, filters, values):
+    def update_one(self, filters, values):
         raise NotImplemented()
 
     @abc.abstractmethod
-    async def get_all_by_filter(self, filters, order, limit=None):
+    def get_all_by_filter(self, filters, order, limit=None):
         raise NotImplemented()
 
 
@@ -68,7 +68,7 @@ class SQLAlchemyRepository(AbstractRepository):
     async def get_all_by_filter(self, filters, order, limit=None):
         async with async_session_maker() as session:
             session: AsyncSession
-            
+
             if limit:
                 stmt = select(self.model).filter(*filters).order_by(order).limit(limit)
             else:
@@ -94,3 +94,34 @@ class LocalFileRepository(AbstractRepository):
 
     async def delete_one(self, filters: str):
         os.remove(filters)
+
+
+class ChromaRepository(AbstractRepository):
+    collection = None
+    model = None
+
+    async def update_one(self, filters, values):
+        return self.collection.query(
+            query_texts=[filters],
+            n_results=values
+        )
+
+    async def get_all_by_filter(self, filters, order, limit=None):
+        pass
+
+    async def add_one(self, data):
+        self.collection.add(
+            documents=[data['title']],
+            ids=[str(data['id'])],
+        )
+        async with async_session_maker() as session:
+            session: AsyncSession
+            stmt = insert(self.model).values(data)
+            await session.execute(stmt)
+            await session.commit()
+
+    async def get_one(self, filters):
+        return self.collection.get(ids=filters)
+
+    async def delete_one(self, filters):
+        pass

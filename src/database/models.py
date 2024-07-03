@@ -4,16 +4,31 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from src.database.db_config import Base
 
 
+class Topic(Base):
+    __tablename__ = "topic"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False, unique=True)
+
+
+class SubTopic(Base):
+    __tablename__ = "subtopic"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False, unique=True)
+    topic_id = Column(Integer, ForeignKey(Topic.id))
+
+
 class Word(Base):
     __tablename__ = "word"
 
     id = Column(Integer, primary_key=True, index=True)
     enValue = Column(String)
     ruValue = Column(String)
-    topic = Column(String, nullable=True)
     audioLink = Column(String, nullable=True)
     pictureLink = Column(String, nullable=True)
-
+    topic = Column(String, ForeignKey(Topic.title))
+    subtopic = Column(String, ForeignKey(SubTopic.title))
     userWords = relationship("UserWord", back_populates='word')
 
 
@@ -28,22 +43,3 @@ class UserWord(Base):
     latest_study = Column(DateTime)
 
     word = relationship("Word", back_populates='userWords', lazy='selectin')
-
-
-class Topic(Base):
-    __tablename__ = "topic"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False, unique=True)
-
-    subtopics = relationship("SubTopic", back_populates='topic')
-
-
-class SubTopic(Base):
-    __tablename__ = "subtopic"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False, unique=True)
-    topic_id = Column(Integer, ForeignKey(Topic.id))
-    
-    topic = relationship("Topic", back_populates='subtopics', lazy='selectin')
