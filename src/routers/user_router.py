@@ -6,15 +6,14 @@ from datetime import datetime
 from typing import Annotated, List
 from fastapi import APIRouter, File, UploadFile, Depends
 from src.config.instance import UPLOAD_DIR
+from src.database.models import UserWord
 from src.schemes.schemas import Audio, UserWordDumpSchema, WordsIdsSchema, YoutubeLink
-from src.services.word_service import WordService
 from src.utils.dependenes.file_service_fabric import file_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.services.audio_service import AudioService
 from src.services.file_service import FileService
 from src.services.user_word_service import UserWordService
 from src.celery.tasks import upload_audio_task, upload_youtube_task
-from src.utils.dependenes.word_service_fabric import word_service_fabric
 
 user_router_v1 = APIRouter(prefix="/api/v1/user")
 
@@ -22,17 +21,54 @@ logger = logging.getLogger("[ROUTER WORDS]")
 logging.basicConfig(level=logging.INFO)
 
 
-@user_router_v1.get("/words/get_words", response_model=List[UserWordDumpSchema], tags=["User Words"])
+# response_model=List[UserWordDumpSchema]
+@user_router_v1.get("/words/get_words", tags=["User Words"])
 async def get_user_words(user_id: str,
                          user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)]):
-    return await user_words_service.get_user_words(user_id)
-
+    user_words: [UserWord] = await user_words_service.get_user_words(user_id)
+    words = [x.word for x in user_words]
+    subtopics = {}
+    topics = []
+    subtopics_words = {}
+    non_subtopics_words = []
+    for word in words:
+        if word.topic not in topics:
+            topics.append(word.topic)
+        if word.subtopic not in subtopics:
+            subtopics[word.subtopic] = 1
+        else:
+            subtopics[word.subtopic] += 1
+    for word in words:
+        add_word = {
+            "ruValue": word.ruValue,
+            "enValue": word.enValue,
+            "id": word.id,
+            "pictureLink": word.pictureLink,
+            "audioLink": word.audioLink
+        }
+        if word.subtopic not in subtopics_words:
+            if word.subtopic in subtopics:
+                if subtopics[word.subtopic] >= 8:
+                    subtopics_words[word.subtopic] = [add_word]
+                else:
+                    non_subtopics_words.append(add_word)
+        else:
+            subtopics_words[word.subtopic].append(add_word)
+    result = []
+    for topic in topics:
+        topic_dump = {
+            'topic': topic,
+            'words_in_subtopics': subtopics_words,
+            'words_without_subtopic': non_subtopics_words
+        }
+        result.append(topic_dump)
+    return result
 
 
 @user_router_v1.get("/words/study", response_model=List[UserWordDumpSchema], tags=["User Words"])
 async def get_user_words_for_study(user_id: str,
                                    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-                                   topic_id: str = None):
+                                   topic_id: int | None = None):
     words_for_study = await user_words_service.get_user_words_for_study(user_id=user_id, topic_id=topic_id)
 
     return words_for_study
@@ -49,7 +85,6 @@ async def complete_user_words_learning(user_id: str, schema: WordsIdsSchema, use
 async def upload_audio(
         user_id: str,
         file: Annotated[UploadFile, File(description="A file read as UploadFile")],
-        user_word_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
         file_service: Annotated[FileService, Depends(file_service_fabric)]
 ) -> Audio:
     filename = file.filename
