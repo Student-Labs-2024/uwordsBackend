@@ -1,0 +1,17 @@
+# environment
+.env*
+keys.json
+
+# audios
+**.wav
+**.ogg
+**.mp3
+
+# dirs
+postgres-data/
+venv/
+.idea/
+**/__pycache__
+
+# conf
+nginx-prod.conf
