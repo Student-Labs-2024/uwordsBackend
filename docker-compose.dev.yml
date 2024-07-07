@@ -8,7 +8,7 @@ services:
     restart: always
     volumes:
       - ./:/backend
-      - chromadb:./backend/chroma.sqlite3:rw
+      - chromadb:/backend/chroma_db:rw
     ports:
       - "8001:8000"
     env_file:
@@ -40,7 +40,7 @@ services:
     command: celery -A src.config.celery_app worker --loglevel=info
     volumes:
       - ./:/backend
-      - chromadb:./backend/chroma.sqlite3:ro
+      - chromadb:/backend/chroma_db:ro
     env_file:
       - ./.env.dev
     depends_on:

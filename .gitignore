@@ -8,7 +8,7 @@ keys.json
 **.mp3
 
 # chroma
-chroma.sqlite3
+chroma_db/chroma.sqlite3
 **.bin
 
 # dirs
