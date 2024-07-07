@@ -1,5 +1,6 @@
+from datetime import datetime
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime
 
 from src.database.db_config import Base
 
@@ -43,3 +44,22 @@ class UserWord(Base):
     latest_study = Column(DateTime)
 
     word = relationship("Word", back_populates='userWords', lazy='selectin')
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False)
+    firstname = Column(String, nullable=True)
+    lastname = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    email = Column(String, nullable=False)
+    phone_number = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    birth_date = Column(DateTime, nullable=True)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_superuser = Column(Boolean, default=False, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
+
