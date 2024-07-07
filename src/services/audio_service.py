@@ -143,7 +143,7 @@ class AudioService:
 
             loop = asyncio.get_event_loop()
             loop.run_until_complete(
-                user_word_service.upload_user_words(translated_words, user_id, word_service, topic_service,
+                user_word_service.upload_user_words(translated_words, user_id, word_service,
                                                     subtopic_service))
 
             logger.info(f'[AUDIO UPLOAD] Upload ended successfully!')
