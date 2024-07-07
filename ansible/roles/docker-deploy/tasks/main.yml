@@ -71,6 +71,8 @@
 
             MINIO_HOST: "{{ MINIO_HOST }}"
 
+            FASTAPI_SECRET: "{{ FASTAPI_SECRET }}"
+
           logging:
             options:
               max-size: "10m"
