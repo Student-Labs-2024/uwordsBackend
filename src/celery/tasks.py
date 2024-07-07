@@ -8,6 +8,7 @@ from celery.exceptions import MaxRetriesExceededError
 from src.config.celery_app import app
 from src.services.audio_service import AudioService
 from src.services.text_service import TextService
+from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 
@@ -19,8 +20,10 @@ logging.basicConfig(level=logging.INFO)
 def upload_audio_task(self, path: str, user_id: str):
     user_word_service = user_word_service_fabric()
     word_service = word_service_fabric()
+    subtopic_service = subtopic_service_fabric()
     try:
-        result = AudioService.upload_audio(path, user_id, user_word_service, word_service)
+        result = AudioService.upload_audio(path, user_id, user_word_service, word_service,
+                                           subtopic_service)
 
         if not result:
             raise self.retry(countdown=5)
@@ -48,6 +51,7 @@ def upload_youtube_task(self, link: str, user_id: str):
 def upload_youtube(link: str, user_id: str):
     user_word_service = user_word_service_fabric()
     word_service = word_service_fabric()
+    subtopic_service = subtopic_service_fabric()
     try:
         logger.info(f'[YOUTUBE UPLOAD] Upload started...')
 
@@ -81,7 +85,9 @@ def upload_youtube(link: str, user_id: str):
             translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian")
 
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(user_word_service.upload_user_words(translated_words, user_id, word_service))
+        loop.run_until_complete(
+            user_word_service.upload_user_words(translated_words, user_id, word_service,
+                                                subtopic_service))
 
         logger.info(f'[YOUTUBE UPLOAD] Upload ended successfully!')
 
