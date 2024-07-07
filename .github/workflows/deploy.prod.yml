@@ -8,6 +8,7 @@ jobs:
   docker:
     name: DockerHub | Push image
     runs-on: self-hosted
+    timeout-minutes: 15
     steps:
       - 
         name: Checkout
@@ -46,6 +47,7 @@ jobs:
     name: Ansible | Pull Docker Image to server
     needs: docker
     runs-on: self-hosted
+    timeout-minutes: 15
     container: willhallonline/ansible:2.13-alpine-3.15
     steps:
       - 
