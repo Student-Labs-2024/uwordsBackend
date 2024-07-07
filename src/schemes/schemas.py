@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field
-
+import uuid
+from pydantic import BaseModel, Field, EmailStr
+from fastapi_users import schemas
 
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
@@ -58,3 +59,36 @@ class SubTopic(BaseModel):
     topic_title: str = Field(examples=['Animal'])
     class Config:
         from_attributes = True
+
+class UserRead(schemas.BaseUser[int]):
+    id: int
+    username: str
+    firstname: str
+    lastname: Optional[str] = None
+    email: EmailStr
+    avatar_url: Optional[str] = None
+    phone_number: Optional[str] = None
+    birth_date: Optional[datetime] = None
+    created_at: datetime
+
+
+class UserCreate(schemas.BaseUserCreate):
+    username: str
+    firstname: str
+    lastname: Optional[str] = None
+    email: EmailStr
+    phone_number: Optional[str] = None
+    birth_date: Optional[str] = None
+
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
+    is_verified: Optional[bool] = True
+
+
+class UserUpdate(schemas.BaseUserUpdate):
+    username: Optional[str]
+    firstname: Optional[str]
+    lastname: Optional[str]
+    avatar_url: Optional[str]
+    phone_number: Optional[str]
+    birth_date: Optional[datetime]
