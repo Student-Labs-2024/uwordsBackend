@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from src.config.instance import MINIO_BUCKET_VOICEOVER, MINIO_BUCKET_PICTURE
+from src.database import models
 from src.database.models import UserWord
 from src.services.minio_uploader import MinioUploader
 from src.services.services_config import mc
@@ -67,20 +68,20 @@ class UserWordService:
             logger.info(f'[UPLOAD USER WORD] ERROR: {e}')
 
     async def upload_user_word(self, new_word: dict, user_id: str, word_service: WordService,
-                               topic_service: TopicService, subtopic_service: TopicService) -> bool:
+                               subtopic_service: TopicService) -> bool:
         try:
             en_value = new_word.get('enValue', None)
             ru_value = new_word.get('ruValue', None)
             frequency = new_word.get('frequency', 0)
-
             is_new = False
 
             word = await word_service.get_word(en_value=en_value)
 
             if not word:
-                topic_title = await topic_service.check_word(en_value)
                 subtopic_title = await subtopic_service.check_word(en_value)
-                word = await word_service.upload_new_word(en_value=en_value, ru_value=ru_value, topic_title=topic_title,
+                subtopic = await subtopic_service.get([models.SubTopic.title == subtopic_title])
+                word = await word_service.upload_new_word(en_value=en_value, ru_value=ru_value,
+                                                          topic_title=subtopic.topic_title,
                                                           subtopic_title=subtopic_title)
                 is_new = True
             user_word = await self.get_user_word(user_id=user_id, word_id=word.id)

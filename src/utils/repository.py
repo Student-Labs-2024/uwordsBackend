@@ -71,10 +71,8 @@ class SQLAlchemyRepository(AbstractRepository):
 
             if limit:
                 stmt = select(self.model).filter(*filters).order_by(order).limit(limit)
-            elif filters and order:
-                stmt = select(self.model).filter(*filters).order_by(order)
             else:
-                stmt = select(self.model)
+                stmt = select(self.model).filter(*filters).order_by(order)
             res = await session.execute(stmt)
             res = [row[0] for row in res.all()]
             return res
@@ -112,9 +110,9 @@ class ChromaRepository(AbstractRepository):
         async with async_session_maker() as session:
             session: AsyncSession
 
-            if limit:
+            if limit and filters and order:
                 stmt = select(self.model).filter(*filters).order_by(order).limit(limit)
-            if filters and order:
+            elif filters and order:
                 stmt = select(self.model).filter(*filters).order_by(order)
             else:
                 stmt = select(self.model)

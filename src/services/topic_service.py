@@ -9,8 +9,8 @@ class TopicService:
     async def add(self, topic: Topic | SubTopic):
         await self.repo.add_one(dict(topic))
 
-    async def get(self, topic_id) -> Topic | SubTopic:
-        return await self.repo.get_one(topic_id)
+    async def get(self, title) -> Topic | SubTopic:
+        return await self.repo.get_one(title)
 
     async def get_all(self):
         return await self.repo.get_all_by_filter()
