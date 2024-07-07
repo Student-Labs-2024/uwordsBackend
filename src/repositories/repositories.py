@@ -11,8 +11,7 @@ class WordRepository(SQLAlchemyRepository):
     model = Word
 
 
-class TopicRepository(ChromaRepository):
-    collection = topic_collection
+class TopicRepository(SQLAlchemyRepository):
     model = Topic
 
 

@@ -50,3 +50,11 @@ class Topic(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SubTopic(BaseModel):
+    id: int = Field(examples=[1])
+    title: str = Field(examples=["Rat"])
+    topic_title: str = Field(examples=['Animal'])
+    class Config:
+        from_attributes = True
