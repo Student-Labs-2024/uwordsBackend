@@ -24,10 +24,6 @@ class WordService:
 
     async def upload_new_word(self, en_value: str, ru_value: str, topic_title: str, subtopic_title: str) -> Word | None:
         try:
-            if CensoreFilter.is_censore(text=ru_value):
-                logger.info(f'[UPLOAD WORD] CENSORE: {ru_value}')
-                return None
-
             audio_link = AudioService.word_to_speech(word=en_value)
             picture_link = AudioService.download_picture(word=en_value)
 

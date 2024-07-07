@@ -7,9 +7,12 @@ class TopicService:
         self.repo = repo
 
     async def add(self, topic: Topic | SubTopic):
-        await self.repo.add_one(dict(topic))
+        try:
+            await self.repo.add_one(dict(topic))
+        except:
+            return True
 
-    async def get(self, title) -> Topic | SubTopic:
+    async def get(self, title) -> Topic | SubTopic | None:
         return await self.repo.get_one(title)
 
     async def get_all(self):
@@ -17,4 +20,6 @@ class TopicService:
 
     async def check_word(self, word: str) -> str:
         res = await self.repo.update_one(word, 1)
-        return res['documents'][0][0]
+        if res:
+            return res['documents'][0][0]
+        return ""
