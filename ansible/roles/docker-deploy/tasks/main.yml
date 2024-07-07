@@ -133,6 +133,8 @@
 
             MINIO_HOST: "{{ MINIO_HOST }}"
 
+            FASTAPI_SECRET: "{{ FASTAPI_SECRET }}"
+
           depends_on:
             - db
             - app
