@@ -26,4 +26,3 @@ MINIO_BUCKET_PICTURE = os.environ.get("MINIO_BUCKET_PICTURE")
 MINIO_HOST = os.environ.get("MINIO_HOST")
 UPLOAD_DIR = Path() / 'audio_transfer'
 FASTAPI_SECRET = os.environ.get("FASTAPI_SECRET")
-ADMIN_SECRET = os.environ.get("ADMIN_SECRET")
