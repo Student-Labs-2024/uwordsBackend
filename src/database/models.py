@@ -9,15 +9,15 @@ class Topic(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
-
+    subtopics = relationship("SubTopic", back_populates="topic", lazy="selectin")
 
 class SubTopic(Base):
     __tablename__ = "subtopic"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
-    topic_id = Column(Integer, ForeignKey(Topic.id))
-
+    topic_title = Column(String, ForeignKey(Topic.title))
+    topic = relationship("Topic", back_populates="subtopics", lazy="selectin")
 
 class Word(Base):
     __tablename__ = "word"

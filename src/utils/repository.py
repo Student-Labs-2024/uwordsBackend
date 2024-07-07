@@ -25,7 +25,7 @@ class AbstractRepository(ABC):
         raise NotImplemented()
 
     @abc.abstractmethod
-    def get_all_by_filter(self, filters, order, limit=None):
+    def get_all_by_filter(self, filters=None, order=None, limit=None):
         raise NotImplemented()
 
 
@@ -65,7 +65,7 @@ class SQLAlchemyRepository(AbstractRepository):
             await session.execute(stmt)
             await session.commit()
 
-    async def get_all_by_filter(self, filters, order, limit=None):
+    async def get_all_by_filter(self, filters=None, order=None, limit=None):
         async with async_session_maker() as session:
             session: AsyncSession
 
@@ -106,8 +106,19 @@ class ChromaRepository(AbstractRepository):
             n_results=values
         )
 
-    async def get_all_by_filter(self, filters, order, limit=None):
-        pass
+    async def get_all_by_filter(self, filters=None, order=None, limit=None):
+        async with async_session_maker() as session:
+            session: AsyncSession
+
+            if limit and filters and order:
+                stmt = select(self.model).filter(*filters).order_by(order).limit(limit)
+            elif filters and order:
+                stmt = select(self.model).filter(*filters).order_by(order)
+            else:
+                stmt = select(self.model)
+            res = await session.execute(stmt)
+            res = [row[0] for row in res.all()]
+            return res
 
     async def add_one(self, data):
         self.collection.add(
@@ -121,7 +132,12 @@ class ChromaRepository(AbstractRepository):
             await session.commit()
 
     async def get_one(self, filters):
-        return self.collection.get(ids=filters)
+        async with async_session_maker() as session:
+            session: AsyncSession
+
+            stmt = select(self.model).filter(*filters)
+            res = await session.execute(stmt)
+            return res.scalar_one_or_none()
 
     async def delete_one(self, filters):
         pass

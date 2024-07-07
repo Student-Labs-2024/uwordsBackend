@@ -112,7 +112,7 @@ class AudioService:
             return None
 
     @staticmethod
-    def upload_audio(path: str, user_id: str, user_word_service, word_service, topic_service, subtopic_service):
+    def upload_audio(path: str, user_id: str, user_word_service, word_service, subtopic_service):
         try:
 
             logger.info(f'[AUDIO UPLOAD] {path}')
