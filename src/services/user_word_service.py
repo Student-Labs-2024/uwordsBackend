@@ -34,11 +34,12 @@ class UserWordService:
         try:
             if not subtopic_title:
                 user_words = await self.repo.get_all_by_filter(
-                    [UserWord.user_id == user_id, Word.topic == topic_title], UserWord.progress.desc())
+                    [UserWord.user_id == user_id, UserWord.word.has(Word.topic == topic_title)],
+                    UserWord.progress.desc())
             else:
                 user_words = await self.repo.get_all_by_filter(
-                    [UserWord.user_id == user_id, Word.topic == topic_title,
-                     Word.subtopic == subtopic_title], UserWord.progress.desc())
+                    [UserWord.user_id == user_id, UserWord.word.has(Word.topic == topic_title),
+                     UserWord.word.has(Word.subtopic == subtopic_title)], UserWord.progress.desc())
             words_for_study = []
             time_now = datetime.now()
 

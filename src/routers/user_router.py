@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 @user_router_v1.get("/words/get_words", tags=["User Words"])
 async def get_user_words(user_id: str,
                          user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)]):
-    user_words: [UserWord] = await user_words_service.get_user_words(user_id)
+    user_words: list[UserWord] = await user_words_service.get_user_words(user_id)
     topics = {}
     for user_word in user_words:
         if user_word.word.topic not in topics:
