@@ -26,25 +26,34 @@ logging.basicConfig(level=logging.INFO)
 async def get_user_words(user_id: str,
                          user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)]):
     user_words: list[UserWord] = await user_words_service.get_user_words(user_id)
-    topics = {}
+    topics = []
+    topics_titles = []
+    titles: dict[str:list] = {}
     for user_word in user_words:
-        if user_word.word.topic not in topics:
-            topics[user_word.word.topic] = {user_word.word.subtopic: [user_word]}
+        if user_word.word.topic not in titles:
+            titles[user_word.word.topic] = []
+            topics_titles.append(user_word.word.topic)
+            topics.append(
+                {
+                    'topic_title': [user_word.word.topic],
+                    'subtopics': []
+                }
+            )
         else:
-            if user_word.word.subtopic not in topics[user_word.word.topic]:
-                topics[user_word.word.topic][user_word.word.subtopic] = [user_word]
+            index = topics_titles.index(user_word.word.topic)
+            if user_word.word.subtopic in titles[user_word.word.topic]:
+                sub_index = titles[user_word.word.topic].index(user_word.word.subtopic)
+                topics[index]['subtopics'][sub_index]['words'].append(user_word)
             else:
-                topics[user_word.word.topic][user_word.word.subtopic].append(user_word)
+                titles[user_word.word.topic].append(user_word.word.subtopic)
+                topics[index]['subtopics'].append({"subtopic_title": user_word.word.subtopic, "words": [user_word]})
     for topic in topics:
-        not_in_subtopic = []
-        subtopic_to_delete = []
-        for subtopic in topics[topic]:
-            if len(topics[topic][subtopic]) < 8:
-                not_in_subtopic.extend(topics[topic][subtopic])
-                subtopic_to_delete.append(subtopic)
-        for subtopic in subtopic_to_delete:
-            del topics[topic][subtopic]
-        topics[topic]["not in subtopic"] = not_in_subtopic
+        not_in_subtopics = []
+        subtopics = topic['subtopics']
+        for subtopic in subtopics:
+            if len(subtopic['words']) < 8:
+                not_in_subtopics.extend(subtopic['words'])
+        subtopics.append({'subtopic_title': 'not_in_subtopics', 'words': not_in_subtopics})
     return topics
 
 
