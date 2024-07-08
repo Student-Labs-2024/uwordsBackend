@@ -33,10 +33,15 @@ async def get_user_words(user_id: str,
         if user_word.word.topic not in titles:
             titles[user_word.word.topic] = []
             topics_titles.append(user_word.word.topic)
+            titles[user_word.word.topic].append(user_word.word.subtopic)
             topics.append(
                 {
                     'topic_title': user_word.word.topic,
-                    'subtopics': []
+                    'subtopics': [{
+                        'subtopic_title': user_word.word.subtopic,
+                        'words': [user_word]
+                    }
+                    ]
                 }
             )
         else:
