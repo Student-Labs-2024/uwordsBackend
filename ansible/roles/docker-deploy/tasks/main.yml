@@ -88,6 +88,8 @@
           - db
           - redis
           restart: always
+          volumes:
+            - "/{{ project_name }}_chroma_data:/backend/chroma_db"
 
         db:
           image: postgres:latest
@@ -142,6 +144,8 @@
             - app
             - redis
           restart: always
+          volumes:
+            - "/{{ project_name }}_chroma_data:/backend/chroma_db"
 
         minio:
           image: minio/minio:latest
