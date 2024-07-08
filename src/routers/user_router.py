@@ -35,7 +35,7 @@ async def get_user_words(user_id: str,
             topics_titles.append(user_word.word.topic)
             topics.append(
                 {
-                    'topic_title': [user_word.word.topic],
+                    'topic_title': user_word.word.topic,
                     'subtopics': []
                 }
             )
@@ -49,11 +49,17 @@ async def get_user_words(user_id: str,
                 topics[index]['subtopics'].append({"subtopic_title": user_word.word.subtopic, "words": [user_word]})
     for topic in topics:
         not_in_subtopics = []
+        subtopics_to_remove = []
         subtopics = topic['subtopics']
         for subtopic in subtopics:
             if len(subtopic['words']) < 8:
                 not_in_subtopics.extend(subtopic['words'])
+                subtopics_to_remove.append(subtopic['subtopic_title'])
+        for subtopic_to_remove in subtopics_to_remove:
+            index = titles[topic['topic_title']].index(subtopic_to_remove)
+            del subtopics[index]
         subtopics.append({'subtopic_title': 'not_in_subtopics', 'words': not_in_subtopics})
+
     return topics
 
 
