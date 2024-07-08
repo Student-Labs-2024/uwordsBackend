@@ -63,3 +63,14 @@ class User(Base):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
 
+
+class Error(Base):
+    __tablename__ = "error"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String)
+    message = Column(String)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    is_send = Column(Boolean, default=False)
+

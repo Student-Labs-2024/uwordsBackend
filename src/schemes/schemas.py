@@ -92,3 +92,16 @@ class UserUpdate(schemas.BaseUserUpdate):
     avatar_url: Optional[str]
     phone_number: Optional[str]
     birth_date: Optional[datetime]
+
+class ErrorCreate(BaseModel):
+    user_id: str
+    message: str
+    description: Optional[str]
+
+class ErrorDump(BaseModel):
+    id: int
+    user_id: str
+    message: str
+    description: Optional[str]
+    created_at: datetime
+    is_send: bool

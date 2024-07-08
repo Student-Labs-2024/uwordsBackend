@@ -6,9 +6,11 @@ from concurrent.futures import ThreadPoolExecutor
 from celery.exceptions import MaxRetriesExceededError
 
 from src.config.celery_app import app
+from src.schemes.schemas import ErrorCreate
 from src.services.audio_service import AudioService
 from src.services.text_service import TextService
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
+from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 
@@ -21,9 +23,10 @@ def upload_audio_task(self, path: str, user_id: str):
     user_word_service = user_word_service_fabric()
     word_service = word_service_fabric()
     subtopic_service = subtopic_service_fabric()
+    error_service = error_service_fabric()
     try:
         result = AudioService.upload_audio(path, user_id, user_word_service, word_service,
-                                           subtopic_service)
+                                           subtopic_service, error_service)
 
         if not result:
             raise self.retry(countdown=5)
@@ -52,10 +55,11 @@ def upload_youtube(link: str, user_id: str):
     user_word_service = user_word_service_fabric()
     word_service = word_service_fabric()
     subtopic_service = subtopic_service_fabric()
+    error_service = error_service_fabric()
     try:
         logger.info(f'[YOUTUBE UPLOAD] Upload started...')
 
-        path, audio_title, video_title = AudioService.upload_youtube_audio(link=link)
+        path, audio_title, video_title = AudioService.upload_youtube_audio(link=link, error_service=error_service, user_id=user_id)
 
         logger.info(f'PATH: {path}')
 
@@ -63,31 +67,31 @@ def upload_youtube(link: str, user_id: str):
 
         logger.info(f'TITLE: {title}')
 
-        filepath = AudioService.convert_audio(path=path, title=title)
+        filepath = AudioService.convert_audio(path=path, title=title, error_service=error_service, user_id=user_id)
 
         files_paths = []
-        files_paths = AudioService.cut_audio(path=filepath)
+        files_paths = AudioService.cut_audio(path=filepath, error_service=error_service, user_id=user_id)
 
         lang = detect(video_title)
 
         if lang == 'ru':
             with ThreadPoolExecutor(max_workers=20) as executor:
-                results = list(executor.map(AudioService.speech_to_text_ru, files_paths))
+                results = list(executor.map(AudioService.speech_to_text_ru, files_paths, error_service, user_id))
         else:
             with ThreadPoolExecutor(max_workers=20) as executor:
-                results = list(executor.map(AudioService.speech_to_text_en, files_paths))
+                results = list(executor.map(AudioService.speech_to_text_en, files_paths, error_service, user_id))
 
-        freq_dict = TextService.get_frequency_dict(text=' '.join(results))
+        freq_dict = TextService.get_frequency_dict(text=' '.join(results), error_service=error_service, user_id=user_id)
 
         if lang == 'ru':
-            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english")
+            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english", error_service=error_service, user_id=user_id)
         else:
-            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian")
+            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian", error_service=error_service, user_id=user_id)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
             user_word_service.upload_user_words(translated_words, user_id, word_service,
-                                                subtopic_service))
+                                                subtopic_service, error_service))
 
         logger.info(f'[YOUTUBE UPLOAD] Upload ended successfully!')
 
@@ -96,6 +100,13 @@ def upload_youtube(link: str, user_id: str):
     except BaseException as e:
         logger.info(f'[YOUTUBE UPLOAD] Error occured')
         logger.info(e)
+        error = ErrorCreate(
+            user_id=user_id,
+            message="[UPLOAD YOUTUBE]",
+            description=str(e)
+            )
+        error_obj = asyncio.run(error_service.add(error=error))
+        logger.info(error_obj)
         return False
 
     finally:
