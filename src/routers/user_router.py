@@ -27,56 +27,62 @@ logging.basicConfig(level=logging.INFO)
 @user_router_v1.get("/words/get_words", tags=["User Words"])
 async def get_user_words(user_id: str,
                          user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)]):
-    user_words: List[UserWord] = await user_words_service.get_user_words(user_id)
-    words = [x.word for x in user_words]
-    subtopics = {}
+  
+    user_words: list[UserWord] = await user_words_service.get_user_words(user_id)
     topics = []
-    subtopics_words = {}
-    non_subtopics_words = []
-    for word in words:
-        if word.topic not in topics:
-            topics.append(word.topic)
-        if word.subtopic not in subtopics:
-            subtopics[word.subtopic] = 1
+    topics_titles = []
+    titles: dict[str:list] = {}
+    for user_word in user_words:
+        if user_word.word.topic not in titles:
+            titles[user_word.word.topic] = []
+            topics_titles.append(user_word.word.topic)
+            titles[user_word.word.topic].append(user_word.word.subtopic)
+            topics.append(
+                {
+                    'topic_title': user_word.word.topic,
+                    'subtopics': [{
+                        'subtopic_title': user_word.word.subtopic,
+                        'words': [user_word]
+                    }
+                    ]
+                }
+            )
         else:
-            subtopics[word.subtopic] += 1
-    for word in words:
-        add_word = {
-            "ruValue": word.ruValue,
-            "enValue": word.enValue,
-            "id": word.id,
-            "pictureLink": word.pictureLink,
-            "audioLink": word.audioLink
-        }
-        if word.subtopic not in subtopics_words:
-            if word.subtopic in subtopics:
-                if subtopics[word.subtopic] >= 8:
-                    subtopics_words[word.subtopic] = [add_word]
-                else:
-                    non_subtopics_words.append(add_word)
-        else:
-            subtopics_words[word.subtopic].append(add_word)
-    result = []
+            index = topics_titles.index(user_word.word.topic)
+            if user_word.word.subtopic in titles[user_word.word.topic]:
+                sub_index = titles[user_word.word.topic].index(user_word.word.subtopic)
+                topics[index]['subtopics'][sub_index]['words'].append(user_word)
+            else:
+                titles[user_word.word.topic].append(user_word.word.subtopic)
+                topics[index]['subtopics'].append({"subtopic_title": user_word.word.subtopic, "words": [user_word]})
     for topic in topics:
-        topic_dump = {
-            'topic': topic,
-            'words_in_subtopics': subtopics_words,
-            'words_without_subtopic': non_subtopics_words
-        }
-        result.append(topic_dump)
-    return result
+        not_in_subtopics = []
+        subtopics_to_remove = []
+        subtopics = topic['subtopics']
+        for subtopic in subtopics:
+            if len(subtopic['words']) < 8:
+                not_in_subtopics.extend(subtopic['words'])
+                subtopics_to_remove.append(subtopic['subtopic_title'])
+        for subtopic_to_remove in subtopics_to_remove:
+            index = titles[topic['topic_title']].index(subtopic_to_remove)
+            del subtopics[index]
+        subtopics.append({'subtopic_title': 'not_in_subtopics', 'words': not_in_subtopics})
+
+    return topics
 
 
-@user_router_v1.get("/words/study", response_model=List[UserWordDumpSchema], tags=["User Words"])
+@user_router_v1.get("/words/study", tags=["User Words"])
 async def get_user_words_for_study(user_id: str,
                                    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-                                   topic_id: int | None = None):
-    words_for_study = await user_words_service.get_user_words_for_study(user_id=user_id, topic_id=topic_id)
+                                   topic_title: str | None = None,
+                                   subtopic_title: str | None = None):
+    words_for_study = await user_words_service.get_user_words_for_study(user_id=user_id, topic_title=topic_title,
+                                                                        subtopic_title=subtopic_title)
 
     return words_for_study
 
 
-@user_router_v1.post("/words/study", response_model=WordsIdsSchema, tags=["User Words"])
+@user_router_v1.post("/words/study", tags=["User Words"])
 async def complete_user_words_learning(user_id: str, schema: WordsIdsSchema, user_words_service: Annotated[
     UserWordService, Depends(user_word_service_fabric)]):
     await user_words_service.update_progress_word(user_id=user_id, words_ids=schema.words_ids)

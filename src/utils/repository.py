@@ -71,6 +71,8 @@ class SQLAlchemyRepository(AbstractRepository):
 
             if limit:
                 stmt = select(self.model).filter(*filters).order_by(order).limit(limit)
+            elif not filters:
+                stmt = select(self.model)
             else:
                 stmt = select(self.model).filter(*filters).order_by(order)
             res = await session.execute(stmt)

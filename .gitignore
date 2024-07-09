@@ -7,6 +7,10 @@ keys.json
 **.ogg
 **.mp3
 
+# chroma
+chroma_db/chroma.sqlite3
+**.bin
+
 # dirs
 postgres-data/
 venv/

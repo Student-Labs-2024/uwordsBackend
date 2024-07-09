@@ -134,14 +134,12 @@ class AudioService:
 
         except Exception as e:
             logger.info(e)
+            
             error = ErrorCreate(
                 user_id=user_id,
                 message="[UPLOAD YOUTUBE AUDIO] Ошибка выгрузки аудио из ютуба!",
                 description=str(e),
             )
-
-            asyncio.run(error_service.add_one(error=error))
-
             return None
 
     @staticmethod

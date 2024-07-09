@@ -71,6 +71,8 @@
 
             MINIO_HOST: "{{ MINIO_HOST }}"
 
+            FASTAPI_SECRET: "{{ FASTAPI_SECRET }}"
+
           logging:
             options:
               max-size: "10m"
@@ -86,6 +88,8 @@
           - db
           - redis
           restart: always
+          volumes:
+            - "/{{ project_name }}_chroma_data:/backend/chroma_db"
 
         db:
           image: postgres:latest
@@ -133,11 +137,15 @@
 
             MINIO_HOST: "{{ MINIO_HOST }}"
 
+            FASTAPI_SECRET: "{{ FASTAPI_SECRET }}"
+
           depends_on:
             - db
             - app
             - redis
           restart: always
+          volumes:
+            - "/{{ project_name }}_chroma_data:/backend/chroma_db"
 
         minio:
           image: minio/minio:latest
