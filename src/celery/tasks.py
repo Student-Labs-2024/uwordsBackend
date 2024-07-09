@@ -20,13 +20,8 @@ logging.basicConfig(level=logging.INFO)
 
 @app.task(bind=True, name="upload_audio", max_retries=2)
 def upload_audio_task(self, path: str, user_id: str):
-    user_word_service = user_word_service_fabric()
-    word_service = word_service_fabric()
-    subtopic_service = subtopic_service_fabric()
-    error_service = error_service_fabric()
     try:
-        result = AudioService.upload_audio(path, user_id, user_word_service, word_service,
-                                           subtopic_service, error_service)
+        result = upload_audio(path=path, user_id=user_id)
 
         if not result:
             raise self.retry(countdown=5)
@@ -76,10 +71,33 @@ def upload_youtube(link: str, user_id: str):
 
         if lang == 'ru':
             with ThreadPoolExecutor(max_workers=20) as executor:
-                results = list(executor.map(AudioService.speech_to_text_ru, files_paths, error_service, user_id))
+                try:
+                    results = list(executor.map(AudioService.speech_to_text_ru, files_paths))
+                except Exception as e:
+                    logger.info(f'[STT RU] Error {e}')
+
+                    error = ErrorCreate(
+                        user_id=user_id,
+                        message="[STT RU] ERROR",
+                        description=str(e)
+                    )
+
+                    asyncio.run(error_service.add_one(error=error))
+                
         else:
             with ThreadPoolExecutor(max_workers=20) as executor:
-                results = list(executor.map(AudioService.speech_to_text_en, files_paths, error_service, user_id))
+                try:
+                    results = list(executor.map(AudioService.speech_to_text_en, files_paths))
+                except Exception as e:
+                    logger.info(f'[STT EN] Error {e}')
+
+                    error = ErrorCreate(
+                        user_id=user_id,
+                        message="[STT EN] ERROR",
+                        description=str(e)
+                    )
+
+                    asyncio.run(error_service.add_one(error=error))
 
         freq_dict = TextService.get_frequency_dict(text=' '.join(results), error_service=error_service, user_id=user_id)
 
@@ -90,27 +108,122 @@ def upload_youtube(link: str, user_id: str):
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
-            user_word_service.upload_user_words(translated_words, user_id, word_service,
-                                                subtopic_service, error_service))
+            user_word_service.upload_user_words(
+                user_words=translated_words,
+                user_id=user_id,
+                word_service=word_service,
+                subtopic_service=subtopic_service,
+                error_service=error_service
+                )
+            )
 
         logger.info(f'[YOUTUBE UPLOAD] Upload ended successfully!')
 
         return True
 
     except BaseException as e:
-        logger.info(f'[YOUTUBE UPLOAD] Error occured')
-        logger.info(e)
+        logger.info(f'[YOUTUBE UPLOAD] Error occured {e}')
         error = ErrorCreate(
             user_id=user_id,
-            message="[UPLOAD YOUTUBE]",
+            message="[YOUTUBE UPLOAD] ERROR",
             description=str(e)
-            )
-        error_obj = asyncio.run(error_service.add(error=error))
-        logger.info(error_obj)
+        )
+
+        asyncio.run(error_service.add_one(error=error))
         return False
 
     finally:
         for file_path in files_paths + [path, filepath]:
+            try:
+                os.remove(path=file_path)
+            except:
+                continue
+
+
+def upload_audio(path: str, user_id: str):
+    user_word_service = user_word_service_fabric()
+    word_service = word_service_fabric()
+    subtopic_service = subtopic_service_fabric()
+    error_service = error_service_fabric()
+    try:
+
+        logger.info(f'[AUDIO UPLOAD] {path}')
+
+        files_paths = []
+        files_paths = AudioService.cut_audio(path=path, error_service=error_service, user_id=user_id)
+
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            try:
+                results_ru = list(executor.map(AudioService.speech_to_text_ru, files_paths))
+            except Exception as e:
+                logger.info(f'[STT RU] Error {e}')
+
+                error = ErrorCreate(
+                    user_id=user_id,
+                    message="[STT RU] ERROR",
+                    description=str(e)
+                )
+
+                asyncio.run(error_service.add_one(error=error))
+            
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            try:
+                results_en = list(executor.map(AudioService.speech_to_text_en, files_paths))
+            
+            except Exception as e:
+                logger.info(f'[STT EN] Error {e}')
+
+                error = ErrorCreate(
+                    user_id=user_id,
+                    message="[STT EN] ERROR",
+                    description=str(e)
+                )
+
+                asyncio.run(error_service.add_one(error=error))
+
+        if len(' '.join(results_ru)) > len(' '.join(results_en)):
+            is_ru = True
+            results = results_ru
+
+        else:
+            is_ru = False
+            results = results_en
+
+        freq_dict = TextService.get_frequency_dict(text=' '.join(results), error_service=error_service, user_id=user_id)
+
+        if is_ru:
+            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english", error_service=error_service, user_id=user_id)
+        else:
+            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian", error_service=error_service, user_id=user_id)
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            user_word_service.upload_user_words(
+                user_words=translated_words,
+                user_id=user_id,
+                word_service=word_service,
+                subtopic_service=subtopic_service,
+                error_service=error_service
+            )
+        )
+
+        logger.info(f'[AUDIO UPLOAD] Upload ended successfully!')
+
+        return True
+
+    except Exception as e:
+        logger.info(f'[AUDIO UPLOAD] Error occured! {e}')
+        error = ErrorCreate(
+            user_id=user_id,
+            message="[AUDIO UPLOAD] ERROR",
+            description=str(e)
+        )
+
+        asyncio.run(error_service.add_one(error=error))
+        return False
+
+    finally:
+        for file_path in files_paths + [path]:
             try:
                 os.remove(path=file_path)
             except:

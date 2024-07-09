@@ -4,22 +4,24 @@ import string
 from deep_translator.google import GoogleTranslator
 from src.schemes.schemas import ErrorCreate
 from src.services.services_config import ma, STOPWORDS
+from src.services.error_service import ErrorService
 
 logger = logging.getLogger("[SERVICES FILE]")
 logging.basicConfig(level=logging.INFO)
 
 
 class TextService:
+    
     @staticmethod
-    def get_frequency_dict(text: str, error_service, user_id) -> dict:
+    def get_frequency_dict(text: str, error_service: ErrorService, user_id) -> dict:
         try:
-            text_without_spec_chars = TextService.remove_spec_chars(text=text)
+            text_without_spec_chars = TextService.remove_spec_chars(text=text, error_service=error_service, user_id=user_id)
 
-            words = TextService.remove_stop_words(text=text_without_spec_chars)
+            words = TextService.remove_stop_words(text=text_without_spec_chars, error_service=error_service, user_id=user_id)
 
-            norm_words = TextService.normalize_words(words=words)
+            norm_words = TextService.normalize_words(words=words, error_service=error_service, user_id=user_id)
 
-            freq_dict = TextService.create_freq_dict(words=norm_words)
+            freq_dict = TextService.create_freq_dict(words=norm_words, error_service=error_service, user_id=user_id)
 
             return freq_dict
         
@@ -30,14 +32,13 @@ class TextService:
                 message="[GET FREQ]",
                 description=str(e)
             )
-            error_obj = asyncio.run(error_service.add(error=error))
-            logger.info(error_obj)
+            
+            asyncio.run(error_service.add_one(error=error))
+
             return None
 
-        
-
     @staticmethod
-    def remove_spec_chars(text: str, error_service, user_id: str) -> str:
+    def remove_spec_chars(text: str, error_service: ErrorService, user_id: str) -> str:
         try:
             spec_chars = string.punctuation + '\n\xa0«»\t—…' + '0123456789'
             return "".join([char for char in text if char not in spec_chars])
@@ -49,14 +50,13 @@ class TextService:
                 message="[REMOVE SPEC CHAR]",
                 description=str(e)
             )
-            error_obj = asyncio.run(error_service.add(error=error))
-            logger.info(error_obj)
+            
+            asyncio.run(error_service.add_one(error=error))
+            
             return None
-        
-        
 
     @staticmethod
-    def normalize_words(words: list[str], error_service, user_id: str) -> list[str]:
+    def normalize_words(words: list[str], error_service: ErrorService, user_id: str) -> list[str]:
         try:
             norm_words = []
 
@@ -72,12 +72,13 @@ class TextService:
                 message="[NORM WORDS]",
                 description=str(e)
             )
-            error_obj = asyncio.run(error_service.add(error=error))
-            logger.info(error_obj)
+
+            asyncio.run(error_service.add_one(error=error))
+
             return None
 
     @staticmethod
-    def create_freq_dict(words: list[str], error_service, user_id: str) -> dict:
+    def create_freq_dict(words: list[str], error_service: ErrorService, user_id: str) -> dict:
         try:
             freq_dict = {}
 
@@ -96,11 +97,12 @@ class TextService:
                 message="[CREATE FREQ]",
                 description=str(e)
             )
-            error_obj = asyncio.run(error_service.add(error=error))
-            logger.info(error_obj)
+
+            asyncio.run(error_service.add_one(error=error))
+
             return None
 
-    def remove_stop_words(text: str, error_service, user_id: str) -> list[str]:
+    def remove_stop_words(text: str, error_service: ErrorService, user_id: str) -> list[str]:
         try:
             return [word for word in text.split() if word not in STOPWORDS]
         
@@ -111,12 +113,13 @@ class TextService:
                 message="[REMOVE STOP WORDS]",
                 description=str(e)
             )
-            error_obj = asyncio.run(error_service.add(error=error))
-            logger.info(error_obj)
+
+            asyncio.run(error_service.add_one(error=error))
+
             return None
 
     @staticmethod
-    def translate(words: dict, from_lang: str, to_lang: str, error_service, user_id: str) -> list[dict]:
+    def translate(words: dict, from_lang: str, to_lang: str, error_service: ErrorService, user_id: str) -> list[dict]:
 
         translated_words = []
 
@@ -146,8 +149,9 @@ class TextService:
                     message="[TRANSLATE]",
                     description=str(e)
                 )
-                error_obj = asyncio.run(error_service.add(error=error))
-                logger.info(error_obj)
+
+                asyncio.run(error_service.add_one(error=error))
+
                 continue
 
         return translated_words

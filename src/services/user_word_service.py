@@ -102,8 +102,9 @@ class UserWordService:
                 message="[CREATE FREQ]",
                 description=str(e)
             )
-            error_obj = await error_service.add(error=error)
-            logger.info(error_obj)
+            
+            await error_service.add_one(error=error)
+            
             return False
 
 
@@ -135,6 +136,7 @@ class UserWordService:
                 message="[CREATE FREQ]",
                 description=str(e)
             )
-            error_obj = await error_service.add(error=error)
-            logger.info(error_obj)
+
+            await error_service.add_one(error=error)
+
             return None

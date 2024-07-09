@@ -1,42 +1,50 @@
-# В вашем файле main.py или где-то еще, где вы определяете ваше приложение FastAPI
-
 import asyncio
-from fastapi import FastAPI
-from fastapi import WebSocket
+import json
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.websockets import WebSocket
 
-app = FastAPI()
+from src.schemes.schemas import ErrorCreate
+from src.services.error_service import ErrorService
+from src.services.user_word_service import UserWordService
+from src.utils.dependenes.error_service_fabric import error_service_fabric
+from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 
-active_websockets = set()
+websocket_router_v1 = APIRouter(prefix="/api/v1/websockets")
+add_error_router = APIRouter(prefix="/api/v1/error")
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    active_websockets.add(websocket)
+@add_error_router.post("/add")
+async def add_user_error(user_id, error_service: Annotated[ErrorService, Depends(error_service_fabric)],):
     try:
-        while True:
-            data = await websocket.receive_text()
-    finally:
-        active_websockets.remove(websocket)
+        error = ErrorCreate(
+            user_id=user_id,
+            message="test",
+            description="test"
+        )
+        await error_service.add_one(error)
+        return {"message": "Error added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-# В вашем файле tasks.py или где-то еще, где вы определяете ваши задачи Celery
+@websocket_router_v1.websocket("/errors")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    user_id,
+    error_service: Annotated[ErrorService, Depends(error_service_fabric)],
+):
+    await websocket.accept()
+    while True:
+        # проверить бд на ошибки
+        errors = await error_service.get_user_errors(user_id)
+        for error in errors:
+            if not error.is_send:
+                await websocket.send_json(
+                    data={
+                        "msg": f"Отчет об ошибке: {error.message}, {error.description}"
+                    }
+                )
 
-from celery.signals import task_failure
+                await error_service.update_error_status(error_id=error.id)
+        
+        await asyncio.sleep(30)
 
-@task_failure.connect
-def handle_task_failure(sender=None, task_id=None, exception=None, **kwargs):
-    for websocket in active_websockets:
-        asyncio.create_task(websocket.send_text(f"Task {task_id} failed: {exception}"))
-
-
-
-async def connect(self):
-       # какой-то код
-       self.process_task = asyncio.create_task(self.process_buffer())
-
-async def process_buffer(self):
-        while True:
-            ### код проверки сообщения
-
-            self.send("ОШИБКА")
-
-            await asyncio.sleep(1)
