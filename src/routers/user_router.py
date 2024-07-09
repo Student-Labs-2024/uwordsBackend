@@ -8,6 +8,8 @@ from fastapi import APIRouter, File, UploadFile, Depends
 from src.config.instance import UPLOAD_DIR
 from src.database.models import UserWord
 from src.schemes.schemas import Audio, UserWordDumpSchema, WordsIdsSchema, YoutubeLink
+from src.services.error_service import ErrorService
+from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.file_service_fabric import file_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.services.audio_service import AudioService
@@ -25,6 +27,7 @@ logging.basicConfig(level=logging.INFO)
 @user_router_v1.get("/words/get_words", tags=["User Words"])
 async def get_user_words(user_id: str,
                          user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)]):
+  
     user_words: list[UserWord] = await user_words_service.get_user_words(user_id)
     topics = []
     topics_titles = []
@@ -90,7 +93,9 @@ async def complete_user_words_learning(user_id: str, schema: WordsIdsSchema, use
 async def upload_audio(
         user_id: str,
         file: Annotated[UploadFile, File(description="A file read as UploadFile")],
-        file_service: Annotated[FileService, Depends(file_service_fabric)]
+        file_service: Annotated[FileService, Depends(file_service_fabric)],
+        error_service: Annotated[ErrorService, Depends(error_service_fabric)],
+
 ) -> Audio:
     filename = file.filename
     _, extension = os.path.splitext(filename)
@@ -113,7 +118,7 @@ async def upload_audio(
 
     if extension != ".wav":
         title = f'{os.path.splitext(audio_name)[0]}_converted.wav'
-        filepath = AudioService.convert_audio(path=destination, title=title)
+        filepath = AudioService.convert_audio(path=destination, title=title, error_service=error_service, user_id=user_id)
         await file_service.delete_file(destination)
 
     else:

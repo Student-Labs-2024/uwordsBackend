@@ -3,6 +3,8 @@ from datetime import datetime
 
 from src.config.instance import MINIO_BUCKET_VOICEOVER, MINIO_BUCKET_PICTURE
 from src.database import models
+from src.schemes.schemas import ErrorCreate
+from src.services.error_service import ErrorService
 from src.database.models import UserWord, Word
 from src.services.censore_service import CensoreFilter
 from src.services.minio_uploader import MinioUploader
@@ -72,7 +74,7 @@ class UserWordService:
             logger.info(f'[UPLOAD USER WORD] ERROR: {e}')
 
     async def upload_user_word(self, new_word: dict, user_id: str, word_service: WordService,
-                               subtopic_service: TopicService) -> bool:
+                               subtopic_service: TopicService, error_service: ErrorService) -> bool:
         try:
             en_value = new_word.get('enValue', None)
             ru_value = new_word.get('ruValue', None)
@@ -103,9 +105,19 @@ class UserWordService:
             return is_new
         except BaseException as e:
             logger.info(f'[UPLOAD USER WORD] ERROR: {e}')
+            error = ErrorCreate(
+                user_id=user_id,
+                message="[CREATE FREQ]",
+                description=str(e)
+            )
+            
+            await error_service.add_one(error=error)
+            
+            return False
+
 
     async def upload_user_words(self, user_words: list[dict], user_id: str, word_service: WordService,
-                                subtopic_service: TopicService) -> bool:
+                                subtopic_service: TopicService, error_service: ErrorService) -> bool:
         try:
             found_voiceover_bucket = mc.bucket_exists(MINIO_BUCKET_VOICEOVER)
             if not found_voiceover_bucket:
@@ -119,7 +131,7 @@ class UserWordService:
             all_words = len(user_words)
 
             for user_word in user_words:
-                is_new = await self.upload_user_word(user_word, user_id, word_service, subtopic_service)
+                is_new = await self.upload_user_word(user_word, user_id, word_service, subtopic_service, error_service)
                 if is_new:
                     new_words += 1
 
@@ -127,3 +139,12 @@ class UserWordService:
 
         except BaseException as e:
             logger.info(f'[UPLOAD USER WORDS] ERROR: {e}')
+            error = ErrorCreate(
+                user_id=user_id,
+                message="[CREATE FREQ]",
+                description=str(e)
+            )
+
+            await error_service.add_one(error=error)
+
+            return None

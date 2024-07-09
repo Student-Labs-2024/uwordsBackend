@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_users import FastAPIUsers
-
+from src.routers.websocket_router import websocket_router_v1, add_error_router
 from src.database.db_config import User
 from src.routers.topic_router import topic_router_v1
 from src.routers.user_router import user_router_v1
@@ -39,7 +39,8 @@ app.add_middleware(
 
 app.include_router(user_router_v1)
 app.include_router(topic_router_v1)
-
+app.include_router(websocket_router_v1)
+app.include_router(add_error_router)
 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
