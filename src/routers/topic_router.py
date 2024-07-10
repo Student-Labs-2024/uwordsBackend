@@ -2,7 +2,7 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-
+from fastapi import HTTPException
 from src.database import models
 from src.schemes.schemas import Topic, SubTopic
 from src.services.topic_service import TopicService
@@ -19,23 +19,29 @@ async def add_topic(topic: Topic, topic_service: Annotated[TopicService, Depends
     res = await topic_service.add(topic)
     if not res:
         return topic
-    return "Topic already exist"
+    return HTTPException(detail="Topic already exist", status_code=400)
 
 
 @topic_router_v1.post("/subtopic/add")
 async def add_subtopic(subtopic: SubTopic,
-                       subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)], ):
-    res = await subtopic_service.add(subtopic)
-    if not res:
-        return subtopic
-    return "Subtopic already exist"
+                       subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
+                       topic_service: Annotated[TopicService, Depends(topic_service_fabric)]):
+    if await topic_service.get([models.Topic.title == subtopic.topic_title]):
+        res = await subtopic_service.add(subtopic)
+        if not res:
+            return subtopic
+        return HTTPException(detail="Subtopic already exist", status_code=400)
+    else:
+        return HTTPException(detail="Topic do not exist", status_code=400)
+
 
 @topic_router_v1.get("/get")
 async def get_topic(topic_title: str, topic_service: Annotated[TopicService, Depends(topic_service_fabric)]):
     res = await topic_service.get([models.Topic.title == topic_title])
     if res:
         return res
-    return "This topic do not exist"
+    return HTTPException(detail="Topic do not exist", status_code=400)
+
 
 @topic_router_v1.get("/subtopic/get")
 async def get_subtopic(subtopic_title: str,
@@ -43,7 +49,8 @@ async def get_subtopic(subtopic_title: str,
     res = await subtopic_service.get([models.SubTopic.title == subtopic_title])
     if res:
         return res
-    return "This subtopic do not exist"
+    return HTTPException(detail="Subtopic do not exist", status_code=400)
+
 
 @topic_router_v1.get("/all")
 async def get_all_topics(topic_service: Annotated[TopicService, Depends(topic_service_fabric)]):
@@ -60,7 +67,7 @@ async def get_all_subtopics(topic_title: str, topic_service: Annotated[TopicServ
     topic = await topic_service.get([models.Topic.title == topic_title])
     if topic:
         return topic.subtopics
-    return "No subtopics"
+    return []
 
 
 @topic_router_v1.get("/subtopic/check", response_model=str)
