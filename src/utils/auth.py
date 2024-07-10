@@ -118,9 +118,24 @@ async def get_active_current_user(
     
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail={
-                "msg": f"User {user.email} inactive"
+                "msg": f"User {user.email} banned"
+            }
+        )
+    
+    return user
+
+
+async def get_admin_user(
+        user: User = Depends(get_active_current_user)
+) -> User:
+    
+    if not user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "msg": f"User {user.email} not a superuser"
             }
         )
     

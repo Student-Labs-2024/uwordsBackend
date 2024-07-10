@@ -54,3 +54,24 @@ class UserService:
         except Exception as e:
             logger.info(f'[UPDATE USER] Error: {e}')
             return None
+        
+    async def ban_user(self, user_id: int):
+        try:
+            return await self.repo.update_one(
+                filters=[User.id == user_id],
+                values={
+                    "is_active": False
+                }
+            )
+        except Exception as e:
+            logger.info(f'[BAN USER] Error: {e}')
+            return None
+        
+    async def delete_user(self, user_id: int):
+        try:
+            return await self.repo.delete_one(
+                filters=[User.id == user_id]
+            )
+        except Exception as e:
+            logger.info(f'[DELETE USER] Error: {e}')
+            return None
