@@ -3,11 +3,11 @@ import uuid
 import logging
 from pydub import AudioSegment
 from datetime import datetime
-from typing import Annotated, List
+from typing import Annotated
 from fastapi import APIRouter, File, UploadFile, Depends
 from src.config.instance import UPLOAD_DIR
 from src.database.models import UserWord
-from src.schemes.schemas import Audio, UserWordDumpSchema, WordsIdsSchema, YoutubeLink
+from src.schemes.schemas import Audio, WordsIdsSchema, YoutubeLink
 from src.utils.dependenes.file_service_fabric import file_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.services.audio_service import AudioService
@@ -60,9 +60,13 @@ async def get_user_words(user_id: str,
             if len(subtopic['words']) < 8:
                 not_in_subtopics.extend(subtopic['words'])
                 subtopics_to_remove.append(subtopic['subtopic_title'])
-        for subtopic_to_remove in subtopics_to_remove:
-            index = titles[topic['topic_title']].index(subtopic_to_remove)
+        while True:
+            if len(subtopics_to_remove) == 0:
+                break
+            index = titles[topic['topic_title']].index(subtopics_to_remove[0])
+            del titles[topic['topic_title']][index]
             del subtopics[index]
+            del subtopics_to_remove[0]
         subtopics.append({'subtopic_title': 'not_in_subtopics', 'words': not_in_subtopics})
 
     return topics
