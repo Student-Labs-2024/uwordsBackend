@@ -143,4 +143,11 @@ class ChromaRepository(AbstractRepository):
             return res.scalar_one_or_none()
 
     async def delete_one(self, filters):
-        pass
+        self.collection.delete(filters[1])
+        del filters[1]
+        async with async_session_maker() as session:
+            session: AsyncSession
+
+            stmt = delete(self.model).where(*filters)
+            await session.execute(stmt)
+            await session.commit()

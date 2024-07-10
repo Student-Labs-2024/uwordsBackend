@@ -18,6 +18,9 @@ class TopicService:
     async def get_all(self):
         return await self.repo.get_all_by_filter()
 
+    async def delete(self, title):
+        return await self.repo.delete_one(title)
+
     async def check_word(self, word: str) -> str:
         res = await self.repo.update_one(word, 1)
         if res:
