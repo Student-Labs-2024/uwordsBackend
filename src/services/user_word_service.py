@@ -21,10 +21,10 @@ class UserWordService:
     def __init__(self, repo: AbstractRepository):
         self.repo = repo
 
-    async def get_user_words(self, user_id: str):
+    async def get_user_words(self, user_id: int):
         return await self.repo.get_all_by_filter([UserWord.user_id == user_id], UserWord.frequency.desc())
 
-    async def get_user_word(self, user_id: str, word_id: int) -> UserWord:
+    async def get_user_word(self, user_id: int, word_id: int) -> UserWord:
         try:
             user_word: UserWord = await self.repo.get_one([UserWord.user_id == user_id, UserWord.word_id == word_id])
             return user_word
@@ -32,7 +32,7 @@ class UserWordService:
         except BaseException as e:
             logger.info(f'[GET USER WORD] ERROR: {e}')
 
-    async def get_user_words_for_study(self, user_id: str, topic_title: str, subtopic_title: str | None = None):
+    async def get_user_words_for_study(self, user_id: int, topic_title: str, subtopic_title: str | None = None):
         try:
             if not subtopic_title:
                 user_words = await self.repo.get_all_by_filter(
@@ -59,7 +59,7 @@ class UserWordService:
         except BaseException as e:
             logger.info(f'[GET USER WORDS FOR STUDY] ERROR: {e}')
 
-    async def update_progress_word(self, user_id: str, words_ids: list[int]):
+    async def update_progress_word(self, user_id: int, words_ids: list[int]):
         try:
             time_now = datetime.now()
             learned = 0
@@ -73,7 +73,7 @@ class UserWordService:
         except BaseException as e:
             logger.info(f'[UPLOAD USER WORD] ERROR: {e}')
 
-    async def upload_user_word(self, new_word: dict, user_id: str, word_service: WordService,
+    async def upload_user_word(self, new_word: dict, user_id: int, word_service: WordService,
                                subtopic_service: TopicService, error_service: ErrorService) -> bool:
         try:
             en_value = new_word.get('enValue', None)
@@ -116,7 +116,7 @@ class UserWordService:
             return False
 
 
-    async def upload_user_words(self, user_words: list[dict], user_id: str, word_service: WordService,
+    async def upload_user_words(self, user_words: list[dict], user_id: int, word_service: WordService,
                                 subtopic_service: TopicService, error_service: ErrorService) -> bool:
         try:
             found_voiceover_bucket = mc.bucket_exists(MINIO_BUCKET_VOICEOVER)
