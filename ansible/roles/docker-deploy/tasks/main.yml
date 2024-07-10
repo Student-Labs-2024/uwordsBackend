@@ -90,6 +90,7 @@
           restart: always
           volumes:
             - "/{{ project_name }}_chroma_data:/backend/chroma_db"
+            - "/{{ project_name }}_certs:/backend/src/config/certs"
 
         db:
           image: postgres:latest
@@ -146,6 +147,7 @@
           restart: always
           volumes:
             - "/{{ project_name }}_chroma_data:/backend/chroma_db"
+            - "/{{ project_name }}_certs:/backend/src/config/certs"
 
         minio:
           image: minio/minio:latest
