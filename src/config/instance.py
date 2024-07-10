@@ -38,3 +38,6 @@ JWT_ALGORITHM: str = "RS256"
 
 ACCESS_TOKEN_LIFETIME: int = 60 # minutes
 REFRESH_TOKEN_LIFETIME: int = 30 # days
+
+# SENTRY
+SENTRY_URL: str = os.environ.get("SENTRY_URL")
