@@ -7,8 +7,8 @@ from src.schemes.schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 
-websocket_router_v1 = APIRouter(prefix="/api/v1/websockets")
-add_error_router = APIRouter(prefix="/api/v1/error")
+websocket_router_v1 = APIRouter(prefix="/api/v1/websockets", tags=["Errors"])
+add_error_router = APIRouter(prefix="/api/v1/error", tags=["Errors"])
 
 @add_error_router.post("/add")
 async def add_user_error(user_id, error_service: Annotated[ErrorService, Depends(error_service_fabric)],):
@@ -31,7 +31,6 @@ async def websocket_endpoint(
 ):
     await websocket.accept()
     while True:
-        # проверить бд на ошибки
         errors = await error_service.get_user_errors(user_id)
         for error in errors:
             if not error.is_send:

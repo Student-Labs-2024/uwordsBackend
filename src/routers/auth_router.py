@@ -4,9 +4,10 @@ from typing import Annotated
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
 
+from src.config.instance import FASTAPI_SECRET
 from src.database.models import User
 from src.services.user_service import UserService
-from src.schemes.schemas import TokenInfo, UserCreate, UserCreateDB, UserDump, UserLogin, UserUpdate
+from src.schemes.schemas import AdminCreate, CustomResponse, TokenInfo, UserCreate, UserCreateDB, UserDump, UserLogin, UserUpdate
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
@@ -18,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 http_bearer = HTTPBearer()
 auth_router_v1 = APIRouter(prefix="/api/users", tags=["Users"])
+admin_router_v1 = APIRouter(prefix="/api/users", tags=["Admins"])
 
 
 @auth_router_v1.post("/register", response_model=UserDump)
@@ -110,4 +112,83 @@ async def update_user_me(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    return await user_service.update_user(user_id=user.id, user_data=user_data.model_dump())
+    return await user_service.update_user(user_id=user.id, user_data=user_data.model_dump(exclude_none=True))
+
+
+@auth_router_v1.delete("/me/delete", response_model=CustomResponse)
+async def delete_user(
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user)
+):
+    await user_service.delete_user(user_id=user.id)
+    
+    return CustomResponse(status_code=200, message=f"User {user.id} deleted succesfully")
+
+
+@auth_router_v1.get("/{user_id}", response_model=UserDump)
+async def get_user_profile(
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user)
+):
+    return await user_service.get_user_by_id(user_id=user_id)
+
+
+@admin_router_v1.post("/admin/register", response_model=UserDump)
+async def create_admin(
+    admin_data: AdminCreate,
+    user_service: Annotated[UserService, Depends(user_service_fabric)]
+):
+    
+    if await user_service.get_user_by_email_provider(email=admin_data.email, provider="admin"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "msg": f"Admin with email {admin_data.email} already exists"
+            }
+        )
+    
+    if not admin_data.admin_secret == FASTAPI_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "msg": f"Incorrect admin-create key"
+            }
+        )
+    
+    hashed_password: bytes = auth_utils.hash_password(password=admin_data.password)
+
+    admin_data_db = UserCreateDB(
+        hashed_password=hashed_password.decode(),
+        is_superuser=True,
+        provider="admin",
+        **admin_data.model_dump()
+    )
+
+    admin = await user_service.create_user(
+        user_data=admin_data_db.model_dump()
+    )
+
+    return admin
+
+
+@admin_router_v1.delete("/{user_id}/ban", response_model=CustomResponse)
+async def ban_user(
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user)
+):
+    await user_service.ban_user(user_id=user_id)
+    
+    return CustomResponse(status_code=200, message=f"User {user_id} banned succesfully")
+
+
+@admin_router_v1.delete("/{user_id}/delete", response_model=CustomResponse)
+async def ban_user(
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user)
+):
+    await user_service.delete_user(user_id=user_id)
+    
+    return CustomResponse(status_code=200, message=f"User {user_id} deleted succesfully")
