@@ -1,14 +1,11 @@
 import asyncio
-import json
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.websockets import WebSocket
 
 from src.schemes.schemas import ErrorCreate
 from src.services.error_service import ErrorService
-from src.services.user_word_service import UserWordService
 from src.utils.dependenes.error_service_fabric import error_service_fabric
-from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 
 websocket_router_v1 = APIRouter(prefix="/api/v1/websockets")
 add_error_router = APIRouter(prefix="/api/v1/error")
@@ -29,7 +26,7 @@ async def add_user_error(user_id, error_service: Annotated[ErrorService, Depends
 @websocket_router_v1.websocket("/errors")
 async def websocket_endpoint(
     websocket: WebSocket,
-    user_id,
+    user_id: int,
     error_service: Annotated[ErrorService, Depends(error_service_fabric)],
 ):
     await websocket.accept()
