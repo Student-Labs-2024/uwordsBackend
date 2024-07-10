@@ -38,7 +38,7 @@ class UserWord(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     word_id = Column(Integer, ForeignKey(Word.id))
-    user_id = Column(String)
+    user_id = Column(Integer)
     frequency = Column(Integer)
     progress = Column(Integer, default=0)
     latest_study = Column(DateTime)
@@ -50,16 +50,29 @@ class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, nullable=False)
+    provider = Column(String, nullable=False)
+    username = Column(String, nullable=True)
     firstname = Column(String, nullable=True)
     lastname = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
     email = Column(String, nullable=False)
-    phone_number = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.now)
+    phone_number = Column(String, nullable=True)
     birth_date = Column(DateTime, nullable=True)
     hashed_password = Column(String, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.now)
+
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
 
+
+class Error(Base):
+    __tablename__ = "error"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer)
+    message = Column(String)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    is_send = Column(Boolean, default=False)

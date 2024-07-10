@@ -5,25 +5,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = Path(__file__).parent.parent.parent
+
 # PostgreSQL
-POSTGRES_DB = os.environ.get("POSTGRES_DB")
-POSTGRES_HOST = os.environ.get("POSTGRES_HOST")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT")
-POSTGRES_USER = os.environ.get("POSTGRES_USER")
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
+POSTGRES_DB: str = os.environ.get("POSTGRES_DB")
+POSTGRES_HOST: str = os.environ.get("POSTGRES_HOST")
+POSTGRES_PORT: str = os.environ.get("POSTGRES_PORT")
+POSTGRES_USER: str = os.environ.get("POSTGRES_USER")
+POSTGRES_PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")
 
 # REDIS
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL")
 
 # MINIO
-MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT")
-MINIO_ROOT_USER = os.environ.get("MINIO_ROOT_USER")
-MINIO_ROOT_PASSWORD = os.environ.get("MINIO_ROOT_PASSWORD")
-MINIO_BUCKET_VOICEOVER = os.environ.get("MINIO_BUCKET_VOICEOVER")
-MINIO_BUCKET_PICTURE = os.environ.get("MINIO_BUCKET_PICTURE")
+MINIO_ENDPOINT: str = os.environ.get("MINIO_ENDPOINT")
+MINIO_ROOT_USER: str = os.environ.get("MINIO_ROOT_USER")
+MINIO_ROOT_PASSWORD: str = os.environ.get("MINIO_ROOT_PASSWORD")
+MINIO_BUCKET_VOICEOVER: str = os.environ.get("MINIO_BUCKET_VOICEOVER")
+MINIO_BUCKET_PICTURE: str = os.environ.get("MINIO_BUCKET_PICTURE")
 
 # SYSTEM
-MINIO_HOST = os.environ.get("MINIO_HOST")
-UPLOAD_DIR = Path() / 'audio_transfer'
-FASTAPI_SECRET = os.environ.get("FASTAPI_SECRET")
-ADMIN_SECRET = os.environ.get("ADMIN_SECRET")
+MINIO_HOST: str = os.environ.get("MINIO_HOST")
+UPLOAD_DIR: Path = BASE_DIR / 'audio_transfer'
+FASTAPI_SECRET: str = os.environ.get("FASTAPI_SECRET")
+
+
+# TOKEN SETTINGS
+PRIVATE_KEY: Path = BASE_DIR / "src" / "config" / "certs" / "key"
+PUBLIC_KEY: Path = BASE_DIR / "src" / "config" / "certs" / "key.pub"
+
+JWT_ALGORITHM: str = "RS256"
+
+ACCESS_TOKEN_LIFETIME: int = 60 # minutes
+REFRESH_TOKEN_LIFETIME: int = 30 # days

@@ -3,13 +3,12 @@ name: Build and publish
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   docker:
     name: DockerHub | Push image
     runs-on: self-hosted
+    timeout-minutes: 15
     steps:
       - 
         name: Checkout
@@ -48,6 +47,7 @@ jobs:
     name: Ansible | Pull Docker Image to server
     needs: docker
     runs-on: self-hosted
+    timeout-minutes: 15
     container: willhallonline/ansible:2.13-alpine-3.15
     steps:
       - 
@@ -110,6 +110,7 @@ jobs:
           echo "MINIO_HOST: ${{ secrets.PROD_MINIO_HOST }}" >> $TMPDIR/vars.yml
           echo "GPT_TOKEN: ${{ secrets.PROD_GPT_TOKEN }}" >> $TMPDIR/vars.yml
           echo "PIX_TOKEN: ${{ secrets.PROD_PIX_TOKEN }}" >> $TMPDIR/vars.yml
+          echo "FASTAPI_SECRET: ${{ secrets.PROD_FASTAPI_SECRET }}" >> $TMPDIR/vars.yml
       - 
         name: Run ansible playbook
         run: |

@@ -1,9 +1,7 @@
 from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
-import uuid
 from pydantic import BaseModel, Field, EmailStr
-from fastapi_users import schemas
 
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
@@ -37,7 +35,7 @@ class WordDumpSchema(BaseModel):
 class UserWordDumpSchema(BaseModel):
     topic: str = Field(examples=[1])
     word: WordDumpSchema
-    user_id: str = Field(examples=["ijembbp53kbtSJ7FW3k68XQwJYp1"])
+    user_id: int = Field(examples=["ijembbp53kbtSJ7FW3k68XQwJYp1"])
     frequency: int = Field(examples=[7])
     progress: int = Field(examples=[2])
 
@@ -60,35 +58,78 @@ class SubTopic(BaseModel):
     class Config:
         from_attributes = True
 
-class UserRead(schemas.BaseUser[int]):
+
+class ErrorCreate(BaseModel):
+    user_id: int
+    message: str
+    description: Optional[str]
+
+
+class ErrorDump(BaseModel):
     id: int
-    username: str
-    firstname: str
-    lastname: Optional[str] = None
+    user_id: int
+    message: str
+    description: Optional[str]
+    created_at: datetime
+    is_send: bool
+
+
+class UserDump(BaseModel):
+    id: int
     email: EmailStr
+    provider: str
+
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
     birth_date: Optional[datetime] = None
     created_at: datetime
 
 
-class UserCreate(schemas.BaseUserCreate):
-    username: str
-    firstname: str
-    lastname: Optional[str] = None
+class UserCreate(BaseModel):
+    provider: str
     email: EmailStr
+    password: str
+
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Optional[str] = None
-
-    is_active: Optional[bool] = True
-    is_superuser: Optional[bool] = False
-    is_verified: Optional[bool] = True
+    birth_date: Optional[datetime] = None
 
 
-class UserUpdate(schemas.BaseUserUpdate):
-    username: Optional[str]
-    firstname: Optional[str]
-    lastname: Optional[str]
-    avatar_url: Optional[str]
-    phone_number: Optional[str]
-    birth_date: Optional[datetime]
+class UserCreateDB(BaseModel):
+    provider: str
+    email: EmailStr
+    hashed_password: str
+
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    avatar_url: Optional[str] = None
+    phone_number: Optional[str] = None
+    birth_date: Optional[datetime] = None
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    avatar_url: Optional[str] = None
+    phone_number: Optional[str] = None
+    birth_date: Optional[datetime] = None
+
+
+class UserLogin(BaseModel):
+    provider: str
+    email: EmailStr
+    password: str
+
+
+class TokenInfo(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str = "Bearer"

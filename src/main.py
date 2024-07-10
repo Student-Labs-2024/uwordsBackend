@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_users import FastAPIUsers
 
-from src.database.db_config import User
+from src.routers.websocket_router import websocket_router_v1, add_error_router
 from src.routers.topic_router import topic_router_v1
 from src.routers.user_router import user_router_v1
-from src.schemes.schemas import UserCreate, UserRead, UserUpdate
-from src.utils.user import get_user_manager, auth_backend
+from src.routers.auth_router import auth_router_v1
 
 
 tags_metadata = [
@@ -39,28 +37,6 @@ app.add_middleware(
 
 app.include_router(user_router_v1)
 app.include_router(topic_router_v1)
-
-
-fastapi_users = FastAPIUsers[User, int](
-    get_user_manager,
-    [auth_backend],
-)
-
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix="/api/v1/users/auth",
-    tags=["User Auth"],
-)
-
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/api/v1/users/auth",
-    tags=["User Auth"],
-)
-
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix="/api/v1/users",
-    tags=["User Router"],
-)
-
+app.include_router(websocket_router_v1)
+app.include_router(add_error_router)
+app.include_router(auth_router_v1)
