@@ -19,3 +19,5 @@ venv/
 
 # conf
 nginx-prod.conf
+key
+key.pub

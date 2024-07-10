@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Annotated, List
 from fastapi import APIRouter, File, UploadFile, Depends
 from src.config.instance import UPLOAD_DIR
-from src.database.models import UserWord
+from src.database.models import User, UserWord
 from src.schemes.schemas import Audio, UserWordDumpSchema, WordsIdsSchema, YoutubeLink
 from src.services.error_service import ErrorService
 from src.utils.dependenes.error_service_fabric import error_service_fabric
@@ -17,6 +17,8 @@ from src.services.file_service import FileService
 from src.services.user_word_service import UserWordService
 from src.celery.tasks import upload_audio_task, upload_youtube_task
 
+from src.utils import auth as auth_utils
+
 user_router_v1 = APIRouter(prefix="/api/v1/user")
 
 logger = logging.getLogger("[ROUTER WORDS]")
@@ -25,10 +27,12 @@ logging.basicConfig(level=logging.INFO)
 
 # response_model=List[UserWordDumpSchema]
 @user_router_v1.get("/words/get_words", tags=["User Words"])
-async def get_user_words(user_id: str,
-                         user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)]):
+async def get_user_words(
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user)
+):
   
-    user_words: list[UserWord] = await user_words_service.get_user_words(user_id)
+    user_words: list[UserWord] = await user_words_service.get_user_words(user.id)
     topics = []
     topics_titles = []
     titles: dict[str:list] = {}
@@ -72,29 +76,34 @@ async def get_user_words(user_id: str,
 
 
 @user_router_v1.get("/words/study", tags=["User Words"])
-async def get_user_words_for_study(user_id: str,
-                                   user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-                                   topic_title: str | None = None,
-                                   subtopic_title: str | None = None):
-    words_for_study = await user_words_service.get_user_words_for_study(user_id=user_id, topic_title=topic_title,
+async def get_user_words_for_study(
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+    topic_title: str | None = None,
+    subtopic_title: str | None = None
+):
+    words_for_study = await user_words_service.get_user_words_for_study(user_id=user.id, topic_title=topic_title,
                                                                         subtopic_title=subtopic_title)
 
     return words_for_study
 
 
 @user_router_v1.post("/words/study", tags=["User Words"])
-async def complete_user_words_learning(user_id: str, schema: WordsIdsSchema, user_words_service: Annotated[
-    UserWordService, Depends(user_word_service_fabric)]):
-    await user_words_service.update_progress_word(user_id=user_id, words_ids=schema.words_ids)
+async def complete_user_words_learning(
+    schema: WordsIdsSchema, 
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    await user_words_service.update_progress_word(user_id=user.id, words_ids=schema.words_ids)
     return schema
 
 
 @user_router_v1.post("/audio", response_model=Audio, tags=["User Words"])
 async def upload_audio(
-        user_id: str,
-        file: Annotated[UploadFile, File(description="A file read as UploadFile")],
-        file_service: Annotated[FileService, Depends(file_service_fabric)],
-        error_service: Annotated[ErrorService, Depends(error_service_fabric)],
+    file: Annotated[UploadFile, File(description="A file read as UploadFile")],
+    file_service: Annotated[FileService, Depends(file_service_fabric)],
+    error_service: Annotated[ErrorService, Depends(error_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user)
 
 ) -> Audio:
     filename = file.filename
@@ -118,7 +127,7 @@ async def upload_audio(
 
     if extension != ".wav":
         title = f'{os.path.splitext(audio_name)[0]}_converted.wav'
-        filepath = AudioService.convert_audio(path=destination, title=title, error_service=error_service, user_id=user_id)
+        filepath = AudioService.convert_audio(path=destination, title=title, error_service=error_service, user_id=user.id)
         await file_service.delete_file(destination)
 
     else:
@@ -131,12 +140,15 @@ async def upload_audio(
         uploaded_at=uploaded_at,
     )
 
-    upload_audio_task.apply_async((filepath, user_id), countdown=1)
+    upload_audio_task.apply_async((filepath, user.id), countdown=1)
 
     return response
 
 
 @user_router_v1.post("/youtube", response_model=YoutubeLink, tags=["User Words"])
-async def upload_youtube_video(user_id: str, schema: YoutubeLink):
-    upload_youtube_task.apply_async((schema.link, user_id,), countdown=1)
+async def upload_youtube_video(
+    schema: YoutubeLink,
+    user: User = Depends(auth_utils.get_active_current_user)
+):
+    upload_youtube_task.apply_async((schema.link, user.id), countdown=1)
     return schema

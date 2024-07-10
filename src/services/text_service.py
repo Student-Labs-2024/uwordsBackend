@@ -38,7 +38,7 @@ class TextService:
             return None
 
     @staticmethod
-    def remove_spec_chars(text: str, error_service: ErrorService, user_id: str) -> str:
+    def remove_spec_chars(text: str, error_service: ErrorService, user_id: int) -> str:
         try:
             spec_chars = string.punctuation + '\n\xa0«»\t—…' + '0123456789'
             return "".join([char for char in text if char not in spec_chars])
@@ -56,7 +56,7 @@ class TextService:
             return None
 
     @staticmethod
-    def normalize_words(words: list[str], error_service: ErrorService, user_id: str) -> list[str]:
+    def normalize_words(words: list[str], error_service: ErrorService, user_id: int) -> list[str]:
         try:
             norm_words = []
 
@@ -78,7 +78,7 @@ class TextService:
             return None
 
     @staticmethod
-    def create_freq_dict(words: list[str], error_service: ErrorService, user_id: str) -> dict:
+    def create_freq_dict(words: list[str], error_service: ErrorService, user_id: int) -> dict:
         try:
             freq_dict = {}
 
@@ -102,7 +102,7 @@ class TextService:
 
             return None
 
-    def remove_stop_words(text: str, error_service: ErrorService, user_id: str) -> list[str]:
+    def remove_stop_words(text: str, error_service: ErrorService, user_id: int) -> list[str]:
         try:
             return [word for word in text.split() if word not in STOPWORDS]
         
@@ -119,7 +119,7 @@ class TextService:
             return None
 
     @staticmethod
-    def translate(words: dict, from_lang: str, to_lang: str, error_service: ErrorService, user_id: str) -> list[dict]:
+    def translate(words: dict, from_lang: str, to_lang: str, error_service: ErrorService, user_id: int) -> list[dict]:
 
         translated_words = []
 

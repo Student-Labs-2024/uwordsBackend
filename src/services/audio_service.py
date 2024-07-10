@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 class AudioService:
     @staticmethod
     def convert_audio(
-        path: str, title: str, error_service: ErrorService, user_id: str
+        path: str, title: str, error_service: ErrorService, user_id: int
     ) -> str | None:
         try:
             out_path = UPLOAD_DIR / title
@@ -52,7 +52,7 @@ class AudioService:
             return None
 
     @staticmethod
-    def cut_audio(path: str, error_service: ErrorService, user_id: str) -> list[str]:
+    def cut_audio(path: str, error_service: ErrorService, user_id: int) -> list[str]:
         files = []
 
         try:
@@ -118,9 +118,11 @@ class AudioService:
             return " "
 
     @staticmethod
-    def upload_youtube_audio(link: str, error_service: ErrorService, user_id: str):
+    def upload_youtube_audio(link: str, error_service: ErrorService, user_id: int):
         try:
             video = YouTube(link)
+
+            logger.info(link)
 
             stream = video.streams.filter(only_audio=True).first()
 

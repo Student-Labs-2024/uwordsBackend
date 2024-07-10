@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @app.task(bind=True, name="upload_audio", max_retries=2)
-def upload_audio_task(self, path: str, user_id: str):
+def upload_audio_task(self, path: str, user_id: int):
     try:
         result = upload_audio(path=path, user_id=user_id)
 
@@ -33,7 +33,7 @@ def upload_audio_task(self, path: str, user_id: str):
 
 
 @app.task(bind=True, name="upload_video", max_retries=2)
-def upload_youtube_task(self, link: str, user_id: str):
+def upload_youtube_task(self, link: str, user_id: int):
     try:
         result = upload_youtube(link=link, user_id=user_id)
 
@@ -46,7 +46,7 @@ def upload_youtube_task(self, link: str, user_id: str):
         return 'Возникла ошибка загрузки видео'
 
 
-def upload_youtube(link: str, user_id: str):
+def upload_youtube(link: str, user_id: int):
     user_word_service = user_word_service_fabric()
     word_service = word_service_fabric()
     subtopic_service = subtopic_service_fabric()
@@ -54,6 +54,7 @@ def upload_youtube(link: str, user_id: str):
     try:
         logger.info(f'[YOUTUBE UPLOAD] Upload started...')
 
+        files_paths = []
         path, audio_title, video_title = AudioService.upload_youtube_audio(link=link, error_service=error_service, user_id=user_id)
 
         logger.info(f'PATH: {path}')
@@ -64,7 +65,6 @@ def upload_youtube(link: str, user_id: str):
 
         filepath = AudioService.convert_audio(path=path, title=title, error_service=error_service, user_id=user_id)
 
-        files_paths = []
         files_paths = AudioService.cut_audio(path=filepath, error_service=error_service, user_id=user_id)
 
         lang = detect(video_title)
@@ -140,7 +140,7 @@ def upload_youtube(link: str, user_id: str):
                 continue
 
 
-def upload_audio(path: str, user_id: str):
+def upload_audio(path: str, user_id: int):
     user_word_service = user_word_service_fabric()
     word_service = word_service_fabric()
     subtopic_service = subtopic_service_fabric()
