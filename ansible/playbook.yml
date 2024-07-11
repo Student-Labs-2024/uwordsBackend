@@ -1,5 +1,0 @@
----
-- 
-  hosts: base
-  roles:
-    - { role: docker-deploy, project_name: "{{ PROJECT_NAME }}" }

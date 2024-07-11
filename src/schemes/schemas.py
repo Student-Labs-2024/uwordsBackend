@@ -113,6 +113,10 @@ class UserCreateDB(BaseModel):
     phone_number: Optional[str] = None
     birth_date: Optional[datetime] = None
 
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
+    is_verified: Optional[bool] = False
+
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -133,3 +137,21 @@ class TokenInfo(BaseModel):
     access_token: str
     refresh_token: Optional[str] = None
     token_type: str = "Bearer"
+
+
+class CustomResponse(BaseModel):
+    status_code: int
+    message: str
+
+
+class AdminCreate(BaseModel):
+    email: EmailStr
+    password: str
+    admin_secret: str
+
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    avatar_url: Optional[str] = None
+    phone_number: Optional[str] = None
+    birth_date: Optional[datetime] = None
