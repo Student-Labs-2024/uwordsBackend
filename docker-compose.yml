@@ -4,10 +4,10 @@ services:
   app:
     build: .
     command: >
-      /bin/sh -c "alembic -c src/alembic.ini upgrade head && uvicorn src.main:app --reload --proxy-headers --host 0.0.0.0 --port 8000 --workers 4"
+      /bin/sh -c "alembic -c src/alembic.ini revision --autogenerate && alembic -c src/alembic.ini upgrade head && uvicorn src.main:app --reload --proxy-headers --host 0.0.0.0 --port 8000 --workers 4"
     restart: always
     volumes:
-      - ./chromadb:/backend/chroma_db
+      - ./:/backend
     ports:
       - "8001:8000"
     env_file:
@@ -38,7 +38,7 @@ services:
     build: .
     command: celery -A src.config.celery_app worker --loglevel=info
     volumes:
-      - ./chromadb:/backend/chroma_db
+      - ./:/backend
     env_file:
       - ./.env.prod
     depends_on:
