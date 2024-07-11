@@ -82,7 +82,7 @@ class AudioService:
 
             error = ErrorCreate(
                 user_id=user_id,
-                message="[UPLOAD AUDIO] Ошибка обработки видео!",
+                message="[UPLOAD AUDIO] Ошибка обработки аудио!",
                 description=str(e),
             )
 
