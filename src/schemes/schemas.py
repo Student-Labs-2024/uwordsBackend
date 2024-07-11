@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, validator
 
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
@@ -98,7 +98,13 @@ class UserCreate(BaseModel):
     lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Optional[datetime] = None
+    birth_date: Union[datetime, str, None] = None
+
+    @validator("*", pre=True)
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
 
 
 class UserCreateDB(BaseModel):
@@ -111,11 +117,17 @@ class UserCreateDB(BaseModel):
     lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Optional[datetime] = None
+    birth_date: Union[datetime, str, None] = None
 
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
+
+    @validator("*", pre=True)
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
 
 
 class UserUpdate(BaseModel):
@@ -124,7 +136,13 @@ class UserUpdate(BaseModel):
     lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Optional[datetime] = None
+    birth_date: Union[datetime, str, None] = None
+
+    @validator("*", pre=True)
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
 
 
 class UserLogin(BaseModel):
@@ -154,4 +172,10 @@ class AdminCreate(BaseModel):
     lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Optional[datetime] = None
+    birth_date: Union[datetime, str, None] = None
+
+    @validator("*", pre=True)
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
