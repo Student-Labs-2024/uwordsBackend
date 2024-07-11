@@ -2,7 +2,7 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from src.database import models
 from src.schemes.schemas import Topic, SubTopic
 from src.services.topic_service import TopicService
@@ -24,7 +24,7 @@ async def add_topic(
     res = await topic_service.add(topic)
     if not res:
         return topic
-    return HTTPException(detail="Topic already exist", status_code=400)
+    raise HTTPException(detail="Topic already exist", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @topic_router_v1.post("/subtopic/add")
@@ -38,9 +38,9 @@ async def add_subtopic(
         res = await subtopic_service.add(subtopic)
         if not res:
             return subtopic
-        return HTTPException(detail="Subtopic already exist", status_code=400)
+        raise HTTPException(detail="Subtopic already exist", status_code=status.HTTP_400_BAD_REQUEST)
     else:
-        return HTTPException(detail="Topic do not exist", status_code=400)
+        raise HTTPException(detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @topic_router_v1.get("/get")
@@ -52,7 +52,7 @@ async def get_topic(
     res = await topic_service.get([models.Topic.title == topic_title])
     if res:
         return res
-    return HTTPException(detail="Topic do not exist", status_code=400)
+    raise HTTPException(detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @topic_router_v1.get("/subtopic/get")
@@ -64,7 +64,7 @@ async def get_subtopic(
     res = await subtopic_service.get([models.SubTopic.title == subtopic_title])
     if res:
         return res
-    return HTTPException(detail="Subtopic do not exist", status_code=400)
+    raise HTTPException(detail="Subtopic do not exist", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @topic_router_v1.get("/all")
@@ -118,7 +118,7 @@ async def delete_topic(
         await topic_service.delete([models.Topic.title == topic_title])
         return topic_title
     except:
-        return HTTPException(detail="Topic do not exist", status_code=400)
+        raise HTTPException(detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @topic_router_v1.delete('/subtopic/delete')
@@ -131,5 +131,5 @@ async def delete_subtopic(
         subtopic = await subtopic_service.get([models.SubTopic.title == subtopic_title])
         await subtopic_service.delete([models.SubTopic.title == subtopic.title, str(subtopic.id)])
     except:
-        return HTTPException(detail="Subtopic do not exist", status_code=400)
+        raise HTTPException(detail="Subtopic do not exist", status_code=status.HTTP_400_BAD_REQUEST)
     return subtopic_title

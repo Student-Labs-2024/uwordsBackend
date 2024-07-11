@@ -4,10 +4,9 @@ import asyncio
 import logging
 import subprocess
 from io import BytesIO
-
+import yt_dlp
 from gtts import gTTS
 from pydub import AudioSegment
-from pytube import YouTube
 from speech_recognition import AudioFile
 
 from src.config.instance import (
@@ -29,7 +28,7 @@ logging.basicConfig(level=logging.INFO)
 class AudioService:
     @staticmethod
     def convert_audio(
-        path: str, title: str, error_service: ErrorService, user_id: int
+            path: str, title: str, error_service: ErrorService, user_id: int
     ) -> str | None:
         try:
             out_path = UPLOAD_DIR / title
@@ -120,23 +119,29 @@ class AudioService:
     @staticmethod
     def upload_youtube_audio(link: str, error_service: ErrorService, user_id: int):
         try:
-            video = YouTube(link)
-
             logger.info(link)
-
-            stream = video.streams.filter(only_audio=True).first()
-
-            filename = f"audio_{uuid.uuid4()}.mp3"
-
+            uid = uuid.uuid4()
+            filename_for_yt = f"audio_{uid}"
+            filename = f"audio_{uid}.mp3"
+            download_path_for_yt = UPLOAD_DIR / filename_for_yt
             download_path = UPLOAD_DIR / filename
-
-            stream.download(filename=download_path)
-
-            return download_path, filename, video.title
+            ydl_opts = {
+                'format': 'mp3/bestaudio/best',
+                'outtmpl': '{}.%(ext)s'.format(download_path_for_yt),
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                }]
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download(link)
+                info_dict = ydl.extract_info(link, download=False)
+                video_title = info_dict.get('title', None)
+            return download_path, filename, video_title
 
         except Exception as e:
             logger.info(e)
-            
+
             error = ErrorCreate(
                 user_id=user_id,
                 message="[UPLOAD YOUTUBE AUDIO] Ошибка выгрузки аудио из ютуба!",
