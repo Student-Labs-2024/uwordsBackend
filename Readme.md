@@ -38,6 +38,10 @@ alembic -c src/alembic.ini upgrade head
 docker-compose -f "docker-compose.dev.yml" up --build
 ```
 
+Пример .env можно увидеть в следующих файлах:
+- env.dev.example
+- env.dev.db.example
+
 ## Authors
 Daniil Kolevatykh - CTO, python software developer
 
