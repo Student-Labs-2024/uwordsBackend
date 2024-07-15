@@ -131,7 +131,7 @@ async def upload_audio(
 
     if extension != ".wav":
         title = f'{os.path.splitext(audio_name)[0]}_converted.wav'
-        filepath = AudioService.convert_audio(path=destination, title=title, error_service=error_service, user_id=user.id)
+        filepath = await AudioService.convert_audio(path=str(destination), title=title, error_service=error_service, user_id=user.id)
         await file_service.delete_file(destination)
 
     else:
