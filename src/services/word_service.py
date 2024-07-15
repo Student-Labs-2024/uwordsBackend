@@ -1,7 +1,6 @@
 import logging
 from src.database.models import Word
 from src.services.audio_service import AudioService
-from src.services.censore_service import CensoreFilter
 from src.utils.repository import AbstractRepository
 
 logger = logging.getLogger("[SERVICES WORDS]")
