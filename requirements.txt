@@ -8,7 +8,6 @@ fastapi-users[sqlalchemy]
 celery==5.4.0
 SpeechRecognition==3.10.3
 pymorphy3==2.0.1
-pytube==15.0.0
 langdetect==1.0.9
 Redis==5.0.3
 minio==7.2.5
@@ -19,3 +18,5 @@ pydub==0.25.1
 numpy==1.26.4
 sentry-sdk[fastapi]
 yt-dlp==2024.7.9
+nltk==3.8.1
+ffmpeg-python==0.2.0
