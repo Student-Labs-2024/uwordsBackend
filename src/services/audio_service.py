@@ -2,7 +2,7 @@ import os
 import uuid
 import asyncio
 import logging
-import subprocess
+import ffmpeg
 from io import BytesIO
 import yt_dlp
 from gtts import gTTS
@@ -27,16 +27,13 @@ logging.basicConfig(level=logging.INFO)
 
 class AudioService:
     @staticmethod
-    def convert_audio(
+    async def convert_audio(
             path: str, title: str, error_service: ErrorService, user_id: int
     ) -> str | None:
         try:
             out_path = UPLOAD_DIR / title
             logger.info(f"OUT_PATH: {out_path}")
-            cmd = f"ffmpeg -i {path} -ac 1 {out_path} -y"
-
-            subprocess.call(cmd, shell=True)
-
+            ffmpeg.input(path).output(str(out_path), ac=1).run()
             return str(out_path)
 
         except Exception as e:
@@ -46,8 +43,7 @@ class AudioService:
                 message="[CONVERT AUDIO] Ошибка конвертации аудио!",
                 description=str(e),
             )
-            asyncio.run(error_service.add_one(error=error))
-
+            await error_service.add_one(error=error)
             return None
 
     @staticmethod
@@ -66,11 +62,11 @@ class AudioService:
                 )
 
                 if (index + 1) * 30 < duration:
-                    cmd = f"ffmpeg -ss {index * 30} -i {path} -t 30 -ac 1 {filename}_{index + 1}.wav -y"
+                    ffmpeg.input(str(path), ss=index * 30).output(str(filename) + '_' + str(index + 1) + '.wav', t=30,
+                                                                  ac=1).run()
                 else:
-                    cmd = f"ffmpeg -ss {index * 30} -i {path} -ac 1 {filename}_{index + 1}.wav -y"
-
-                subprocess.call(cmd, shell=True)
+                    ffmpeg.input(str(path), ss=index * 30).output(str(filename) + '_' + str(index + 1) + '.wav',
+                                                                  ac=1).run()
 
                 files.append(f"{filename}_{index + 1}.wav")
                 index += 1

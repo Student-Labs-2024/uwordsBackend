@@ -126,8 +126,15 @@ class TextService:
         for word in words.keys():
             word: str
             try:
-                translated = GoogleTranslator(source=from_lang, target=to_lang).translate(word)
-
+                count = 0
+                translated = None
+                while count < 3:
+                    translated = GoogleTranslator(source=from_lang, target=to_lang).translate(word)
+                    if translated:
+                        break
+                    count += 1
+                if not translated:
+                    continue
                 if from_lang == "russian":
                     translated_words.append({
                         'ruValue': word.capitalize(),
