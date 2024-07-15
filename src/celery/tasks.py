@@ -55,7 +55,8 @@ def upload_youtube(link: str, user_id: int):
         logger.info(f'[YOUTUBE UPLOAD] Upload started...')
 
         files_paths = []
-        path, audio_title, video_title = AudioService.upload_youtube_audio(link=link, error_service=error_service, user_id=user_id)
+        path, audio_title, video_title = AudioService.upload_youtube_audio(link=link, error_service=error_service,
+                                                                           user_id=user_id)
 
         logger.info(f'PATH: {path}')
 
@@ -63,10 +64,11 @@ def upload_youtube(link: str, user_id: int):
 
         logger.info(f'TITLE: {title}')
 
-        filepath = AudioService.convert_audio(path=path, title=title, error_service=error_service, user_id=user_id)
+        loop = asyncio.get_event_loop()
+        filepath = loop.run_until_complete(
+            AudioService.convert_audio(path=path, title=title, error_service=error_service, user_id=user_id))
 
         files_paths = AudioService.cut_audio(path=filepath, error_service=error_service, user_id=user_id)
-
         lang = detect(video_title)
 
         if lang == 'ru':
@@ -83,7 +85,7 @@ def upload_youtube(link: str, user_id: int):
                     )
 
                     asyncio.run(error_service.add_one(error=error))
-                
+
         else:
             with ThreadPoolExecutor(max_workers=20) as executor:
                 try:
@@ -102,9 +104,11 @@ def upload_youtube(link: str, user_id: int):
         freq_dict = TextService.get_frequency_dict(text=' '.join(results), error_service=error_service, user_id=user_id)
 
         if lang == 'ru':
-            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english", error_service=error_service, user_id=user_id)
+            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english",
+                                                     error_service=error_service, user_id=user_id)
         else:
-            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian", error_service=error_service, user_id=user_id)
+            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian",
+                                                     error_service=error_service, user_id=user_id)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
@@ -114,8 +118,9 @@ def upload_youtube(link: str, user_id: int):
                 word_service=word_service,
                 subtopic_service=subtopic_service,
                 error_service=error_service
-                )
-            )
+            ),
+
+        )
 
         logger.info(f'[YOUTUBE UPLOAD] Upload ended successfully!')
 
@@ -165,11 +170,11 @@ def upload_audio(path: str, user_id: int):
                 )
 
                 asyncio.run(error_service.add_one(error=error))
-            
+
         with ThreadPoolExecutor(max_workers=20) as executor:
             try:
                 results_en = list(executor.map(AudioService.speech_to_text_en, files_paths))
-            
+
             except Exception as e:
                 logger.info(f'[STT EN] Error {e}')
 
@@ -192,9 +197,11 @@ def upload_audio(path: str, user_id: int):
         freq_dict = TextService.get_frequency_dict(text=' '.join(results), error_service=error_service, user_id=user_id)
 
         if is_ru:
-            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english", error_service=error_service, user_id=user_id)
+            translated_words = TextService.translate(words=freq_dict, from_lang="russian", to_lang="english",
+                                                     error_service=error_service, user_id=user_id)
         else:
-            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian", error_service=error_service, user_id=user_id)
+            translated_words = TextService.translate(words=freq_dict, from_lang="english", to_lang="russian",
+                                                     error_service=error_service, user_id=user_id)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
