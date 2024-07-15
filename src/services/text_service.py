@@ -40,7 +40,7 @@ class TextService:
     @staticmethod
     def remove_spec_chars(text: str, error_service: ErrorService, user_id: int) -> str:
         try:
-            spec_chars = string.punctuation + '\n\xa0«»\t—…' + '0123456789'
+            spec_chars = string.punctuation + '\n\xa0«»\t—…' + string.digits
             return "".join([char for char in text if char not in spec_chars])
 
         except Exception as e:
