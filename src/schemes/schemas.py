@@ -98,7 +98,7 @@ class UserCreate(BaseModel):
     lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Union[datetime, str, None] = None
+    birth_date: Optional[str] = None
 
     @validator("*", pre=True)
     def remove_empty(cls, value):
@@ -117,8 +117,7 @@ class UserCreateDB(BaseModel):
     lastname: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    birth_date: Union[datetime, str, None] = None
-
+    birth_date: Optional[datetime] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
