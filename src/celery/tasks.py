@@ -8,6 +8,7 @@ from celery.exceptions import MaxRetriesExceededError
 from src.config.celery_app import app
 from src.schemes.schemas import ErrorCreate
 from src.services.audio_service import AudioService
+from src.services.email_service import EmailService
 from src.services.text_service import TextService
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
@@ -30,6 +31,11 @@ def upload_audio_task(self, path: str, user_id: int):
 
     except MaxRetriesExceededError:
         return 'Возникла ошибка загрузки аудио'
+
+
+@app.task(bind=True, name='Email_send', max_retries=2)
+def send_email_task(self, email, code):
+    EmailService.send_email(email, code)
 
 
 @app.task(bind=True, name="upload_video", max_retries=2)

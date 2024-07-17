@@ -3,6 +3,7 @@ from typing import Optional, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr, validator
 
+
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
     extension: str = Field(examples=[".ogg"])
@@ -55,6 +56,7 @@ class SubTopic(BaseModel):
     id: int = Field(examples=[1])
     title: str = Field(examples=["Rat"])
     topic_title: str = Field(examples=['Animal'])
+
     class Config:
         from_attributes = True
 
@@ -92,6 +94,7 @@ class UserCreate(BaseModel):
     provider: str
     email: EmailStr
     password: str
+    code: str
 
     username: Optional[str] = None
     firstname: Optional[str] = None
@@ -178,3 +181,8 @@ class AdminCreate(BaseModel):
         if value == "":
             return None
         return value
+
+
+class SendEmailCode(BaseModel):
+    email: EmailStr
+    code: str
