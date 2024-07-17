@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from dateutil.parser import parse
 from src.config.instance import FASTAPI_SECRET
 from src.database.models import User
+from src.services.email_service import EmailService
 from src.services.user_service import UserService
 from src.schemes.schemas import AdminCreate, CustomResponse, TokenInfo, UserCreate, UserCreateDB, UserDump, UserLogin, \
     UserUpdate
@@ -28,6 +29,13 @@ async def register_user(
         user_data: UserCreate,
         user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
+    if not EmailService.check_code(user_data.email, user_data.code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "msg": f"Wrong code for {user_data.email}"
+            }
+        )
     if await user_service.get_user_by_email_provider(email=user_data.email, provider=user_data.provider):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -43,7 +51,6 @@ async def register_user(
         birth_date = parse(birth_date, fuzzy=False)
     except:
         birth_date = None
-
     user_data_db = UserCreateDB(
         birth_date=birth_date,
         hashed_password=hashed_password.decode(),

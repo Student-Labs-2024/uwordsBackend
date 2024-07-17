@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 
 from src.config.instance import SENTRY_URL
+from src.routers.mail_router import mail_router_v1
 from src.routers.websocket_router import websocket_router_v1, add_error_router
 from src.routers.topic_router import topic_router_v1
 from src.routers.user_router import user_router_v1
@@ -47,3 +48,4 @@ app.include_router(websocket_router_v1)
 app.include_router(add_error_router)
 app.include_router(auth_router_v1)
 app.include_router(admin_router_v1)
+app.include_router(mail_router_v1)
