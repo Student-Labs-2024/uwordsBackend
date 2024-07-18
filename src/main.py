@@ -10,6 +10,7 @@ from src.routers.auth_router import auth_router_v1, admin_router_v1
 from src.routers.websocket_router import websocket_router_v1, add_error_router
 
 from src.config.instance import SENTRY_URL
+from src.config.fastapi_docs_config import TAGS_METADATA
 
 
 sentry_sdk.init(
@@ -18,17 +19,10 @@ sentry_sdk.init(
 )
 
 
-tags_metadata = [
-    {
-        "name": "User Words",
-        "description": "Operations with user's words",
-    }
-]
-
 app = FastAPI(
     title="UWords FastAPI",
     description="API of UWords - application for learning English",
-    openapi_tags=tags_metadata,
+    openapi_tags=TAGS_METADATA,
 )
 
 origins = [

@@ -9,9 +9,11 @@ from fastapi import APIRouter, File, UploadFile, Depends
 
 from src.celery.tasks import upload_audio_task, upload_youtube_task
 
-from src.config.instance import UPLOAD_DIR
 from src.database.models import User, UserWord
 from src.schemes.schemas import Audio, WordsIdsSchema, YoutubeLink
+
+from src.config.instance import UPLOAD_DIR
+from src.config import fastapi_docs_config as doc_data
 
 from src.services.file_service import FileService
 from src.services.error_service import ErrorService
@@ -24,13 +26,17 @@ from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 
 
-user_router_v1 = APIRouter(prefix="/api/v1/user")
+user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
 
 logger = logging.getLogger("[ROUTER WORDS]")
 logging.basicConfig(level=logging.INFO)
 
 
-@user_router_v1.get("/words/get_words", tags=["User Words"])
+@user_router_v1.get(
+    "/words/get_words",
+    name=doc_data.USER_WORDS_GET_TITLE,
+    description=doc_data.USER_WORDS_GET_DESCRIPTION,
+)
 async def get_user_words(
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
@@ -88,7 +94,11 @@ async def get_user_words(
     return topics
 
 
-@user_router_v1.get("/words/study", tags=["User Words"])
+@user_router_v1.get(
+    "/words/study",
+    name=doc_data.USER_WORDS_GET_STUDY_TITLE,
+    description=doc_data.USER_WORDS_GET_STUDY_DESCRIPTION,
+)
 async def get_user_words_for_study(
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
@@ -102,7 +112,11 @@ async def get_user_words_for_study(
     return words_for_study
 
 
-@user_router_v1.post("/words/study", tags=["User Words"])
+@user_router_v1.post(
+    "/words/study",
+    name=doc_data.USER_WORDS_POST_STUDY_TITLE,
+    description=doc_data.USER_WORDS_POST_STUDY_DESCRIPTION,
+)
 async def complete_user_words_learning(
     schema: WordsIdsSchema,
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
@@ -114,7 +128,12 @@ async def complete_user_words_learning(
     return schema
 
 
-@user_router_v1.post("/audio", response_model=Audio, tags=["User Words"])
+@user_router_v1.post(
+    "/audio",
+    response_model=Audio,
+    name=doc_data.UPLOAD_AUDIO_TITLE,
+    description=doc_data.UPLOAD_AUDIO_DESCRIPTION,
+)
 async def upload_audio(
     file: Annotated[UploadFile, File(description="A file read as UploadFile")],
     file_service: Annotated[FileService, Depends(file_service_fabric)],
@@ -165,7 +184,12 @@ async def upload_audio(
     return response
 
 
-@user_router_v1.post("/youtube", response_model=YoutubeLink, tags=["User Words"])
+@user_router_v1.post(
+    "/youtube",
+    response_model=YoutubeLink,
+    name=doc_data.UPLOAD_YOUTUBE_TITLE,
+    description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
+)
 async def upload_youtube_video(
     schema: YoutubeLink, user: User = Depends(auth_utils.get_active_current_user)
 ):

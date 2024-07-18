@@ -5,6 +5,8 @@ from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
 
 from src.config.instance import FASTAPI_SECRET
+from src.config import fastapi_docs_config as doc_data
+
 from src.database.models import User
 
 from src.services.user_service import UserService
@@ -35,7 +37,12 @@ auth_router_v1 = APIRouter(prefix="/api/users", tags=["Users"])
 admin_router_v1 = APIRouter(prefix="/api/users", tags=["Admins"])
 
 
-@auth_router_v1.post("/register", response_model=UserDump)
+@auth_router_v1.post(
+    "/register",
+    response_model=UserDump,
+    name=doc_data.USER_REGISTER_TITLE,
+    description=doc_data.USER_REGISTER_DESCRIPTION,
+)
 async def register_user(
     user_data: UserCreateEmail,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -62,7 +69,12 @@ async def register_user(
     return user
 
 
-@auth_router_v1.post("/register/vk", response_model=UserDump)
+@auth_router_v1.post(
+    "/register/vk",
+    response_model=UserDump,
+    name=doc_data.USER_REGISTER_VK_TITLE,
+    description=doc_data.USER_REGISTER_VK_DESCRIPTION,
+)
 async def register_vk_user(
     user_data: UserCreateVk,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -88,7 +100,12 @@ async def register_vk_user(
         return user
 
 
-@auth_router_v1.post("/login", response_model=TokenInfo)
+@auth_router_v1.post(
+    "/login",
+    response_model=TokenInfo,
+    name=doc_data.USER_LOGIN_TITLE,
+    description=doc_data.USER_LOGIN_DESCRIPTION,
+)
 async def user_login(
     login_data: UserEmailLogin,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -100,7 +117,12 @@ async def user_login(
     return await user_service.auth_email_user(login_data)
 
 
-@auth_router_v1.post("/login/vk", response_model=TokenInfo)
+@auth_router_v1.post(
+    "/login/vk",
+    response_model=TokenInfo,
+    name=doc_data.USER_LOGIN_VK_TITLE,
+    description=doc_data.USER_LOGIN_VK_DESCRIPTION,
+)
 async def user_login(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     stat=Depends(auth_utils.validate_vk_token),
@@ -110,7 +132,11 @@ async def user_login(
 
 
 @auth_router_v1.get(
-    "/token/refresh", response_model=TokenInfo, response_model_exclude_none=True
+    "/token/refresh",
+    response_model=TokenInfo,
+    response_model_exclude_none=True,
+    name=doc_data.TOKEN_REFRESH_TITLE,
+    description=doc_data.TOKEN_REFRESH_DESCRIPTION,
 )
 async def refresh_token(user: User = Depends(auth_utils.get_current_user_by_refresh)):
     access_token = token_utils.create_access_token(user=user)
@@ -118,12 +144,22 @@ async def refresh_token(user: User = Depends(auth_utils.get_current_user_by_refr
     return TokenInfo(access_token=access_token)
 
 
-@auth_router_v1.get("/me", response_model=UserDump)
+@auth_router_v1.get(
+    "/me",
+    response_model=UserDump,
+    name=doc_data.USER_ME_TITLE,
+    description=doc_data.USER_ME_DESCRIPTION,
+)
 async def get_user_me(user: User = Depends(auth_utils.get_active_current_user)):
     return user
 
 
-@auth_router_v1.post("/me/update", response_model=UserDump)
+@auth_router_v1.post(
+    "/me/update",
+    response_model=UserDump,
+    name=doc_data.USER_ME_UPDATE_TITLE,
+    description=doc_data.USER_ME_UPDATE_DESCRIPTION,
+)
 async def update_user_me(
     user_data: UserUpdate,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -134,7 +170,12 @@ async def update_user_me(
     )
 
 
-@auth_router_v1.delete("/me/delete", response_model=CustomResponse)
+@auth_router_v1.delete(
+    "/me/delete",
+    response_model=CustomResponse,
+    name=doc_data.USER_ME_DELETE_TITLE,
+    description=doc_data.USER_ME_DELETE_DESCRIPTION,
+)
 async def delete_user(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
@@ -146,7 +187,12 @@ async def delete_user(
     )
 
 
-@auth_router_v1.get("/{user_id}", response_model=UserDump)
+@auth_router_v1.get(
+    "/{user_id}",
+    response_model=UserDump,
+    name=doc_data.USER_PROFILE_TITLE,
+    description=doc_data.USER_PROFILE_DESCRIPTION,
+)
 async def get_user_profile(
     user_id: int,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -155,7 +201,12 @@ async def get_user_profile(
     return await user_service.get_user_by_id(user_id=user_id)
 
 
-@admin_router_v1.post("/admin/register", response_model=UserDump)
+@admin_router_v1.post(
+    "/admin/register",
+    response_model=UserDump,
+    name=doc_data.ADMIN_REGISTER_TITLE,
+    description=doc_data.ADMIN_REGISTER_DESCRIPTION,
+)
 async def create_admin(
     admin_data: AdminCreate,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -188,7 +239,12 @@ async def create_admin(
     return admin
 
 
-@admin_router_v1.delete("/{user_id}/ban", response_model=CustomResponse)
+@admin_router_v1.delete(
+    "/{user_id}/ban",
+    response_model=CustomResponse,
+    name=doc_data.USER_BAN_TITLE,
+    description=doc_data.USER_BAN_DESCRIPTION,
+)
 async def ban_user(
     user_id: int,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
@@ -199,7 +255,12 @@ async def ban_user(
     return CustomResponse(status_code=200, message=f"User {user_id} banned succesfully")
 
 
-@admin_router_v1.delete("/{user_id}/delete", response_model=CustomResponse)
+@admin_router_v1.delete(
+    "/{user_id}/delete",
+    response_model=CustomResponse,
+    name=doc_data.USER_DELETE_TITLE,
+    description=doc_data.USER_DELETE_DESCRIPTION,
+)
 async def ban_user(
     user_id: int,
     user_service: Annotated[UserService, Depends(user_service_fabric)],

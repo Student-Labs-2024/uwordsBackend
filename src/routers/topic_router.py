@@ -15,6 +15,8 @@ from src.utils.dependenes.chroma_service_fabric import (
     subtopic_service_fabric,
 )
 
+from src.config import fastapi_docs_config as doc_data
+
 
 topic_router_v1 = APIRouter(prefix="/api/v1/topic", tags=["Topic"])
 
@@ -22,7 +24,9 @@ logger = logging.getLogger("[ROUTER WORDS]")
 logging.basicConfig(level=logging.INFO)
 
 
-@topic_router_v1.post("/add")
+@topic_router_v1.post(
+    "/add", name=doc_data.TOPIC_ADD_TITLE, description=doc_data.TOPIC_ADD_DESCRIPTION
+)
 async def add_topic(
     topic: TopicCreate,
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
@@ -36,7 +40,11 @@ async def add_topic(
     )
 
 
-@topic_router_v1.post("/subtopic/add")
+@topic_router_v1.post(
+    "/subtopic/add",
+    name=doc_data.SUBTOPIC_ADD_TITLE,
+    description=doc_data.SUBTOPIC_ADD_DESCRIPTION,
+)
 async def add_subtopic(
     subtopic: SubTopicCreate,
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
@@ -56,7 +64,9 @@ async def add_subtopic(
         )
 
 
-@topic_router_v1.get("/get")
+@topic_router_v1.get(
+    "/get", name=doc_data.TOPIC_GET_TITLE, description=doc_data.TOPIC_GET_DESCRIPTION
+)
 async def get_topic(
     topic_title: str,
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
@@ -70,7 +80,11 @@ async def get_topic(
     )
 
 
-@topic_router_v1.get("/subtopic/get")
+@topic_router_v1.get(
+    "/subtopic/get",
+    name=doc_data.SUBTOPIC_GET_TITLE,
+    description=doc_data.SUBTOPIC_GET_DESCRIPTION,
+)
 async def get_subtopic(
     subtopic_title: str,
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
@@ -84,7 +98,9 @@ async def get_subtopic(
     )
 
 
-@topic_router_v1.get("/all")
+@topic_router_v1.get(
+    "/all", name=doc_data.TOPIC_ALL_TITLE, description=doc_data.TOPIC_ALL_DESCRIPTION
+)
 async def get_all_topics(
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
@@ -92,7 +108,11 @@ async def get_all_topics(
     return await topic_service.get_all()
 
 
-@topic_router_v1.get("/subtopic/all")
+@topic_router_v1.get(
+    "/subtopic/all",
+    name=doc_data.SUBTOPIC_ALL_TITLE,
+    description=doc_data.SUBTOPIC_ALL_DESCRIPTION,
+)
 async def get_all_subtopics(
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
@@ -100,7 +120,11 @@ async def get_all_subtopics(
     return await subtopic_service.get_all()
 
 
-@topic_router_v1.get("/subtopics")
+@topic_router_v1.get(
+    "/subtopics",
+    name=doc_data.SUBTOPIC_ALL_TOPIC_TITLE,
+    description=doc_data.SUBTOPIC_ALL_TOPIC_DESCRIPTION,
+)
 async def get_all_subtopics(
     topic_title: str,
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
@@ -112,7 +136,12 @@ async def get_all_subtopics(
     return []
 
 
-@topic_router_v1.get("/subtopic/check", response_model=str)
+@topic_router_v1.get(
+    "/subtopic/check",
+    response_model=str,
+    name=doc_data.SUBTOPIC_CHECK_TITLE,
+    description=doc_data.SUBTOPIC_CHECK_DESCRIPTION,
+)
 async def get_topic(
     word: str,
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
@@ -121,7 +150,11 @@ async def get_topic(
     return await subtopic_service.check_word(word)
 
 
-@topic_router_v1.delete("/delete")
+@topic_router_v1.delete(
+    "/delete",
+    name=doc_data.TOPIC_DELETE_TITLE,
+    description=doc_data.TOPIC_DELETE_DESCRIPTION,
+)
 async def delete_topic(
     topic_title: str,
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
@@ -142,7 +175,11 @@ async def delete_topic(
         )
 
 
-@topic_router_v1.delete("/subtopic/delete")
+@topic_router_v1.delete(
+    "/subtopic/delete",
+    name=doc_data.SUBTOPIC_DELETE_TITLE,
+    description=doc_data.SUBTOPIC_DELETE_DESCRIPTION,
+)
 async def delete_subtopic(
     subtopic_title: str,
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
