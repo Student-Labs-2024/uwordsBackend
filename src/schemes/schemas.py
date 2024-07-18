@@ -78,9 +78,10 @@ class ErrorDump(BaseModel):
 
 class UserDump(BaseModel):
     id: int
-    email: EmailStr
+    email: Optional[EmailStr] = None
     provider: str
-
+    google_id: Optional[str] = None
+    vk_id: Optional[str] = None
     username: Optional[str] = None
     firstname: Optional[str] = None
     lastname: Optional[str] = None
@@ -90,18 +91,25 @@ class UserDump(BaseModel):
     created_at: datetime
 
 
-class UserCreate(BaseModel):
+class UserCreateEmail(BaseModel):
     provider: str
-    email: EmailStr
     password: str
     code: str
+    email: EmailStr
+    username: str
+    birth_date: str
 
-    username: Optional[str] = None
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    avatar_url: Optional[str] = None
-    phone_number: Optional[str] = None
-    birth_date: Optional[str] = None
+    @validator("*", pre=True)
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
+
+
+class UserCreateVk(BaseModel):
+    provider: str
+    firstname: str
+    lastname: str
 
     @validator("*", pre=True)
     def remove_empty(cls, value):
@@ -112,9 +120,10 @@ class UserCreate(BaseModel):
 
 class UserCreateDB(BaseModel):
     provider: str
-    email: EmailStr
-    hashed_password: str
-
+    email: Optional[EmailStr] = None
+    hashed_password: Optional[str] = None
+    google_id: Optional[str] = None
+    vk_id: Optional[str] = None
     username: Optional[str] = None
     firstname: Optional[str] = None
     lastname: Optional[str] = None
@@ -147,10 +156,10 @@ class UserUpdate(BaseModel):
         return value
 
 
-class UserLogin(BaseModel):
+class UserEmailLogin(BaseModel):
     provider: str
     email: EmailStr
-    password: str
+    password: Optional[str]
 
 
 class TokenInfo(BaseModel):
