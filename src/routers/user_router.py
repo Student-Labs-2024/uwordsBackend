@@ -1,23 +1,28 @@
 import os
 import uuid
 import logging
-from pydub import AudioSegment
-from datetime import datetime
 from typing import Annotated
+from datetime import datetime
+from pydub import AudioSegment
+
 from fastapi import APIRouter, File, UploadFile, Depends
-from src.config.instance import UPLOAD_DIR
-from src.database.models import User, UserWord
-from src.schemes.schemas import Audio, UserWordDumpSchema, WordsIdsSchema, YoutubeLink
-from src.services.error_service import ErrorService
-from src.utils.dependenes.error_service_fabric import error_service_fabric
-from src.utils.dependenes.file_service_fabric import file_service_fabric
-from src.utils.dependenes.user_word_fabric import user_word_service_fabric
-from src.services.audio_service import AudioService
-from src.services.file_service import FileService
-from src.services.user_word_service import UserWordService
+
 from src.celery.tasks import upload_audio_task, upload_youtube_task
 
+from src.config.instance import UPLOAD_DIR
+from src.database.models import User, UserWord
+from src.schemes.schemas import Audio, WordsIdsSchema, YoutubeLink
+
+from src.services.file_service import FileService
+from src.services.error_service import ErrorService
+from src.services.audio_service import AudioService
+from src.services.user_word_service import UserWordService
+
 from src.utils import auth as auth_utils
+from src.utils.dependenes.file_service_fabric import file_service_fabric
+from src.utils.dependenes.user_word_fabric import user_word_service_fabric
+from src.utils.dependenes.error_service_fabric import error_service_fabric
+
 
 user_router_v1 = APIRouter(prefix="/api/v1/user")
 
@@ -25,13 +30,12 @@ logger = logging.getLogger("[ROUTER WORDS]")
 logging.basicConfig(level=logging.INFO)
 
 
-# response_model=List[UserWordDumpSchema]
 @user_router_v1.get("/words/get_words", tags=["User Words"])
 async def get_user_words(
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-    user: User = Depends(auth_utils.get_active_current_user)
+    user: User = Depends(auth_utils.get_active_current_user),
 ):
-  
+
     user_words: list[UserWord] = await user_words_service.get_user_words(user.id)
     topics = []
     topics_titles = []
@@ -43,38 +47,43 @@ async def get_user_words(
             titles[user_word.word.topic].append(user_word.word.subtopic)
             topics.append(
                 {
-                    'topic_title': user_word.word.topic,
-                    'subtopics': [{
-                        'subtopic_title': user_word.word.subtopic,
-                        'words': [user_word]
-                    }
-                    ]
+                    "topic_title": user_word.word.topic,
+                    "subtopics": [
+                        {
+                            "subtopic_title": user_word.word.subtopic,
+                            "words": [user_word],
+                        }
+                    ],
                 }
             )
         else:
             index = topics_titles.index(user_word.word.topic)
             if user_word.word.subtopic in titles[user_word.word.topic]:
                 sub_index = titles[user_word.word.topic].index(user_word.word.subtopic)
-                topics[index]['subtopics'][sub_index]['words'].append(user_word)
+                topics[index]["subtopics"][sub_index]["words"].append(user_word)
             else:
                 titles[user_word.word.topic].append(user_word.word.subtopic)
-                topics[index]['subtopics'].append({"subtopic_title": user_word.word.subtopic, "words": [user_word]})
+                topics[index]["subtopics"].append(
+                    {"subtopic_title": user_word.word.subtopic, "words": [user_word]}
+                )
     for topic in topics:
         not_in_subtopics = []
         subtopics_to_remove = []
-        subtopics = topic['subtopics']
+        subtopics = topic["subtopics"]
         for subtopic in subtopics:
-            if len(subtopic['words']) < 8:
-                not_in_subtopics.extend(subtopic['words'])
-                subtopics_to_remove.append(subtopic['subtopic_title'])
+            if len(subtopic["words"]) < 8:
+                not_in_subtopics.extend(subtopic["words"])
+                subtopics_to_remove.append(subtopic["subtopic_title"])
         while True:
             if len(subtopics_to_remove) == 0:
                 break
-            index = titles[topic['topic_title']].index(subtopics_to_remove[0])
-            del titles[topic['topic_title']][index]
+            index = titles[topic["topic_title"]].index(subtopics_to_remove[0])
+            del titles[topic["topic_title"]][index]
             del subtopics[index]
             del subtopics_to_remove[0]
-        subtopics.append({'subtopic_title': 'not_in_subtopics', 'words': not_in_subtopics})
+        subtopics.append(
+            {"subtopic_title": "not_in_subtopics", "words": not_in_subtopics}
+        )
 
     return topics
 
@@ -84,21 +93,24 @@ async def get_user_words_for_study(
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
     topic_title: str | None = None,
-    subtopic_title: str | None = None
+    subtopic_title: str | None = None,
 ):
-    words_for_study = await user_words_service.get_user_words_for_study(user_id=user.id, topic_title=topic_title,
-                                                                        subtopic_title=subtopic_title)
+    words_for_study = await user_words_service.get_user_words_for_study(
+        user_id=user.id, topic_title=topic_title, subtopic_title=subtopic_title
+    )
 
     return words_for_study
 
 
 @user_router_v1.post("/words/study", tags=["User Words"])
 async def complete_user_words_learning(
-    schema: WordsIdsSchema, 
+    schema: WordsIdsSchema,
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    await user_words_service.update_progress_word(user_id=user.id, words_ids=schema.words_ids)
+    await user_words_service.update_progress_word(
+        user_id=user.id, words_ids=schema.words_ids
+    )
     return schema
 
 
@@ -107,8 +119,7 @@ async def upload_audio(
     file: Annotated[UploadFile, File(description="A file read as UploadFile")],
     file_service: Annotated[FileService, Depends(file_service_fabric)],
     error_service: Annotated[ErrorService, Depends(error_service_fabric)],
-    user: User = Depends(auth_utils.get_active_current_user)
-
+    user: User = Depends(auth_utils.get_active_current_user),
 ) -> Audio:
     filename = file.filename
     _, extension = os.path.splitext(filename)
@@ -116,7 +127,7 @@ async def upload_audio(
 
     filedata = await file.read()
 
-    audio_name = f'audio_{uuid.uuid4()}{extension}'
+    audio_name = f"audio_{uuid.uuid4()}{extension}"
     destination = UPLOAD_DIR / audio_name
 
     try:
@@ -124,14 +135,19 @@ async def upload_audio(
 
         duration = int(len(AudioSegment.from_file(file=destination)) / 1000)
 
-        logger.info(f'DURATION: {duration}')
+        logger.info(f"DURATION: {duration}")
 
     except Exception as e:
         logger.info(e)
 
     if extension != ".wav":
-        title = f'{os.path.splitext(audio_name)[0]}_converted.wav'
-        filepath = await AudioService.convert_audio(path=str(destination), title=title, error_service=error_service, user_id=user.id)
+        title = f"{os.path.splitext(audio_name)[0]}_converted.wav"
+        filepath = await AudioService.convert_audio(
+            path=str(destination),
+            title=title,
+            error_service=error_service,
+            user_id=user.id,
+        )
         await file_service.delete_file(destination)
 
     else:
@@ -151,8 +167,7 @@ async def upload_audio(
 
 @user_router_v1.post("/youtube", response_model=YoutubeLink, tags=["User Words"])
 async def upload_youtube_video(
-    schema: YoutubeLink,
-    user: User = Depends(auth_utils.get_active_current_user)
+    schema: YoutubeLink, user: User = Depends(auth_utils.get_active_current_user)
 ):
     upload_youtube_task.apply_async((schema.link, user.id), countdown=1)
     return schema

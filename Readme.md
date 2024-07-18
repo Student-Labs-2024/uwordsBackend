@@ -38,6 +38,13 @@ alembic -c src/alembic.ini upgrade head
 docker-compose -f "docker-compose.dev.yml" up --build
 ```
 
+Настройка локального окружения pre-commit:
+```shell
+pre-commit install
+pre-commit run --all-files
+pre-commit install --hook-type commit-msg
+```
+
 Пример .env можно увидеть в следующих файлах:
 - env.dev.example
 - env.dev.db.example

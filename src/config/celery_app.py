@@ -1,14 +1,14 @@
 import time
 from celery import Celery
 
-from .instance import REDIS_URL
+from src.config.instance import REDIS_URL
 
 
 app = Celery(
-    "youwords_fastapi", 
+    "youwords_fastapi",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=['src.celery.tasks']
+    include=["src.celery.tasks"],
 )
 
 app.autodiscover_tasks()

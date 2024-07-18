@@ -4,18 +4,17 @@ from datetime import datetime, timedelta
 from src.database.models import User
 
 from src.config.instance import (
-    PUBLIC_KEY,
-    PRIVATE_KEY,
     JWT_ALGORITHM,
+    FASTAPI_SECRET,
     ACCESS_TOKEN_LIFETIME,
-    REFRESH_TOKEN_LIFETIME
+    REFRESH_TOKEN_LIFETIME,
 )
 
 
 def encode_jwt(
-        payload: dict,
-        private_key: str = PRIVATE_KEY.read_text(),
-        algorithm: str = JWT_ALGORITHM
+    payload: dict,
+    key: str = FASTAPI_SECRET,
+    algorithm: str = JWT_ALGORITHM,
 ) -> str:
     datetime_now = datetime.now()
 
@@ -27,69 +26,38 @@ def encode_jwt(
         expired_at = datetime_now + timedelta(minutes=ACCESS_TOKEN_LIFETIME)
     elif token_type == "refresh":
         expired_at = datetime_now + timedelta(days=REFRESH_TOKEN_LIFETIME)
-    
-    to_payload.update({
-        "iat": datetime_now,
-        "exp": expired_at
-    })
 
-    encoded = jwt.encode(
-        payload=to_payload,
-        key=private_key,
-        algorithm=algorithm
-    )
+    to_payload.update({"iat": datetime_now, "exp": expired_at})
+
+    encoded = jwt.encode(payload=to_payload, key=key, algorithm=algorithm)
 
     return encoded
 
 
 def decode_jwt(
-        token: str,
-        public_key: str = PUBLIC_KEY.read_text(),
-        algorithm: str = JWT_ALGORITHM
+    token: str, key: str = FASTAPI_SECRET, algorithm: str = JWT_ALGORITHM
 ) -> dict:
-    
-    decode = jwt.decode(
-        jwt=token,
-        key=public_key,
-        algorithms=[algorithm]
-    )
+
+    decode = jwt.decode(jwt=token, key=key, algorithms=[algorithm])
 
     return decode
 
 
-def create_jwt(
-        token_type: str, 
-        payload: dict
-) -> str:
-    
+def create_jwt(token_type: str, payload: dict) -> str:
+
     jwt_payload = {"type": token_type}
     jwt_payload.update(payload)
 
-    return encode_jwt(
-        payload=jwt_payload
-    )
+    return encode_jwt(payload=jwt_payload)
 
 
 def create_access_token(user: User) -> str:
-    jwt_payload = {
-        "sub": "user",
-        "user_id": user.id,
-        "email": user.email
-    }
+    jwt_payload = {"sub": "user", "user_id": user.id, "email": user.email}
 
-    return create_jwt(
-        token_type="access", 
-        payload=jwt_payload
-    )
+    return create_jwt(token_type="access", payload=jwt_payload)
 
 
 def create_refresh_token(user: User) -> str:
-    jwt_payload = {
-        "sub": "user",
-        "user_id": user.id
-    }
+    jwt_payload = {"sub": "user", "user_id": user.id}
 
-    return create_jwt(
-        token_type="refresh", 
-        payload=jwt_payload
-    )
+    return create_jwt(token_type="refresh", payload=jwt_payload)
