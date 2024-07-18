@@ -1,13 +1,21 @@
 import os
 import uuid
+import yt_dlp
+import ffmpeg
 import asyncio
 import logging
-import ffmpeg
 from io import BytesIO
-import yt_dlp
 from gtts import gTTS
+from typing import Union
 from pydub import AudioSegment
 from speech_recognition import AudioFile
+
+from src.schemes.schemas import ErrorCreate
+
+from src.services.services_config import sr
+from src.services.error_service import ErrorService
+from src.services.minio_uploader import MinioUploader
+from src.services.image_service import ImageDownloader
 
 from src.config.instance import (
     MINIO_BUCKET_VOICEOVER,
@@ -15,11 +23,7 @@ from src.config.instance import (
     UPLOAD_DIR,
     MINIO_BUCKET_PICTURE,
 )
-from src.schemes.schemas import ErrorCreate
-from src.services.image_service import ImageDownloader
-from src.services.minio_uploader import MinioUploader
-from src.services.services_config import sr
-from src.services.error_service import ErrorService
+
 
 logger = logging.getLogger("[SERVICES AUDIO]")
 logging.basicConfig(level=logging.INFO)
@@ -28,8 +32,8 @@ logging.basicConfig(level=logging.INFO)
 class AudioService:
     @staticmethod
     async def convert_audio(
-            path: str, title: str, error_service: ErrorService, user_id: int
-    ) -> str | None:
+        path: str, title: str, error_service: ErrorService, user_id: int
+    ) -> Union[str, None]:
         try:
             out_path = UPLOAD_DIR / title
             logger.info(f"OUT_PATH: {out_path}")
@@ -62,11 +66,13 @@ class AudioService:
                 )
 
                 if (index + 1) * 30 < duration:
-                    ffmpeg.input(str(path), ss=index * 30).output(str(filename) + '_' + str(index + 1) + '.wav', t=30,
-                                                                  ac=1).run()
+                    ffmpeg.input(str(path), ss=index * 30).output(
+                        str(filename) + "_" + str(index + 1) + ".wav", t=30, ac=1
+                    ).run()
                 else:
-                    ffmpeg.input(str(path), ss=index * 30).output(str(filename) + '_' + str(index + 1) + '.wav',
-                                                                  ac=1).run()
+                    ffmpeg.input(str(path), ss=index * 30).output(
+                        str(filename) + "_" + str(index + 1) + ".wav", ac=1
+                    ).run()
 
                 files.append(f"{filename}_{index + 1}.wav")
                 index += 1
@@ -122,17 +128,19 @@ class AudioService:
             download_path_for_yt = UPLOAD_DIR / filename_for_yt
             download_path = UPLOAD_DIR / filename
             ydl_opts = {
-                'format': 'mp3/bestaudio/best',
-                'outtmpl': '{}.%(ext)s'.format(download_path_for_yt),
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                }]
+                "format": "mp3/bestaudio/best",
+                "outtmpl": "{}.%(ext)s".format(download_path_for_yt),
+                "postprocessors": [
+                    {
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": "mp3",
+                    }
+                ],
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download(link)
                 info_dict = ydl.extract_info(link, download=False)
-                video_title = info_dict.get('title', None)
+                video_title = info_dict.get("title", None)
             return download_path, filename, video_title
 
         except Exception as e:
@@ -146,7 +154,7 @@ class AudioService:
             return None
 
     @staticmethod
-    def word_to_speech(word: str) -> str | None:
+    def word_to_speech(word: str) -> Union[str, None]:
         try:
             tts = gTTS(text=word, lang="en", slow=False)
 
@@ -171,7 +179,7 @@ class AudioService:
             return None
 
     @staticmethod
-    def download_picture(word: str) -> str | None:
+    def download_picture(word: str) -> Union[str, None]:
         try:
             image_data = ImageDownloader.get_image_data(word=word)
             bytes_file = BytesIO(image_data)

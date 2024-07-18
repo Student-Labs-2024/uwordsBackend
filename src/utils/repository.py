@@ -1,5 +1,5 @@
-import abc
 import os
+import abc
 from abc import ABC
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, delete, update
@@ -7,7 +7,6 @@ from src.database.db_config import async_session_maker
 
 
 class AbstractRepository(ABC):
-
     @abc.abstractmethod
     def add_one(self, data, path=None):
         raise NotImplemented()
@@ -61,7 +60,9 @@ class SQLAlchemyRepository(AbstractRepository):
         async with async_session_maker() as session:
             session: AsyncSession
 
-            stmt = update(self.model).filter(*filters).values(values).returning(self.model)
+            stmt = (
+                update(self.model).filter(*filters).values(values).returning(self.model)
+            )
             res = await session.execute(stmt)
             await session.commit()
             return res.scalar_one()
@@ -92,7 +93,7 @@ class LocalFileRepository(AbstractRepository):
         pass
 
     async def add_one(self, data, path=None):
-        with (open(path, 'wb')) as file:
+        with open(path, "wb") as file:
             file.write(data)
 
     async def delete_one(self, filters: str):
@@ -104,10 +105,7 @@ class ChromaRepository(AbstractRepository):
     model = None
 
     async def update_one(self, filters, values):
-        return self.collection.query(
-            query_texts=[filters],
-            n_results=values
-        )
+        return self.collection.query(query_texts=[filters], n_results=values)
 
     async def get_all_by_filter(self, filters=None, order=None, limit=None):
         async with async_session_maker() as session:
@@ -125,8 +123,8 @@ class ChromaRepository(AbstractRepository):
 
     async def add_one(self, data):
         self.collection.add(
-            documents=[data['title']],
-            ids=[str(data['id'])],
+            documents=[data["title"]],
+            ids=[str(data["id"])],
         )
         async with async_session_maker() as session:
             session: AsyncSession
