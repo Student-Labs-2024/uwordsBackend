@@ -55,10 +55,12 @@ class User(Base):
     firstname = Column(String, nullable=True)
     lastname = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
-    email = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+    vk_id = Column(String, nullable=True)
+    google_id = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
     birth_date = Column(DateTime, nullable=True)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.now)
 
