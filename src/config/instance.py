@@ -31,6 +31,19 @@ MINIO_BUCKET_PICTURE: str = os.environ.get("MINIO_BUCKET_PICTURE")
 MINIO_HOST: str = os.environ.get("MINIO_HOST")
 UPLOAD_DIR: Path = BASE_DIR / "audio_transfer"
 FASTAPI_SECRET: str = os.environ.get("FASTAPI_SECRET")
+ALLOWED_AUDIO_MIME_TYPES: set = {
+    "audio/ogg",
+    "audio/mpeg",
+    "audio/wav",
+    "audio/webm",
+    "audio/mp3",
+    "audio/x-m4a",
+}
+ALLOWED_YOUTUBE_LINK_PATTERNS: set = {
+    r"^(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
+    r"^(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
+    r"^(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
+}
 
 # TOKEN SETTINGS
 JWT_ALGORITHM: str = "HS256"
