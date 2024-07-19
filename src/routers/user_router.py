@@ -21,6 +21,7 @@ from src.services.audio_service import AudioService
 from src.services.user_word_service import UserWordService
 
 from src.utils import auth as auth_utils
+from src.utils import helpers as helper_utils
 from src.utils.dependenes.file_service_fabric import file_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
@@ -140,6 +141,7 @@ async def upload_audio(
     error_service: Annotated[ErrorService, Depends(error_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ) -> Audio:
+    await helper_utils.check_mime_type(file=file)
     filename = file.filename
     _, extension = os.path.splitext(filename)
     uploaded_at = datetime.now()
@@ -193,5 +195,6 @@ async def upload_audio(
 async def upload_youtube_video(
     schema: YoutubeLink, user: User = Depends(auth_utils.get_active_current_user)
 ):
+    await helper_utils.check_youtube_link(link=schema.link)
     upload_youtube_task.apply_async((schema.link, user.id), countdown=1)
     return schema
