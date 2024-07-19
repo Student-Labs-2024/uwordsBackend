@@ -1,19 +1,24 @@
 from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
     extension: str = Field(examples=[".ogg"])
     filepath: Union[str, Path] = Field(
-        examples=["audio_transfer/audio_6515bf33-e63c-4493-b29d-55f2b70a892d_converted.wav"])
+        examples=[
+            "audio_transfer/audio_6515bf33-e63c-4493-b29d-55f2b70a892d_converted.wav"
+        ]
+    )
     uploaded_at: datetime = Field(examples=["2024-05-26T10:10:21.520492"])
 
 
 class YoutubeLink(BaseModel):
-    link: str = Field(examples=["https://www.youtube.com/shorts/of3729gHjNs?feature=share"])
+    link: str = Field(
+        examples=["https://www.youtube.com/shorts/of3729gHjNs?feature=share"]
+    )
 
 
 class WordsIdsSchema(BaseModel):
@@ -26,10 +31,14 @@ class WordDumpSchema(BaseModel):
     ruValue: str = Field(examples=["Яблоко"])
     topic: Optional[str] = Field(examples=["Fruit"])
     subtopic: Optional[str] = Field(examples=["Oranges"])
-    audioLink: Optional[str] = Field(examples=["https://big-nose.ru:9100/uwords-voiceover/apple.mp3"], default=None)
-    pictureLink: Optional[str] = Field(examples=["https://big-nose.ru:9100/uwords-picture/apple.jpg"], default=None)
+    audioLink: Optional[str] = Field(
+        examples=["https://big-nose.ru:9100/uwords-voiceover/apple.mp3"], default=None
+    )
+    pictureLink: Optional[str] = Field(
+        examples=["https://big-nose.ru:9100/uwords-picture/apple.jpg"], default=None
+    )
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
@@ -40,70 +49,86 @@ class UserWordDumpSchema(BaseModel):
     frequency: int = Field(examples=[7])
     progress: int = Field(examples=[2])
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
-class Topic(BaseModel):
+class TopicCreate(BaseModel):
     id: int = Field(examples=[1])
     title: str = Field(examples=["Animal"])
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
-class SubTopic(BaseModel):
+class SubTopicCreate(BaseModel):
     id: int = Field(examples=[1])
     title: str = Field(examples=["Rat"])
-    topic_title: str = Field(examples=['Animal'])
+    topic_title: str = Field(examples=["Animal"])
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
 class ErrorCreate(BaseModel):
-    user_id: int
-    message: str
-    description: Optional[str]
+    user_id: int = Field(examples=[1])
+    message: str = Field(examples=["Ошибка обработки списка слов"])
+    description: Optional[str] = Field(
+        examples=["IndexError: list index out of range"], default=None
+    )
 
 
 class ErrorDump(BaseModel):
-    id: int
-    user_id: int
-    message: str
-    description: Optional[str]
-    created_at: datetime
-    is_send: bool
+    id: int = Field(examples=[1])
+    user_id: int = Field(examples=[1])
+    message: str = Field(examples=["Ошибка обработки списка слов"])
+    description: Optional[str] = Field(
+        examples=["Ошибка обработки списка слов"], default=None
+    )
+    created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
+    is_send: bool = Field(examples=[True])
 
 
 class UserDump(BaseModel):
-    id: int
-    email: EmailStr
-    provider: str
+    id: int = Field(examples=[1])
+    email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
+    provider: str = Field(examples=["email"])
+    google_id: Optional[str] = Field(examples=["uid34840..."], default=None)
+    vk_id: Optional[str] = Field(examples=["id6473..."], default=None)
+    username: Optional[str] = Field(examples=["uwords"], default=None)
+    firstname: Optional[str] = Field(examples=["Uwords"], default=None)
+    lastname: Optional[str] = Field(examples=["English App"], default=None)
+    avatar_url: Optional[str] = Field(
+        examples=["https://uwords.ru/image/logo.png"], default=None
+    )
+    phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
+    birth_date: Optional[datetime] = Field(
+        examples=["2023-05-05 10:30:45.999999"], default=None
+    )
+    created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
 
-    username: Optional[str] = None
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    avatar_url: Optional[str] = None
-    phone_number: Optional[str] = None
-    birth_date: Optional[datetime] = None
-    created_at: datetime
+
+class UserCreateEmail(BaseModel):
+    provider: str = Field(examples=["email"])
+    password: str = Field(examples=["strongpass"])
+    code: str = Field(examples=["Wh18QI"])
+    email: EmailStr = Field(examples=["mail@uwords.ru"])
+    username: str = Field(examples=["uwords"])
+    birth_date: str = Field(examples=["2023-05-05 10:30:45.999999"])
+
+    @field_validator("*", mode="before")
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
 
 
-class UserCreate(BaseModel):
-    provider: str
-    email: EmailStr
-    password: str
-    code: str
+class UserCreateVk(BaseModel):
+    provider: str = Field(examples=["vk"])
+    firstname: str = Field(examples=["Uwords"])
+    lastname: str = Field(examples=["English App"])
 
-    username: Optional[str] = None
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    avatar_url: Optional[str] = None
-    phone_number: Optional[str] = None
-    birth_date: Optional[str] = None
-
-    @validator("*", pre=True)
+    @field_validator("*", mode="before")
     def remove_empty(cls, value):
         if value == "":
             return None
@@ -111,21 +136,26 @@ class UserCreate(BaseModel):
 
 
 class UserCreateDB(BaseModel):
-    provider: str
-    email: EmailStr
-    hashed_password: str
+    provider: str = Field(examples=["email"])
+    email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
+    hashed_password: Optional[str] = Field(examples=["43f8a2ad188263...."])
+    google_id: Optional[str] = Field(examples=["uid34840..."], default=None)
+    vk_id: Optional[str] = Field(examples=["id6473..."], default=None)
+    username: Optional[str] = Field(examples=["uwords"], default=None)
+    firstname: Optional[str] = Field(examples=["Uwords"], default=None)
+    lastname: Optional[str] = Field(examples=["English App"], default=None)
+    avatar_url: Optional[str] = Field(
+        examples=["https://uwords.ru/image/logo.png"], default=None
+    )
+    phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
+    birth_date: Optional[datetime] = Field(
+        examples=["2023-05-05 10:30:45.999999"], default=None
+    )
+    is_active: Optional[bool] = Field(examples=[True], default=True)
+    is_superuser: Optional[bool] = Field(examples=[False], default=False)
+    is_verified: Optional[bool] = Field(examples=[True], default=False)
 
-    username: Optional[str] = None
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    avatar_url: Optional[str] = None
-    phone_number: Optional[str] = None
-    birth_date: Optional[datetime] = None
-    is_active: Optional[bool] = True
-    is_superuser: Optional[bool] = False
-    is_verified: Optional[bool] = False
-
-    @validator("*", pre=True)
+    @field_validator("*", mode="before")
     def remove_empty(cls, value):
         if value == "":
             return None
@@ -133,50 +163,58 @@ class UserCreateDB(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = None
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    avatar_url: Optional[str] = None
-    phone_number: Optional[str] = None
-    birth_date: Union[datetime, str, None] = None
+    username: Optional[str] = Field(examples=["uwords"], default=None)
+    firstname: Optional[str] = Field(examples=["Uwords"], default=None)
+    lastname: Optional[str] = Field(examples=["English App"], default=None)
+    avatar_url: Optional[str] = Field(
+        examples=["https://uwords.ru/image/logo.png"], default=None
+    )
+    phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
+    birth_date: Optional[str] = Field(
+        examples=["2023-05-05 10:30:45.999999"], default=None
+    )
 
-    @validator("*", pre=True)
+    @field_validator("*", mode="before")
     def remove_empty(cls, value):
         if value == "":
             return None
         return value
 
 
-class UserLogin(BaseModel):
-    provider: str
-    email: EmailStr
-    password: str
+class UserEmailLogin(BaseModel):
+    provider: str = Field(examples=["email"])
+    email: EmailStr = Field(examples=["mail@uwords.ru"])
+    password: Optional[str] = Field(examples=["strongpass"], default=None)
 
 
 class TokenInfo(BaseModel):
-    access_token: str
-    refresh_token: Optional[str] = None
+    access_token: str = Field(examples=["eyJhbGciOiJ..."])
+    refresh_token: Optional[str] = Field(examples=["eyJhbGciOiJ..."], default=None)
     token_type: str = "Bearer"
 
 
 class CustomResponse(BaseModel):
-    status_code: int
-    message: str
+    status_code: int = Field(examples=[200])
+    message: str = Field(examples=["User banned successfully!"])
 
 
 class AdminCreate(BaseModel):
-    email: EmailStr
-    password: str
-    admin_secret: str
+    email: EmailStr = Field(examples=["support@uwords.ru"])
+    password: str = Field(examples=["adminstrongpass"])
+    admin_secret: str = Field(examples=["admin_secret"])
 
-    username: Optional[str] = None
-    firstname: Optional[str] = None
-    lastname: Optional[str] = None
-    avatar_url: Optional[str] = None
-    phone_number: Optional[str] = None
-    birth_date: Union[datetime, str, None] = None
+    username: Optional[str] = Field(examples=["uwordsadmin"], default=None)
+    firstname: Optional[str] = Field(examples=["admin"], default=None)
+    lastname: Optional[str] = Field(examples=["adminich"], default=None)
+    avatar_url: Optional[str] = Field(
+        examples=["https://uwords.ru/image/users/admin.png"], default=None
+    )
+    phone_number: Optional[str] = Field(examples=["88005553536"], default=None)
+    birth_date: Optional[str] = Field(
+        examples=["2023-05-05 10:30:45.999999"], default=None
+    )
 
-    @validator("*", pre=True)
+    @field_validator("*", mode="before")
     def remove_empty(cls, value):
         if value == "":
             return None
@@ -184,5 +222,5 @@ class AdminCreate(BaseModel):
 
 
 class SendEmailCode(BaseModel):
-    email: EmailStr
-    code: str
+    email: EmailStr = Field(examples=["mail@uwords.ru"])
+    code: str = Field(examples=["Wh18QI"])

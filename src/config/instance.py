@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -28,14 +29,11 @@ MINIO_BUCKET_PICTURE: str = os.environ.get("MINIO_BUCKET_PICTURE")
 
 # SYSTEM
 MINIO_HOST: str = os.environ.get("MINIO_HOST")
-UPLOAD_DIR: Path = BASE_DIR / 'audio_transfer'
+UPLOAD_DIR: Path = BASE_DIR / "audio_transfer"
 FASTAPI_SECRET: str = os.environ.get("FASTAPI_SECRET")
 
 # TOKEN SETTINGS
-PRIVATE_KEY: Path = BASE_DIR / "src" / "config" / "certs" / "key"
-PUBLIC_KEY: Path = BASE_DIR / "src" / "config" / "certs" / "key.pub"
-
-JWT_ALGORITHM: str = "RS256"
+JWT_ALGORITHM: str = "HS256"
 
 ACCESS_TOKEN_LIFETIME: int = 60  # minutes
 REFRESH_TOKEN_LIFETIME: int = 30  # days
@@ -51,3 +49,6 @@ SMTP_SERVER: str = os.environ.get("SMTP_SERVER")
 SENDER_EMAIL: str = os.environ.get("SENDER_EMAIL")
 EMAIL_PASSWORD: str = os.environ.get("EMAIL_PASSWORD")
 EMAIL_CODE_LEN: str = os.environ.get("EMAIL_CODE_LEN")
+
+# VK
+SERVICE_TOKEN = os.environ.get("SERVICE_TOKEN")

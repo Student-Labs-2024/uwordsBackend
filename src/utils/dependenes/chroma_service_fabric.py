@@ -1,5 +1,5 @@
-from src.repositories.repositories import TopicRepository, SubtopicRepository
 from src.services.topic_service import TopicService
+from src.repositories.repositories import TopicRepository, SubtopicRepository
 
 
 def topic_service_fabric():

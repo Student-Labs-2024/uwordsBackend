@@ -1,6 +1,6 @@
 import os
-
 import chromadb
+
 
 path = os.getcwd() + "/chroma_db"
 chroma_client = chromadb.PersistentClient(path=path)

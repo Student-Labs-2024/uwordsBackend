@@ -1,12 +1,12 @@
 import logging
 from src.utils.repository import AbstractRepository
 
+
 logger = logging.getLogger("[SERVICES FILE]")
 logging.basicConfig(level=logging.INFO)
 
 
 class FileService:
-
     def __init__(self, repo: AbstractRepository):
         self.repo = repo
 
@@ -15,4 +15,3 @@ class FileService:
 
     async def delete_file(self, path):
         await self.repo.delete_one(path)
-

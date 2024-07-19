@@ -1,6 +1,7 @@
 from src.database.chroma_config import subtopic_collection
-from src.utils.repository import SQLAlchemyRepository, ChromaRepository
 from src.database.models import Error, User, UserWord, Word, Topic, SubTopic
+
+from src.utils.repository import SQLAlchemyRepository, ChromaRepository
 
 
 class UserWordRepository(SQLAlchemyRepository):
