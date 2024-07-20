@@ -1,15 +1,23 @@
 import json
+import logging
 import requests
+from typing import Union
+
+from src.config.instance import PIX_TOKEN
+
+
+logger = logging.getLogger("[SERVICES IMAGE]")
+logging.basicConfig(level=logging.INFO)
 
 
 class ImageDownloader:
     @staticmethod
-    def get_image_data(word: str):
+    async def get_image_data(word: str) -> Union[bytes, None]:
         try:
             response = requests.get(
                 url="https://pixabay.com/api/",
                 params={
-                    "key": "44077916-f2200c27f389302121ab3a8e5",
+                    "key": PIX_TOKEN,
                     "q": "+".join(word.split()),
                     "lang": "en",
                     "per_page": 3,
@@ -23,5 +31,6 @@ class ImageDownloader:
 
             return image_data.content
 
-        except:
+        except Exception as e:
+            logger.info(f"[DOWNLOAD] Error: {e}")
             return None
