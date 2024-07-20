@@ -1,7 +1,7 @@
 import string
 import asyncio
 import logging
-from typing import Union
+from typing import Union, List, Dict
 from deep_translator.google import GoogleTranslator
 
 from src.schemes.schemas import ErrorCreate
@@ -9,48 +9,13 @@ from src.services.error_service import ErrorService
 from src.services.services_config import ma, STOPWORDS
 
 
-logger = logging.getLogger("[SERVICES FILE]")
+logger = logging.getLogger("[SERVICES TEXT]")
 logging.basicConfig(level=logging.INFO)
 
 
 class TextService:
     @staticmethod
-    def get_frequency_dict(
-        text: str, error_service: ErrorService, user_id
-    ) -> Union[dict, None]:
-        try:
-            text_without_spec_chars = TextService.remove_spec_chars(
-                text=text, error_service=error_service, user_id=user_id
-            )
-
-            words = TextService.remove_stop_words(
-                text=text_without_spec_chars,
-                error_service=error_service,
-                user_id=user_id,
-            )
-
-            norm_words = TextService.normalize_words(
-                words=words, error_service=error_service, user_id=user_id
-            )
-
-            freq_dict = TextService.create_freq_dict(
-                words=norm_words, error_service=error_service, user_id=user_id
-            )
-
-            return freq_dict
-
-        except Exception as e:
-            logger.info(e)
-            error = ErrorCreate(
-                user_id=user_id, message="[GET FREQ]", description=str(e)
-            )
-
-            asyncio.run(error_service.add_one(error=error))
-
-            return None
-
-    @staticmethod
-    def remove_spec_chars(
+    async def remove_spec_chars(
         text: str, error_service: ErrorService, user_id: int
     ) -> Union[str, None]:
         try:
@@ -58,19 +23,19 @@ class TextService:
             return "".join([char for char in text if char not in spec_chars])
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[SPEC CHARS] Error: {e}")
+
             error = ErrorCreate(
                 user_id=user_id, message="[REMOVE SPEC CHAR]", description=str(e)
             )
 
-            asyncio.run(error_service.add_one(error=error))
-
+            await error_service.add_one(error=error)
             return None
 
     @staticmethod
-    def normalize_words(
-        words: list[str], error_service: ErrorService, user_id: int
-    ) -> Union[list[str], None]:
+    async def normalize_words(
+        words: List[str], error_service: ErrorService, user_id: int
+    ) -> Union[List[str], None]:
         try:
             norm_words = []
 
@@ -80,19 +45,19 @@ class TextService:
             return norm_words
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[NORM WORDS] Error: {e}")
+
             error = ErrorCreate(
                 user_id=user_id, message="[NORM WORDS]", description=str(e)
             )
 
-            asyncio.run(error_service.add_one(error=error))
-
+            await error_service.add_one(error=error)
             return None
 
     @staticmethod
-    def create_freq_dict(
-        words: list[str], error_service: ErrorService, user_id: int
-    ) -> Union[dict, None]:
+    async def create_freq_dict(
+        words: List[str], error_service: ErrorService, user_id: int
+    ) -> Union[Dict[str, int], None]:
         try:
             freq_dict = {}
 
@@ -105,33 +70,33 @@ class TextService:
             return dict(sorted(freq_dict.items(), key=lambda x: x[1], reverse=True))
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[CREATE FREQ] Error: {e}")
+
             error = ErrorCreate(
                 user_id=user_id, message="[CREATE FREQ]", description=str(e)
             )
 
-            asyncio.run(error_service.add_one(error=error))
-
+            await error_service.add_one(error=error)
             return None
 
-    def remove_stop_words(
+    async def remove_stop_words(
         text: str, error_service: ErrorService, user_id: int
     ) -> Union[list[str], None]:
         try:
             return [word for word in text.split() if word not in STOPWORDS]
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[REMOVE STOPS] Error: {e}")
+
             error = ErrorCreate(
                 user_id=user_id, message="[REMOVE STOP WORDS]", description=str(e)
             )
 
-            asyncio.run(error_service.add_one(error=error))
-
+            await error_service.add_one(error=error)
             return None
 
     @staticmethod
-    def translate(
+    async def translate(
         words: dict,
         from_lang: str,
         to_lang: str,
@@ -174,13 +139,13 @@ class TextService:
                     )
 
             except Exception as e:
-                logger.info(e)
+                logger.info(f"[TRANSLATE] Error: {e}")
+
                 error = ErrorCreate(
                     user_id=user_id, message="[TRANSLATE]", description=str(e)
                 )
 
-                asyncio.run(error_service.add_one(error=error))
-
+                await error_service.add_one(error=error)
                 continue
 
         return translated_words

@@ -10,6 +10,7 @@ keys.json
 # chroma
 chroma_db/chroma.sqlite3
 **.bin
+chroma.sqlite3
 
 # dirs
 postgres-data/
@@ -21,3 +22,4 @@ venv/
 nginx-prod.conf
 key
 key.pub
+docker-compose.yml

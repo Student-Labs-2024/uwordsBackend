@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import uuid
 import yt_dlp
 import ffmpeg
@@ -6,8 +7,8 @@ import asyncio
 import logging
 from io import BytesIO
 from gtts import gTTS
-from typing import Union
 from pydub import AudioSegment
+from typing import Union, Tuple
 from speech_recognition import AudioFile
 
 from src.schemes.schemas import ErrorCreate
@@ -41,7 +42,7 @@ class AudioService:
             return str(out_path)
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[CONVERT] Error: {e}")
             error = ErrorCreate(
                 user_id=user_id,
                 message="[CONVERT AUDIO] Ошибка конвертации аудио!",
@@ -51,7 +52,9 @@ class AudioService:
             return None
 
     @staticmethod
-    def cut_audio(path: str, error_service: ErrorService, user_id: int) -> list[str]:
+    async def cut_audio(
+        path: str, error_service: ErrorService, user_id: int
+    ) -> list[str]:
         files = []
 
         try:
@@ -80,7 +83,7 @@ class AudioService:
             return files
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[CUT] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id,
@@ -88,7 +91,7 @@ class AudioService:
                 description=str(e),
             )
 
-            asyncio.run(error_service.add_one(error=error))
+            await error_service.add_one(error=error)
 
             return files
 
@@ -102,7 +105,7 @@ class AudioService:
                 return text.lower()
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[STT RU] Error: {e}")
             return " "
 
     @staticmethod
@@ -115,11 +118,13 @@ class AudioService:
                 return text.lower()
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[STT EN] Error: {e}")
             return " "
 
     @staticmethod
-    def upload_youtube_audio(link: str, error_service: ErrorService, user_id: int):
+    async def upload_youtube_audio(
+        link: str, error_service: ErrorService, user_id: int
+    ) -> Union[Tuple[Path, str, str], Tuple[None, None, None]]:
         try:
             logger.info(link)
             uid = uuid.uuid4()
@@ -141,20 +146,23 @@ class AudioService:
                 ydl.download(link)
                 info_dict = ydl.extract_info(link, download=False)
                 video_title = info_dict.get("title", None)
+
             return download_path, filename, video_title
 
         except Exception as e:
-            logger.info(e)
+            logger.info(f"[UPLOAD YOUTUBE] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id,
                 message="[UPLOAD YOUTUBE AUDIO] Ошибка выгрузки аудио из ютуба!",
                 description=str(e),
             )
-            return None
+
+            await error_service.add_one(error=error)
+            return None, None, None
 
     @staticmethod
-    def word_to_speech(word: str) -> Union[str, None]:
+    async def word_to_speech(word: str) -> Union[str, None]:
         try:
             tts = gTTS(text=word, lang="en", slow=False)
 
@@ -164,7 +172,7 @@ class AudioService:
 
             object_name = f'{"_".join(word.lower().split())}.mp3'
 
-            MinioUploader.upload_object(
+            await MinioUploader.upload_object(
                 bucket_name=MINIO_BUCKET_VOICEOVER,
                 object_name=object_name,
                 data=bytes_file,
@@ -175,19 +183,19 @@ class AudioService:
             return f"{MINIO_HOST}/{MINIO_BUCKET_VOICEOVER}/{object_name}"
 
         except BaseException as e:
-            logger.info(e)
+            logger.info(f"[TTS] Error: {e}")
             return None
 
     @staticmethod
-    def download_picture(word: str) -> Union[str, None]:
+    async def download_picture(word: str) -> Union[str, None]:
         try:
-            image_data = ImageDownloader.get_image_data(word=word)
+            image_data = await ImageDownloader.get_image_data(word=word)
             bytes_file = BytesIO(image_data)
             bytes_file.seek(0)
 
             object_name = f'{"_".join(word.lower().split())}.jpg'
 
-            MinioUploader.upload_object(
+            await MinioUploader.upload_object(
                 bucket_name=MINIO_BUCKET_PICTURE,
                 object_name=object_name,
                 data=bytes_file,
@@ -198,5 +206,5 @@ class AudioService:
             return f"{MINIO_HOST}/{MINIO_BUCKET_PICTURE}/{object_name}"
 
         except BaseException as e:
-            logger.info(e)
+            logger.info(f"[DOWNLOAD PICTURE] Error: {e}")
             return None
