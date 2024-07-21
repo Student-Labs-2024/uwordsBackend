@@ -20,13 +20,32 @@ class TextService:
     ) -> Union[str, None]:
         try:
             spec_chars = string.punctuation + "\n\xa0«»\t—…" + string.digits
-            return "".join([char for char in text if char not in spec_chars])
+            text_without_spec_chars = "".join(
+                [char for char in text if char not in spec_chars]
+            )
+            return " ".join(text_without_spec_chars.split())
 
         except Exception as e:
             logger.info(f"[SPEC CHARS] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[REMOVE SPEC CHAR]", description=str(e)
+            )
+
+            await error_service.add_one(error=error)
+            return None
+
+    async def remove_stop_words(
+        text: str, error_service: ErrorService, user_id: int
+    ) -> Union[list[str], None]:
+        try:
+            return [word for word in text.split() if word not in STOPWORDS]
+
+        except Exception as e:
+            logger.info(f"[REMOVE STOPS] Error: {e}")
+
+            error = ErrorCreate(
+                user_id=user_id, message="[REMOVE STOP WORDS]", description=str(e)
             )
 
             await error_service.add_one(error=error)
@@ -79,47 +98,27 @@ class TextService:
             await error_service.add_one(error=error)
             return None
 
-    async def remove_stop_words(
-        text: str, error_service: ErrorService, user_id: int
-    ) -> Union[list[str], None]:
-        try:
-            return [word for word in text.split() if word not in STOPWORDS]
-
-        except Exception as e:
-            logger.info(f"[REMOVE STOPS] Error: {e}")
-
-            error = ErrorCreate(
-                user_id=user_id, message="[REMOVE STOP WORDS]", description=str(e)
-            )
-
-            await error_service.add_one(error=error)
-            return None
-
     @staticmethod
     async def translate(
-        words: dict,
+        words: Dict,
         from_lang: str,
         to_lang: str,
         error_service: ErrorService,
         user_id: int,
-    ) -> list[dict]:
+    ) -> List[Dict]:
 
         translated_words = []
 
         for word in words.keys():
             word: str
             try:
-                count = 0
-                translated = None
-                while count < 3:
-                    translated = GoogleTranslator(
-                        source=from_lang, target=to_lang
-                    ).translate(word)
-                    if translated:
-                        break
-                    count += 1
+                translated = GoogleTranslator(
+                    source=from_lang, target=to_lang
+                ).translate(word)
+
                 if not translated:
                     continue
+
                 if from_lang == "russian":
                     translated_words.append(
                         {
