@@ -138,7 +138,7 @@ class UserCreateVk(BaseModel):
 class UserCreateDB(BaseModel):
     provider: str = Field(examples=["email"])
     email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
-    hashed_password: Optional[str] = Field(examples=["43f8a2ad188263...."])
+    hashed_password: Optional[str] = Field(examples=["43f8a2ad188263...."], default=None)
     google_id: Optional[str] = Field(examples=["uid34840..."], default=None)
     vk_id: Optional[str] = Field(examples=["id6473..."], default=None)
     username: Optional[str] = Field(examples=["uwords"], default=None)
