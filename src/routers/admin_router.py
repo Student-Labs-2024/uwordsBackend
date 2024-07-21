@@ -5,8 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from src.config.instance import FASTAPI_SECRET
 from src.database.models import User
-from src.schemes.schemas import UserDump, AdminCreate, CustomResponse, TokenInfo, \
-    AdminEmailLogin
+from src.schemes.schemas import (
+    UserDump,
+    AdminCreate,
+    CustomResponse,
+    TokenInfo,
+    AdminEmailLogin,
+)
 from src.config import fastapi_docs_config as doc_data
 from src.services.user_service import UserService
 from src.utils.auth import Providers
@@ -27,11 +32,11 @@ admin_router_v1 = APIRouter(prefix="/api/users", tags=["Admins"])
     description=doc_data.ADMIN_REGISTER_DESCRIPTION,
 )
 async def create_admin(
-        admin_data: AdminCreate,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
+    admin_data: AdminCreate,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
     if await user_service.get_user_by_provider(
-            unique=admin_data.email, provider=Providers.admin.value
+        unique=admin_data.email, provider=Providers.admin.value
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -44,7 +49,9 @@ async def create_admin(
             detail={"msg": f"Incorrect admin-create key"},
         )
 
-    user = await user_service.create_user(data=admin_data, provider=Providers.admin.value)
+    user = await user_service.create_user(
+        data=admin_data, provider=Providers.admin.value
+    )
     return user
 
 
@@ -55,7 +62,9 @@ async def create_admin(
     description=doc_data.ADMIN_LOGIN_DESCRIPTION,
 )
 async def user_login(
-        login_data: AdminEmailLogin, user_service: Annotated[UserService, Depends(user_service_fabric)], ):
+    login_data: AdminEmailLogin,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+):
     return await user_service.auth_email_user(login_data)
 
 
@@ -66,9 +75,9 @@ async def user_login(
     description=doc_data.USER_BAN_DESCRIPTION,
 )
 async def ban_user(
-        user_id: int,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        user: User = Depends(auth_utils.get_admin_user),
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user),
 ):
     await user_service.ban_user(user_id=user_id)
 
@@ -82,9 +91,9 @@ async def ban_user(
     description=doc_data.USER_DELETE_DESCRIPTION,
 )
 async def ban_user(
-        user_id: int,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        user: User = Depends(auth_utils.get_admin_user),
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user),
 ):
     await user_service.delete_user(user_id=user_id)
 

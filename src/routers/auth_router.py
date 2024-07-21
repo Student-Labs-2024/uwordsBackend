@@ -34,24 +34,24 @@ auth_router_v1 = APIRouter(prefix="/api/users", tags=["Users"])
     description=doc_data.USER_REGISTER_DESCRIPTION,
 )
 async def register_user(
-        user_data: UserCreateEmail,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user_data: UserCreateEmail,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
     if await user_service.get_user_by_provider(
-            unique=user_data.email, provider=Providers.email.value
+        unique=user_data.email, provider=Providers.email.value
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "msg": f"User with email {user_data.email} already exists"
-            },
+            detail={"msg": f"User with email {user_data.email} already exists"},
         )
     if not EmailService.check_code(user_data.email, user_data.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": f"Wrong code for {user_data.email}"},
         )
-    user = await user_service.create_user(data=user_data, provider=Providers.email.value)
+    user = await user_service.create_user(
+        data=user_data, provider=Providers.email.value
+    )
     return user
 
 
@@ -62,13 +62,13 @@ async def register_user(
     description=doc_data.USER_REGISTER_VK_DESCRIPTION,
 )
 async def register_vk_user(
-        user_data: UserCreateVk,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        stat=Depends(auth_utils.validate_vk_token),
+    user_data: UserCreateVk,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    stat=Depends(auth_utils.validate_vk_token),
 ):
     if stat["response"]["success"] == 1:
         if await user_service.get_user_by_provider(
-                unique=str(stat["response"]["user_id"]), provider=Providers.vk.value
+            unique=str(stat["response"]["user_id"]), provider=Providers.vk.value
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -77,7 +77,9 @@ async def register_vk_user(
                 },
             )
         user = await user_service.create_user(
-            data=user_data, uid=str(stat["response"]["user_id"]), provider=Providers.vk.value
+            data=user_data,
+            uid=str(stat["response"]["user_id"]),
+            provider=Providers.vk.value,
         )
         return user
 
@@ -89,7 +91,9 @@ async def register_vk_user(
     description=doc_data.USER_LOGIN_DESCRIPTION,
 )
 async def user_login(
-        login_data: UserEmailLogin, user_service: Annotated[UserService, Depends(user_service_fabric)],):
+    login_data: UserEmailLogin,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+):
     return await user_service.auth_email_user(login_data)
 
 
@@ -100,8 +104,8 @@ async def user_login(
     description=doc_data.USER_LOGIN_VK_DESCRIPTION,
 )
 async def user_login(
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        stat=Depends(auth_utils.validate_vk_token),
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    stat=Depends(auth_utils.validate_vk_token),
 ):
     if stat["response"]["success"] == 1:
         return await user_service.auth_vk_user(str(stat["response"]["user_id"]))
@@ -137,9 +141,9 @@ async def get_user_me(user: User = Depends(auth_utils.get_active_current_user)):
     description=doc_data.USER_ME_UPDATE_DESCRIPTION,
 )
 async def update_user_me(
-        user_data: UserUpdate,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        user: User = Depends(auth_utils.get_active_current_user),
+    user_data: UserUpdate,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
 ):
     return await user_service.update_user(
         user_id=user.id, user_data=user_data.model_dump(exclude_none=True)
@@ -153,8 +157,8 @@ async def update_user_me(
     description=doc_data.USER_ME_DELETE_DESCRIPTION,
 )
 async def delete_user(
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        user: User = Depends(auth_utils.get_active_current_user),
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
 ):
     await user_service.delete_user(user_id=user.id)
 
@@ -170,8 +174,8 @@ async def delete_user(
     description=doc_data.USER_PROFILE_DESCRIPTION,
 )
 async def get_user_profile(
-        user_id: int,
-        user_service: Annotated[UserService, Depends(user_service_fabric)],
-        user: User = Depends(auth_utils.get_active_current_user),
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
 ):
     return await user_service.get_user_by_id(user_id=user_id)

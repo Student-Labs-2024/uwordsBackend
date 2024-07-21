@@ -5,7 +5,13 @@ from fastapi import HTTPException, status
 
 from src.database.models import User
 
-from src.schemes.schemas import UserCreateDB, TokenInfo, UserCreateVk, UserEmailLogin, AdminEmailLogin
+from src.schemes.schemas import (
+    UserCreateDB,
+    TokenInfo,
+    UserCreateVk,
+    UserEmailLogin,
+    AdminEmailLogin,
+)
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
@@ -27,7 +33,7 @@ class UserService:
             return None
 
     async def get_user_by_provider(
-            self, unique: str, provider: str
+        self, unique: str, provider: str
     ) -> Union[User, None]:
         try:
             match provider:
@@ -85,7 +91,9 @@ class UserService:
             logger.info(f"[CREATE USER] Error: {e}")
             return None
 
-    async def auth_email_user(self, login_data: UserEmailLogin | AdminEmailLogin) -> TokenInfo:
+    async def auth_email_user(
+        self, login_data: UserEmailLogin | AdminEmailLogin
+    ) -> TokenInfo:
         user = await self.get_user_by_provider(
             unique=login_data.email, provider=auth_utils.Providers.email.value
         )
@@ -100,7 +108,7 @@ class UserService:
             )
         hashed_password: str = user.hashed_password
         if not auth_utils.validate_password(
-                password=login_data.password, hashed_password=hashed_password.encode()
+            password=login_data.password, hashed_password=hashed_password.encode()
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
