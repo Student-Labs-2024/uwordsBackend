@@ -91,70 +91,92 @@ class UserService:
             logger.info(f"[CREATE USER] Error: {e}")
             return None
 
-    async def auth_email_user(
-        self, login_data: UserEmailLogin | AdminEmailLogin
+    async def auth_user(
+        self,
+        provider,
+        login_data: UserEmailLogin | AdminEmailLogin | None = None,
+        uid=None,
     ) -> TokenInfo:
-        user = await self.get_user_by_provider(
-            unique=login_data.email, provider=auth_utils.Providers.email.value
-        )
-        if not user:
-            user = await self.get_user_by_provider(
-                unique=login_data.email, provider=auth_utils.Providers.admin.value
-            )
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"msg": f"User with email {login_data.email} does not exists"},
-            )
-        hashed_password: str = user.hashed_password
-        if not auth_utils.validate_password(
-            password=login_data.password, hashed_password=hashed_password.encode()
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"msg": f"Incorrect password"},
-            )
+        match provider:
+            case auth_utils.Providers.email.value:
+                user = await self.get_user_by_provider(
+                    unique=login_data.email, provider=auth_utils.Providers.email.value
+                )
+                if not user:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail={
+                            "msg": f"User with email {login_data.email} does not exists"
+                        },
+                    )
+                hashed_password: str = user.hashed_password
+                if not auth_utils.validate_password(
+                    password=login_data.password,
+                    hashed_password=hashed_password.encode(),
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={"msg": f"Incorrect password"},
+                    )
+            case auth_utils.Providers.admin.value:
+                user = await self.get_user_by_provider(
+                    unique=login_data.email, provider=auth_utils.Providers.admin.value
+                )
+                if not user:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail={
+                            "msg": f"Admin with email {login_data.email} does not exists"
+                        },
+                    )
+                hashed_password: str = user.hashed_password
+                if not auth_utils.validate_password(
+                    password=login_data.password,
+                    hashed_password=hashed_password.encode(),
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={"msg": f"Incorrect password"},
+                    )
+            case auth_utils.Providers.vk.value:
+                user = await self.get_user_by_provider(
+                    unique=uid, provider=auth_utils.Providers.vk.value
+                )
+                if not user:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail={"msg": f"User with vk {uid} does not exists"},
+                    )
 
         access_token = token_utils.create_access_token(user=user)
         refresh_token = token_utils.create_refresh_token(user=user)
 
         return TokenInfo(access_token=access_token, refresh_token=refresh_token)
 
-    async def auth_vk_user(self, vk_id) -> TokenInfo:
-        user = await self.get_user_by_provider(
-            unique=vk_id, provider=auth_utils.Providers.vk.value
+
+async def update_user(self, user_id: int, user_data: dict) -> Union[User, None]:
+    try:
+        return await self.repo.update_one(
+            filters=[User.id == user_id], values=user_data
         )
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"msg": f"User with vk {vk_id} does not exists"},
-            )
-        access_token = token_utils.create_access_token(user=user)
-        refresh_token = token_utils.create_refresh_token(user=user)
+    except Exception as e:
+        logger.info(f"[UPDATE USER] Error: {e}")
+        return None
 
-        return TokenInfo(access_token=access_token, refresh_token=refresh_token)
 
-    async def update_user(self, user_id: int, user_data: dict) -> Union[User, None]:
-        try:
-            return await self.repo.update_one(
-                filters=[User.id == user_id], values=user_data
-            )
-        except Exception as e:
-            logger.info(f"[UPDATE USER] Error: {e}")
-            return None
+async def ban_user(self, user_id: int) -> Union[User, None]:
+    try:
+        return await self.repo.update_one(
+            filters=[User.id == user_id], values={"is_active": False}
+        )
+    except Exception as e:
+        logger.info(f"[BAN USER] Error: {e}")
+        return None
 
-    async def ban_user(self, user_id: int) -> Union[User, None]:
-        try:
-            return await self.repo.update_one(
-                filters=[User.id == user_id], values={"is_active": False}
-            )
-        except Exception as e:
-            logger.info(f"[BAN USER] Error: {e}")
-            return None
 
-    async def delete_user(self, user_id: int) -> None:
-        try:
-            return await self.repo.delete_one(filters=[User.id == user_id])
-        except Exception as e:
-            logger.info(f"[DELETE USER] Error: {e}")
-            return None
+async def delete_user(self, user_id: int) -> None:
+    try:
+        return await self.repo.delete_one(filters=[User.id == user_id])
+    except Exception as e:
+        logger.info(f"[DELETE USER] Error: {e}")
+        return None

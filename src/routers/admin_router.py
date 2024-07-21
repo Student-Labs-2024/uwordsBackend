@@ -65,7 +65,9 @@ async def user_login(
     login_data: AdminEmailLogin,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
-    return await user_service.auth_email_user(login_data)
+    return await user_service.auth_user(
+        provider=Providers.admin.value, login_data=login_data
+    )
 
 
 @admin_router_v1.delete(

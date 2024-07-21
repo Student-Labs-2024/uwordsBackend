@@ -94,7 +94,9 @@ async def user_login(
     login_data: UserEmailLogin,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
-    return await user_service.auth_email_user(login_data)
+    return await user_service.auth_user(
+        provider=Providers.email.value, login_data=login_data
+    )
 
 
 @auth_router_v1.post(
@@ -108,7 +110,9 @@ async def user_login(
     stat=Depends(auth_utils.validate_vk_token),
 ):
     if stat["response"]["success"] == 1:
-        return await user_service.auth_vk_user(str(stat["response"]["user_id"]))
+        return await user_service.auth_user(
+            provider=Providers.vk.value, uid=str(stat["response"]["user_id"])
+        )
 
 
 @auth_router_v1.get(
