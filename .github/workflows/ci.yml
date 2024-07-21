@@ -36,31 +36,7 @@ jobs:
 
     - name: Run tests
       env:
-        POSTGRES_DB: ${{ secrets.TEST_POSTGRES_DB }}
-        POSTGRES_HOST: ${{ secrets.TEST_POSTGRES_HOST }}
-        POSTGRES_USER: ${{ secrets.TEST_POSTGRES_USER }}
-        POSTGRES_PASSWORD: ${{ secrets.TEST_POSTGRES_PASSWORD }}
-        POSTGRES_PORT: ${{ secrets.TEST_POSTGRES_PORT }}
-        REDIS_URL: ${{ secrets.TEST_REDIS_URL }}
-        REDIS_HOST: ${{ secrets.TEST_REDIS_HOST }}
-        REDIS_PORT: ${{ secrets.TEST_REDIS_PORT }}
-        REDIS_PASS: ${{ secrets.TEST_REDIS_PASS }}
-        MINIO_ENDPOINT: ${{ secrets.TEST_MINIO_ENDPOINT }}
-        MINIO_ROOT_USER: ${{ secrets.TEST_MINIO_ROOT_USER }}
-        MINIO_ROOT_PASSWORD: ${{ secrets.TEST_MINIO_ROOT_PASSWORD }}
-        MINIO_BUCKET_NAME: ${{ secrets.TEST_MINIO_BUCKET_NAME }}
-        MINIO_BUCKET_VOICEOVER: ${{ secrets.TEST_MINIO_BUCKET_VOICEOVER }}
-        MINIO_BUCKET_PICTURE: ${{ secrets.TEST_MINIO_BUCKET_PICTURE }}
-        PIX_TOKEN: ${{ secrets.TEST_PIX_TOKEN }}
-        MINIO_HOST: ${{ secrets.TEST_MINIO_HOST }}
-        FASTAPI_SECRET: ${{ secrets.TEST_FASTAPI_SECRET }}
-        SENTRY_URL: ${{ secrets.TEST_SENTRY_URL }}
-        EMAIL_CODE_EXP: ${{ secrets.TEST_EMAIL_CODE_EXP }}
-        EMAIL_CODE_LEN: ${{ secrets.TEST_EMAIL_CODE_LEN }}
-        EMAIL_CODE_ATTEMPTS: ${{ secrets.TEST_EMAIL_CODE_ATTEMPTS }}
-        EMAIL_PORT: ${{ secrets.TEST_EMAIL_PORT }}
-        SMTP_SERVER: ${{ secrets.TEST_SMTP_SERVER }}
-        SENDER_EMAIL: ${{ secrets.TEST_SENDER_EMAIL }}
-        EMAIL_PASSWORD: ${{ secrets.TEST_EMAIL_PASSWORD }}
+        ENV: ${{ secrets.TEST_ENV }}
       run: |
+        echo "$ENV" > .env
         python -m pytest -p no:warnings -o log_cli=true
