@@ -27,7 +27,7 @@ def encode_jwt(
     elif token_type == "refresh":
         expired_at = datetime_now + timedelta(days=REFRESH_TOKEN_LIFETIME)
 
-    to_payload.update({"iat": datetime_now, "exp": expired_at})
+    to_payload.update({"iat": datetime_now.timestamp(), "exp": expired_at.timestamp()})
 
     encoded = jwt.encode(payload=to_payload, key=key, algorithm=algorithm)
 
