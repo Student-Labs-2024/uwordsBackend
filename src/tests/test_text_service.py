@@ -1,6 +1,5 @@
 import pytest
-import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from src.services.text_service import TextService
 
