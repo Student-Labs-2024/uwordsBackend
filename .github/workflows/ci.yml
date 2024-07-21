@@ -63,4 +63,4 @@ jobs:
         SENDER_EMAIL: ${{ secrets.TEST_SENDER_EMAIL }}
         EMAIL_PASSWORD: ${{ secrets.TEST_EMAIL_PASSWORD }}
       run: |
-        python -m pytest
+        python -m pytest -p no:warnings -o log_cli=true

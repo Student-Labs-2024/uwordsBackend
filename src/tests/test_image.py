@@ -37,9 +37,3 @@ class TestGetImage:
             result = await ImageDownloader.get_image_data(word)
 
             assert result is None
-
-
-def test_sum():
-    x = 1
-    y = 2
-    assert x + y == 3
