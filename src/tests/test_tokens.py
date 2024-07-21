@@ -2,7 +2,13 @@ import jwt
 import pytest
 
 from src.database.models import User
-from src.utils.tokens import encode_jwt, decode_jwt, create_jwt, create_access_token, create_refresh_token
+from src.utils.tokens import (
+    encode_jwt,
+    decode_jwt,
+    create_jwt,
+    create_access_token,
+    create_refresh_token,
+)
 
 
 class TestJWT:
@@ -41,8 +47,8 @@ class TestJWT:
         token = create_access_token(user)
         assert decode_jwt(token)
         payload = decode_jwt(token)
-        assert payload['type'] == 'access'
+        assert payload["type"] == "access"
         token = create_refresh_token(user)
         assert decode_jwt(token)
         payload = decode_jwt(token)
-        assert payload['type'] == 'refresh'
+        assert payload["type"] == "refresh"
