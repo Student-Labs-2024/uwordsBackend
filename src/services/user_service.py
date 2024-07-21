@@ -5,12 +5,11 @@ from fastapi import HTTPException, status
 
 from src.database.models import User
 
-from src.schemes.schemas import UserCreateDB, TokenInfo, UserCreateVk, UserEmailLogin
+from src.schemes.schemas import UserCreateDB, TokenInfo, UserCreateVk, UserEmailLogin, AdminEmailLogin
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
 from src.utils.repository import AbstractRepository
-
 
 logger = logging.getLogger("[SERVICES USER]")
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +27,7 @@ class UserService:
             return None
 
     async def get_user_by_provider(
-        self, unique: str, provider: str
+            self, unique: str, provider: str
     ) -> Union[User, None]:
         try:
             match provider:
@@ -44,6 +43,10 @@ class UserService:
                     return await self.repo.get_one(
                         [User.google_id == unique, User.provider == provider]
                     )
+                case auth_utils.Providers.admin.value:
+                    return await self.repo.get_one(
+                        [User.email == unique, User.provider == provider]
+                    )
         except Exception as e:
             logger.info(f"[GET USER by EMAIL] Error: {e}")
             return None
@@ -55,7 +58,7 @@ class UserService:
             logger.info(f"[GET USER by EMAIL] Error: {e}")
             return None
 
-    async def create_user(self, data, uid: str = None) -> Union[User, None]:
+    async def create_user(self, data, provider, uid: str = None) -> Union[User, None]:
         try:
             user_data_db = data.model_dump()
             try:
@@ -68,23 +71,28 @@ class UserService:
                     password=data.password
                 )
                 user_data_db = UserCreateDB(
+                    provider=provider,
                     birth_date=birth_date,
                     hashed_password=hashed_password.decode(),
                     **user_data_db,
                 )
             else:
                 user_data_db = UserCreateDB(
-                    birth_date=birth_date, vk_id=uid, **user_data_db
+                    birth_date=birth_date, vk_id=uid, provider=provider, **user_data_db
                 )
             return await self.repo.add_one(data=user_data_db.model_dump())
         except Exception as e:
             logger.info(f"[CREATE USER] Error: {e}")
             return None
 
-    async def auth_email_user(self, login_data: UserEmailLogin) -> TokenInfo:
+    async def auth_email_user(self, login_data: UserEmailLogin | AdminEmailLogin) -> TokenInfo:
         user = await self.get_user_by_provider(
-            unique=login_data.email, provider=login_data.provider
+            unique=login_data.email, provider=auth_utils.Providers.email.value
         )
+        if not user:
+            user = await self.get_user_by_provider(
+                unique=login_data.email, provider=auth_utils.Providers.admin.value
+            )
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -92,7 +100,7 @@ class UserService:
             )
         hashed_password: str = user.hashed_password
         if not auth_utils.validate_password(
-            password=login_data.password, hashed_password=hashed_password.encode()
+                password=login_data.password, hashed_password=hashed_password.encode()
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

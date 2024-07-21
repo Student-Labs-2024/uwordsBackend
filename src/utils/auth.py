@@ -137,3 +137,4 @@ class Providers(Enum):
     email = "email"
     vk = "vk"
     google = "google"
+    admin = "admin"
