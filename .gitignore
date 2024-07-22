@@ -18,6 +18,9 @@ venv/
 .idea/
 **/__pycache__
 minio-storage/
+test-postgres-data/
+src/migrations/versions/**.py
+.pytest_cache/
 
 # conf
 nginx-prod.conf
