@@ -1,6 +1,6 @@
 import logging
-from typing import Union
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Union, List
 
 from src.schemes.schemas import ErrorCreate
 from src.utils.repository import AbstractRepository
@@ -13,10 +13,17 @@ from src.services.topic_service import TopicService
 from src.services.minio_uploader import MinioUploader
 from src.services.censore_service import CensoreFilter
 
-from src.config.instance import MINIO_BUCKET_VOICEOVER, MINIO_BUCKET_PICTURE
+from src.config.instance import (
+    MINIO_BUCKET_VOICEOVER,
+    MINIO_BUCKET_PICTURE,
+    STUDY_DELAY,
+    STUDY_MAX_PROGRESS,
+    STUDY_WORDS_AMOUNT,
+)
 
 
 logger = logging.getLogger("[SERVICES WORDS]")
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -24,7 +31,7 @@ class UserWordService:
     def __init__(self, repo: AbstractRepository):
         self.repo = repo
 
-    async def get_user_words(self, user_id: int) -> list[UserWord]:
+    async def get_user_words(self, user_id: int) -> List[UserWord]:
         return await self.repo.get_all_by_filter(
             [UserWord.user_id == user_id], UserWord.frequency.desc()
         )
@@ -42,10 +49,10 @@ class UserWordService:
 
     async def get_user_words_for_study(
         self, user_id: int, topic_title: str, subtopic_title: str | None = None
-    ) -> Union[list[UserWord], list]:
+    ) -> Union[List[UserWord], List]:
         try:
             if not subtopic_title:
-                user_words = await self.repo.get_all_by_filter(
+                user_words: List[UserWord] = await self.repo.get_all_by_filter(
                     [
                         UserWord.user_id == user_id,
                         UserWord.word.has(Word.topic == topic_title),
@@ -53,7 +60,7 @@ class UserWordService:
                     UserWord.progress.desc(),
                 )
             else:
-                user_words = await self.repo.get_all_by_filter(
+                user_words: List[UserWord] = await self.repo.get_all_by_filter(
                     [
                         UserWord.user_id == user_id,
                         UserWord.word.has(Word.topic == topic_title),
@@ -66,15 +73,15 @@ class UserWordService:
 
             for user_word in user_words:
                 if user_word.latest_study:
-                    time_delta = time_now - user_word.latest_study
+                    time_delta: timedelta = time_now - user_word.latest_study
                     seconds = time_delta.seconds
                 else:
-                    seconds = 86400
+                    seconds = STUDY_DELAY
 
                 if (
-                    user_word.progress < 3
-                    and seconds >= 86400
-                    and len(words_for_study) < 4
+                    user_word.progress < STUDY_MAX_PROGRESS
+                    and seconds >= STUDY_DELAY
+                    and len(words_for_study) < STUDY_WORDS_AMOUNT
                 ):
                     words_for_study.append(user_word)
 
@@ -92,7 +99,7 @@ class UserWordService:
                 user_word = await self.repo.get_one(
                     [UserWord.user_id == user_id, UserWord.id == word_id]
                 )
-                if user_word.progress < 3:
+                if user_word.progress < STUDY_MAX_PROGRESS:
                     await self.repo.update_one(
                         [UserWord.user_id == user_id, UserWord.id == word_id],
                         {"latest_study": time_now, "progress": user_word.progress + 1},
@@ -150,12 +157,12 @@ class UserWordService:
             return is_new
         except BaseException as e:
             logger.info(f"[UPLOAD USER WORD] ERROR: {e}")
+
             error = ErrorCreate(
                 user_id=user_id, message="[CREATE FREQ]", description=str(e)
             )
 
             await error_service.add_one(error=error)
-
             return False
 
     async def upload_user_words(
@@ -169,11 +176,11 @@ class UserWordService:
         try:
             found_voiceover_bucket = mc.bucket_exists(MINIO_BUCKET_VOICEOVER)
             if not found_voiceover_bucket:
-                MinioUploader.create_bucket(MINIO_BUCKET_VOICEOVER)
+                await MinioUploader.create_bucket(MINIO_BUCKET_VOICEOVER)
 
             found_picture_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE)
             if not found_picture_bucket:
-                MinioUploader.create_bucket(MINIO_BUCKET_PICTURE)
+                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE)
 
             new_words = 0
             all_words = len(user_words)
@@ -189,10 +196,10 @@ class UserWordService:
 
         except BaseException as e:
             logger.info(f"[UPLOAD USER WORDS] ERROR: {e}")
+
             error = ErrorCreate(
                 user_id=user_id, message="[CREATE FREQ]", description=str(e)
             )
 
             await error_service.add_one(error=error)
-
             return None

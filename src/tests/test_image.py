@@ -6,7 +6,8 @@ from src.services.image_service import ImageDownloader
 
 class TestGetImage:
     @staticmethod
-    def test_get_image_data_success():
+    @pytest.mark.asyncio
+    async def test_get_image_data_success():
         word = "test"
 
         pixabay_response = {
@@ -20,24 +21,19 @@ class TestGetImage:
 
             m.get("https://example.com/test_image.jpg", content=image_data)
 
-            result = ImageDownloader.get_image_data(word)
+            result = await ImageDownloader.get_image_data(word)
 
             assert result == image_data
 
     @staticmethod
-    def test_get_image_data_failure():
+    @pytest.mark.asyncio
+    async def test_get_image_data_failure():
         word = "test"
 
         with requests_mock.Mocker() as m:
 
             m.get("https://pixabay.com/api/", status_code=404)
 
-            result = ImageDownloader.get_image_data(word)
+            result = await ImageDownloader.get_image_data(word)
 
             assert result is None
-
-
-def test_sum():
-    x = 1
-    y = 2
-    assert x + y == 3

@@ -41,6 +41,7 @@ class EmailService:
                 return True
             redis_connection.set(email + "attempts", attempts + 1)
             return False
+
         except AttributeError:
             raise HTTPException(
                 detail="No code for this email", status_code=status.HTTP_404_NOT_FOUND

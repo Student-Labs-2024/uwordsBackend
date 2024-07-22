@@ -7,7 +7,7 @@ from speech_recognition import Recognizer
 from src.config.instance import MINIO_ENDPOINT, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD
 
 
-sr = Recognizer()
+sr: Recognizer = Recognizer()
 ma = pymorphy3.analyzer.MorphAnalyzer()
 
 mc = Minio(

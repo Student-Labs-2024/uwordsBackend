@@ -109,7 +109,6 @@ class UserDump(BaseModel):
 
 
 class UserCreateEmail(BaseModel):
-    provider: str = Field(examples=["email"])
     password: str = Field(examples=["strongpass"])
     code: str = Field(examples=["Wh18QI"])
     email: EmailStr = Field(examples=["mail@uwords.ru"])
@@ -124,7 +123,6 @@ class UserCreateEmail(BaseModel):
 
 
 class UserCreateVk(BaseModel):
-    provider: str = Field(examples=["vk"])
     firstname: str = Field(examples=["Uwords"])
     lastname: str = Field(examples=["English App"])
 
@@ -138,7 +136,9 @@ class UserCreateVk(BaseModel):
 class UserCreateDB(BaseModel):
     provider: str = Field(examples=["email"])
     email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
-    hashed_password: Optional[str] = Field(examples=["43f8a2ad188263...."])
+    hashed_password: Optional[str] = Field(
+        examples=["43f8a2ad188263...."], default=None
+    )
     google_id: Optional[str] = Field(examples=["uid34840..."], default=None)
     vk_id: Optional[str] = Field(examples=["id6473..."], default=None)
     username: Optional[str] = Field(examples=["uwords"], default=None)
@@ -182,9 +182,13 @@ class UserUpdate(BaseModel):
 
 
 class UserEmailLogin(BaseModel):
-    provider: str = Field(examples=["email"])
     email: EmailStr = Field(examples=["mail@uwords.ru"])
     password: Optional[str] = Field(examples=["strongpass"], default=None)
+
+
+class AdminEmailLogin(BaseModel):
+    email: EmailStr = Field(examples=["support@uwords.ru"])
+    password: Optional[str] = Field(examples=["adminstrongpass"], default=None)
 
 
 class TokenInfo(BaseModel):
@@ -202,17 +206,6 @@ class AdminCreate(BaseModel):
     email: EmailStr = Field(examples=["support@uwords.ru"])
     password: str = Field(examples=["adminstrongpass"])
     admin_secret: str = Field(examples=["admin_secret"])
-
-    username: Optional[str] = Field(examples=["uwordsadmin"], default=None)
-    firstname: Optional[str] = Field(examples=["admin"], default=None)
-    lastname: Optional[str] = Field(examples=["adminich"], default=None)
-    avatar_url: Optional[str] = Field(
-        examples=["https://uwords.ru/image/users/admin.png"], default=None
-    )
-    phone_number: Optional[str] = Field(examples=["88005553536"], default=None)
-    birth_date: Optional[str] = Field(
-        examples=["2023-05-05 10:30:45.999999"], default=None
-    )
 
     @field_validator("*", mode="before")
     def remove_empty(cls, value):
