@@ -18,6 +18,7 @@ venv/
 .idea/
 **/__pycache__
 minio-storage/
+test-postgres-data/
 
 # conf
 nginx-prod.conf
