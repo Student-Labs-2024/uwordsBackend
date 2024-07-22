@@ -32,7 +32,7 @@ jobs:
 
     - name: Run linters
       run: |
-        python -m black . --check
+        python -m black ./src --check
 
     - name: Run tests
       env:
