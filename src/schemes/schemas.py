@@ -228,7 +228,6 @@ class AdminCreate(BaseModel):
     password: str = Field(examples=["adminstrongpass"])
     admin_secret: str = Field(examples=["admin_secret"])
 
-
     @field_validator("*", mode="before")
     def remove_empty(cls, value):
         if value == "":

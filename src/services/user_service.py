@@ -33,7 +33,7 @@ class UserService:
             return None
 
     async def get_user_by_provider(
-            self, unique: str, provider: str
+        self, unique: str, provider: str
     ) -> Union[User, None]:
         try:
             match provider:
@@ -96,7 +96,10 @@ class UserService:
                     )
                 case auth_utils.Providers.vk.value:
                     user_data_db = UserCreateDB(
-                        birth_date=birth_date, vk_id=uid, provider=provider, **user_data_db
+                        birth_date=birth_date,
+                        vk_id=uid,
+                        provider=provider,
+                        **user_data_db,
                     )
                 case auth_utils.Providers.google.value:
                     user_data_db = UserCreateDB(
@@ -108,10 +111,10 @@ class UserService:
             return None
 
     async def auth_user(
-            self,
-            provider,
-            login_data: UserEmailLogin | AdminEmailLogin | None = None,
-            uid=None,
+        self,
+        provider,
+        login_data: UserEmailLogin | AdminEmailLogin | None = None,
+        uid=None,
     ) -> TokenInfo:
         match provider:
             case auth_utils.Providers.email.value:
@@ -127,8 +130,8 @@ class UserService:
                     )
                 hashed_password: str = user.hashed_password
                 if not auth_utils.validate_password(
-                        password=login_data.password,
-                        hashed_password=hashed_password.encode(),
+                    password=login_data.password,
+                    hashed_password=hashed_password.encode(),
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -147,8 +150,8 @@ class UserService:
                     )
                 hashed_password: str = user.hashed_password
                 if not auth_utils.validate_password(
-                        password=login_data.password,
-                        hashed_password=hashed_password.encode(),
+                    password=login_data.password,
+                    hashed_password=hashed_password.encode(),
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -177,7 +180,6 @@ class UserService:
 
         return TokenInfo(access_token=access_token, refresh_token=refresh_token)
 
-
     async def update_user(self, user_id: int, user_data: dict) -> Union[User, None]:
         try:
             return await self.repo.update_one(
@@ -187,7 +189,6 @@ class UserService:
             logger.info(f"[UPDATE USER] Error: {e}")
             return None
 
-
     async def ban_user(self, user_id: int) -> Union[User, None]:
         try:
             return await self.repo.update_one(
@@ -196,7 +197,6 @@ class UserService:
         except Exception as e:
             logger.info(f"[BAN USER] Error: {e}")
             return None
-
 
     async def delete_user(self, user_id: int) -> None:
         try:

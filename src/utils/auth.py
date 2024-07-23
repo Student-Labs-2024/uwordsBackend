@@ -34,7 +34,7 @@ def validate_password(password: str, hashed_password: bytes) -> bool:
 
 
 async def get_current_token_payload(
-        credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
 ) -> dict:
     token = credentials.credentials
 
@@ -65,7 +65,7 @@ async def validate_token(payload: dict, token_type: str) -> bool:
 
 
 async def get_user_by_token(
-        payload: dict, user_service: UserService = user_service_fabric()
+    payload: dict, user_service: UserService = user_service_fabric()
 ) -> User:
     user_id: int | None = payload.get("user_id")
 
@@ -80,14 +80,14 @@ async def get_user_by_token(
 
 
 async def get_current_user(
-        payload: dict = Depends(get_current_token_payload),
+    payload: dict = Depends(get_current_token_payload),
 ) -> User:
     await validate_token(payload=payload, token_type="access")
     return await get_user_by_token(payload=payload)
 
 
 async def get_current_user_by_refresh(
-        payload: dict = Depends(get_current_token_payload),
+    payload: dict = Depends(get_current_token_payload),
 ) -> User:
     await validate_token(payload=payload, token_type="refresh")
     return await get_user_by_token(payload=payload)
@@ -120,7 +120,7 @@ async def get_admin_user(user: User = Depends(get_active_current_user)) -> User:
 
 
 async def validate_vk_token(
-        credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     token = credentials.credentials
     service_token = SERVICE_TOKEN
