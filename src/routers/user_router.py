@@ -141,8 +141,8 @@ async def upload_audio(
     error_service: Annotated[ErrorService, Depends(error_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ) -> Audio:
-    await helper_utils.check_mime_type(file=file)
     filename = file.filename
+    await helper_utils.check_mime_type(filename)
     _, extension = os.path.splitext(filename)
     uploaded_at = datetime.now()
 
