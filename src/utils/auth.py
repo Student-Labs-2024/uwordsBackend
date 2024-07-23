@@ -16,7 +16,6 @@ from src.services.user_service import UserService
 from src.utils import tokens as token_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
-
 logger = logging.getLogger("[AUTH UTILS]")
 logging.basicConfig(level=logging.INFO)
 
@@ -35,7 +34,7 @@ def validate_password(password: str, hashed_password: bytes) -> bool:
 
 
 async def get_current_token_payload(
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+        credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
 ) -> dict:
     token = credentials.credentials
 
@@ -66,7 +65,7 @@ async def validate_token(payload: dict, token_type: str) -> bool:
 
 
 async def get_user_by_token(
-    payload: dict, user_service: UserService = user_service_fabric()
+        payload: dict, user_service: UserService = user_service_fabric()
 ) -> User:
     user_id: int | None = payload.get("user_id")
 
@@ -81,24 +80,30 @@ async def get_user_by_token(
 
 
 async def get_current_user(
-    payload: dict = Depends(get_current_token_payload),
+        payload: dict = Depends(get_current_token_payload),
 ) -> User:
     await validate_token(payload=payload, token_type="access")
     return await get_user_by_token(payload=payload)
 
 
 async def get_current_user_by_refresh(
-    payload: dict = Depends(get_current_token_payload),
+        payload: dict = Depends(get_current_token_payload),
 ) -> User:
     await validate_token(payload=payload, token_type="refresh")
     return await get_user_by_token(payload=payload)
 
 
 async def get_active_current_user(user: User = Depends(get_current_user)) -> User:
-    if not user.is_active:
+    if user:
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"msg": f"User {user.id} banned"},
+            )
+    else:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"msg": f"User {user.email} banned"},
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"msg": f"User do not exist"},
         )
 
     return user
@@ -115,7 +120,7 @@ async def get_admin_user(user: User = Depends(get_active_current_user)) -> User:
 
 
 async def validate_vk_token(
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+        credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     token = credentials.credentials
     service_token = SERVICE_TOKEN
