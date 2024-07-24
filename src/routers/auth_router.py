@@ -169,7 +169,11 @@ async def refresh_token(user: User = Depends(auth_utils.get_current_user_by_refr
     name=doc_data.USER_ME_TITLE,
     description=doc_data.USER_ME_DESCRIPTION,
 )
-async def get_user_me(user: User = Depends(auth_utils.get_active_current_user)):
+async def get_user_me(
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    await user_service.update_user_state(user.id)
     return user
 
 
@@ -217,4 +221,5 @@ async def get_user_profile(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
+    await user_service.update_user_state(user.id)
     return await user_service.get_user_by_id(user_id=user_id)

@@ -63,7 +63,8 @@ class User(Base):
     phone_number = Column(String, nullable=True)
     birth_date = Column(DateTime, nullable=True)
     hashed_password = Column(String, nullable=True)
-
+    latest_study = Column(DateTime, nullable=True)
+    days = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.now)
 
     is_active = Column(Boolean, default=True, nullable=False)
