@@ -41,7 +41,7 @@ ALLOWED_AUDIO_MIME_TYPES: set = {
     "audio/webm",
     "audio/mp3",
     "audio/x-m4a",
-    "audio/x-wav"
+    "audio/x-wav",
 }
 ALLOWED_YOUTUBE_LINK_PATTERNS: set = {
     r"^(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
