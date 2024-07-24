@@ -32,7 +32,7 @@ async def add_topic(
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
     user: User = Depends(auth_utils.get_admin_user),
 ):
-    res = await topic_service.add(topic)
+    res = await topic_service.add(topic.model_dump())
     if not res:
         return topic
     raise HTTPException(
@@ -52,7 +52,7 @@ async def add_subtopic(
     user: User = Depends(auth_utils.get_admin_user),
 ):
     if await topic_service.get([Topic.title == subtopic.topic_title]):
-        res = await subtopic_service.add(subtopic)
+        res = await subtopic_service.add(subtopic.model_dump())
         if not res:
             return subtopic
         raise HTTPException(

@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
@@ -101,6 +102,10 @@ class UserDump(BaseModel):
     avatar_url: Optional[str] = Field(
         examples=["https://uwords.ru/image/logo.png"], default=None
     )
+    latest_study: Optional[datetime] = Field(
+        examples=["2023-05-05 10:30:45.999999"], default=None
+    )
+    days: Optional[int] = Field(examples=[0])
     phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
     birth_date: Optional[datetime] = Field(
         examples=["2023-05-05 10:30:45.999999"], default=None
@@ -112,7 +117,7 @@ class UserCreateEmail(BaseModel):
     password: str = Field(examples=["strongpass"])
     code: str = Field(examples=["Wh18QI"])
     email: EmailStr = Field(examples=["mail@uwords.ru"])
-    username: str = Field(examples=["uwords"])
+    username: Optional[str] = Field(examples=["uwords"])
     birth_date: str = Field(examples=["2023-05-05 10:30:45.999999"])
 
     @field_validator("*", mode="before")
@@ -125,6 +130,26 @@ class UserCreateEmail(BaseModel):
 class UserCreateVk(BaseModel):
     firstname: str = Field(examples=["Uwords"])
     lastname: str = Field(examples=["English App"])
+
+    @field_validator("*", mode="before")
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
+
+
+class UserCreateGoogle(BaseModel):
+    google_id: str = Field(examples=[uuid.uuid4()])
+
+    @field_validator("*", mode="before")
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
+
+
+class UserGoogleLogin(BaseModel):
+    google_id: str = Field(examples=[uuid.uuid4()])
 
     @field_validator("*", mode="before")
     def remove_empty(cls, value):
@@ -149,6 +174,9 @@ class UserCreateDB(BaseModel):
     )
     phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
     birth_date: Optional[datetime] = Field(
+        examples=["2023-05-05 10:30:45.999999"], default=None
+    )
+    latest_study: Optional[datetime] = Field(
         examples=["2023-05-05 10:30:45.999999"], default=None
     )
     is_active: Optional[bool] = Field(examples=[True], default=True)

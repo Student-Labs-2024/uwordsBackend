@@ -16,7 +16,6 @@ from src.services.user_service import UserService
 from src.utils import tokens as token_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
-
 logger = logging.getLogger("[AUTH UTILS]")
 logging.basicConfig(level=logging.INFO)
 
@@ -95,10 +94,16 @@ async def get_current_user_by_refresh(
 
 
 async def get_active_current_user(user: User = Depends(get_current_user)) -> User:
-    if not user.is_active:
+    if user:
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"msg": f"User {user.id} banned"},
+            )
+    else:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"msg": f"User {user.email} banned"},
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"msg": f"User do not exist"},
         )
 
     return user

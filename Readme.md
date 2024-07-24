@@ -1,6 +1,13 @@
 # UWORDS
 Кросплатформенное приложение для изучения языков
 
+![](https://cultofthepartyparrot.com/parrots/hd/congaparrot.gif)
+![](https://cultofthepartyparrot.com/parrots/hd/congaparrot.gif)
+![](https://cultofthepartyparrot.com/parrots/hd/congaparrot.gif)
+![](https://cultofthepartyparrot.com/parrots/hd/congaparrot.gif)
+![](https://cultofthepartyparrot.com/parrots/hd/congaparrot.gif)
+![](https://cultofthepartyparrot.com/parrots/hd/congaparrot.gif)
+
 ## Особенности
 - Онбординг: Введение в приложение для новых пользователей
 

@@ -11,7 +11,7 @@ class TopicService:
     async def add(self, topic: dict):
         try:
             await self.repo.add_one(data=topic)
-        except:
+        except Exception:
             return True
 
     async def get(self, title) -> Union[Topic, SubTopic, None]:

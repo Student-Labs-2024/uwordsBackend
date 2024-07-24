@@ -15,17 +15,18 @@ from src.schemes.schemas import Audio, WordsIdsSchema, YoutubeLink
 from src.config.instance import UPLOAD_DIR
 from src.config import fastapi_docs_config as doc_data
 
-from src.services.file_service import FileService
-from src.services.error_service import ErrorService
-from src.services.audio_service import AudioService
-from src.services.user_word_service import UserWordService
-
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
 from src.utils.dependenes.file_service_fabric import file_service_fabric
+from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 
+from src.services.file_service import FileService
+from src.services.error_service import ErrorService
+from src.services.audio_service import AudioService
+from src.services.user_service import UserService
+from src.services.user_word_service import UserWordService
 
 user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
 
@@ -42,7 +43,6 @@ async def get_user_words(
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-
     user_words: list[UserWord] = await user_words_service.get_user_words(user.id)
     topics = []
     topics_titles = []
@@ -121,11 +121,13 @@ async def get_user_words_for_study(
 async def complete_user_words_learning(
     schema: WordsIdsSchema,
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     await user_words_service.update_progress_word(
         user_id=user.id, words_ids=schema.words_ids
     )
+    await user_service.update_learning_days(user.id)
     return schema
 
 
@@ -141,8 +143,8 @@ async def upload_audio(
     error_service: Annotated[ErrorService, Depends(error_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ) -> Audio:
-    await helper_utils.check_mime_type(file=file)
     filename = file.filename
+    await helper_utils.check_mime_type(filename)
     _, extension = os.path.splitext(filename)
     uploaded_at = datetime.now()
 

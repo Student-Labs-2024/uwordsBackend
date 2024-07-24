@@ -3,8 +3,15 @@ import pytest
 from src.utils.auth import hash_password, validate_password
 
 
-def test_hash_password():
-    password = "my_secure_password"
+@pytest.mark.parametrize(
+    "password",
+    [
+        "my_secure_password",
+        "123456789",
+        "gf98degdfsg1",
+    ],
+)
+def test_hash_password(password):
 
     hashed_password = hash_password(password)
 
