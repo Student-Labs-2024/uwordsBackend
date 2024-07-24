@@ -1,13 +1,13 @@
 import re
 import mimetypes
 
-from fastapi import HTTPException, status, UploadFile
+from fastapi import HTTPException, status
 
 from src.config.instance import ALLOWED_AUDIO_MIME_TYPES, ALLOWED_YOUTUBE_LINK_PATTERNS
 
 
-async def check_mime_type(file: UploadFile) -> bool:
-    mime_type = mimetypes.guess_type(url=file.filename)[0]
+async def check_mime_type(filename: str) -> bool:
+    mime_type = mimetypes.guess_type(filename)[0]
 
     if mime_type not in ALLOWED_AUDIO_MIME_TYPES:
         raise HTTPException(
