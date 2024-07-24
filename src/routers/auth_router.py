@@ -14,6 +14,8 @@ from src.schemes.schemas import (
     UserUpdate,
     UserCreateVk,
     UserEmailLogin,
+    UserCreateGoogle,
+    UserGoogleLogin,
 )
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
@@ -85,6 +87,24 @@ async def register_vk_user(
 
 
 @auth_router_v1.post(
+    "/register/google",
+    response_model=UserDump,
+    name=doc_data.USER_REGISTER_GOOGLE_TITLE,
+    description=doc_data.USER_REGISTER_GOOGLE_DESCRIPTION,
+)
+async def register_google_user(
+    user_data: UserCreateGoogle,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+):
+    user = await user_service.create_user(
+        data=user_data,
+        uid=user_data.google_id,
+        provider=Providers.google.value,
+    )
+    return user
+
+
+@auth_router_v1.post(
     "/login",
     response_model=TokenInfo,
     name=doc_data.USER_LOGIN_TITLE,
@@ -105,7 +125,7 @@ async def user_login(
     name=doc_data.USER_LOGIN_VK_TITLE,
     description=doc_data.USER_LOGIN_VK_DESCRIPTION,
 )
-async def user_login(
+async def user_login_vk(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     stat=Depends(auth_utils.validate_vk_token),
 ):
@@ -113,6 +133,21 @@ async def user_login(
         return await user_service.auth_user(
             provider=Providers.vk.value, uid=str(stat["response"]["user_id"])
         )
+
+
+@auth_router_v1.post(
+    "/login/google",
+    response_model=TokenInfo,
+    name=doc_data.USER_LOGIN_GOOGLE_TITLE,
+    description=doc_data.USER_LOGIN_GOOGLE_DESCRIPTION,
+)
+async def user_login_google(
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user_data: UserGoogleLogin,
+):
+    return await user_service.auth_user(
+        provider=Providers.google.value, uid=user_data.google_id
+    )
 
 
 @auth_router_v1.get(

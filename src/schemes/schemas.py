@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
@@ -125,6 +126,26 @@ class UserCreateEmail(BaseModel):
 class UserCreateVk(BaseModel):
     firstname: str = Field(examples=["Uwords"])
     lastname: str = Field(examples=["English App"])
+
+    @field_validator("*", mode="before")
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
+
+
+class UserCreateGoogle(BaseModel):
+    google_id: str = Field(examples=[uuid.uuid4()])
+
+    @field_validator("*", mode="before")
+    def remove_empty(cls, value):
+        if value == "":
+            return None
+        return value
+
+
+class UserGoogleLogin(BaseModel):
+    google_id: str = Field(examples=[uuid.uuid4()])
 
     @field_validator("*", mode="before")
     def remove_empty(cls, value):
