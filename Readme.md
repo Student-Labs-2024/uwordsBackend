@@ -52,6 +52,16 @@ pre-commit run --all-files
 pre-commit install --hook-type commit-msg
 ```
 
+Перед коммитом проверять код линтером Black
+```shell
+python -m black ./src --check
+```
+
+В случае замечаний линтера выполнить команду
+```shell
+python -m black ./src
+```
+
 Пример .env можно увидеть в следующих файлах:
 - env.dev.example
 - env.dev.db.example
