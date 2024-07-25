@@ -53,7 +53,7 @@ USER_LOGIN_VK_DESCRIPTION = """\
 
 USER_LOGIN_GOOGLE_DESCRIPTION = """\
 Метод, отвечающий за вход в приложение через провайдера Google. \
-В заголовке нужно передавать uid от firebase. \
+В теле запроса нужно передавать uid от firebase. \
 На выходе получается JWT ACCESS токен (нужный для доступа к системе) \
 и JWT REFRESH токен (нужный для обновления ACCESS)\
 """
