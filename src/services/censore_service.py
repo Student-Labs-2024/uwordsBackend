@@ -38,7 +38,9 @@ class CensoreFilter:
 class ImageSafetyVision:
 
     @staticmethod
-    async def check_image_safety(image_content: bytes) -> Tuple[bool, List[Dict[str, str]]]:
+    async def check_image_safety(
+        image_content: bytes,
+    ) -> Tuple[bool, List[Dict[str, str]]]:
         image = Image(content=image_content)
 
         response = google_vision.safe_search_detection(image=image)
@@ -49,34 +51,42 @@ class ImageSafetyVision:
 
         if safe.adult >= IMAGE_SAFETY_INDEX:
             logger.info(f"[IMAGE SAFETY] Adult: {IMAGE_SAFETY_SCALE[safe.adult]}")
-            annotations.append({
-                "type": ImageAnnotations.adult.value,
-                "value": IMAGE_SAFETY_SCALE[safe.adult]
-            })
+            annotations.append(
+                {
+                    "type": ImageAnnotations.adult.value,
+                    "value": IMAGE_SAFETY_SCALE[safe.adult],
+                }
+            )
             is_safe = False
 
         if safe.medical >= IMAGE_SAFETY_INDEX:
             logger.info(f"[IMAGE SAFETY] Medical: {IMAGE_SAFETY_SCALE[safe.medical]}")
-            annotations.append({
-                "type": ImageAnnotations.medical.value,
-                "value": IMAGE_SAFETY_SCALE[safe.medical]
-            })
+            annotations.append(
+                {
+                    "type": ImageAnnotations.medical.value,
+                    "value": IMAGE_SAFETY_SCALE[safe.medical],
+                }
+            )
             is_safe = False
 
         if safe.violence >= IMAGE_SAFETY_INDEX:
             logger.info(f"[IMAGE SAFETY] Violence: {IMAGE_SAFETY_SCALE[safe.violence]}")
-            annotations.append({
-                "type": ImageAnnotations.violence.value,
-                "value": IMAGE_SAFETY_SCALE[safe.violence]
-            })
+            annotations.append(
+                {
+                    "type": ImageAnnotations.violence.value,
+                    "value": IMAGE_SAFETY_SCALE[safe.violence],
+                }
+            )
             is_safe = False
 
         if safe.racy >= IMAGE_SAFETY_INDEX:
             logger.info(f"[IMAGE SAFETY] Racy: {IMAGE_SAFETY_SCALE[safe.racy]}")
-            annotations.append({
-                "type": ImageAnnotations.racy.value,
-                "value": IMAGE_SAFETY_SCALE[safe.racy]
-            })
+            annotations.append(
+                {
+                    "type": ImageAnnotations.racy.value,
+                    "value": IMAGE_SAFETY_SCALE[safe.racy],
+                }
+            )
             is_safe = False
 
         return is_safe, annotations
