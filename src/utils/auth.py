@@ -136,10 +136,3 @@ async def validate_vk_token(
         raise HTTPException(
             detail="Invalid token", status_code=status.HTTP_401_UNAUTHORIZED
         )
-
-
-class Providers(Enum):
-    email = "email"
-    vk = "vk"
-    google = "google"
-    admin = "admin"

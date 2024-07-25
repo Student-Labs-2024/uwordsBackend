@@ -31,8 +31,12 @@ class WordService:
         self, en_value: str, ru_value: str, topic_title: str, subtopic_title: str
     ) -> Union[Word, None]:
         try:
-            audio_link = await AudioService.word_to_speech(word=en_value)
             picture_link = await AudioService.download_picture(word=en_value)
+
+            if not picture_link:
+                return None
+
+            audio_link = await AudioService.word_to_speech(word=en_value)
 
             word = await self.repo.add_one(
                 {
@@ -48,3 +52,4 @@ class WordService:
 
         except BaseException as e:
             logger.info(f"[UPLOAD WORD] ERROR: {e}")
+            return None

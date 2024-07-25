@@ -1,28 +1,33 @@
 import os
-from pathlib import Path
 import uuid
 import yt_dlp
 import ffmpeg
-import asyncio
 import logging
-from io import BytesIO
 from gtts import gTTS
+from io import BytesIO
+from pathlib import Path
 from pydub import AudioSegment
 from typing import Union, Tuple
 from speech_recognition import AudioFile
 
 from src.schemes.schemas import ErrorCreate
+from src.schemes.enums import ImageAnnotations
 
 from src.services.services_config import sr
 from src.services.error_service import ErrorService
 from src.services.minio_uploader import MinioUploader
 from src.services.image_service import ImageDownloader
+from src.services.censore_service import ImageSafetyVision
 
 from src.config.instance import (
     MINIO_BUCKET_VOICEOVER,
     MINIO_HOST,
     UPLOAD_DIR,
     MINIO_BUCKET_PICTURE,
+    MINIO_BUCKET_PICTURE_ADULT,
+    MINIO_BUCKET_PICTURE_MEDICAL,
+    MINIO_BUCKET_PICTURE_VIOLENCE,
+    MINIO_BUCKET_PICTURE_RACY,
 )
 
 
@@ -187,24 +192,61 @@ class AudioService:
             return None
 
     @staticmethod
-    async def download_picture(word: str) -> Union[str, None]:
+    async def download_picture(
+        word: str,
+    ) -> Union[str, None]:
         try:
             image_data = await ImageDownloader.get_image_data(word=word)
+
             bytes_file = BytesIO(image_data)
             bytes_file.seek(0)
 
-            object_name = f'{"_".join(word.lower().split())}.jpg'
-
-            await MinioUploader.upload_object(
-                bucket_name=MINIO_BUCKET_PICTURE,
-                object_name=object_name,
-                data=bytes_file,
-                lenght=bytes_file.getbuffer().nbytes,
-                type="image/jpeg",
+            is_safe, annotations = await ImageSafetyVision.check_image_safety(
+                image_content=image_data
             )
 
-            return f"{MINIO_HOST}/{MINIO_BUCKET_PICTURE}/{object_name}"
+            object_name = f'{"_".join(word.lower().split())}.jpg'
+
+            if is_safe:
+
+                await MinioUploader.upload_object(
+                    bucket_name=MINIO_BUCKET_PICTURE,
+                    object_name=object_name,
+                    data=bytes_file,
+                    lenght=bytes_file.getbuffer().nbytes,
+                    type="image/jpeg",
+                )
+
+                return f"{MINIO_HOST}/{MINIO_BUCKET_PICTURE}/{object_name}"
+
+            for annotation in annotations:
+                match annotation["type"]:
+                    case ImageAnnotations.adult.value:
+                        bucket_name = MINIO_BUCKET_PICTURE_ADULT
+                    case ImageAnnotations.medical.value:
+                        bucket_name = MINIO_BUCKET_PICTURE_MEDICAL
+                    case ImageAnnotations.violence.value:
+                        bucket_name = MINIO_BUCKET_PICTURE_VIOLENCE
+                    case ImageAnnotations.racy.value:
+                        bucket_name = MINIO_BUCKET_PICTURE_RACY
+
+                annotation_value = annotation["value"]
+
+                object_name = f'{annotation_value}-{"_".join(word.lower().split())}.jpg'
+
+                await MinioUploader.upload_object(
+                    bucket_name=bucket_name,
+                    object_name=object_name,
+                    data=bytes_file,
+                    lenght=bytes_file.getbuffer().nbytes,
+                    type="image/jpeg",
+                )
+
+                link = f"{MINIO_HOST}/{bucket_name}/{object_name}"
+
+                logger.info(f"[IMAGE SAFETY] Image not safety: {link}")
+                return None
 
         except BaseException as e:
             logger.info(f"[DOWNLOAD PICTURE] Error: {e}")
-            return None
+            return None, None

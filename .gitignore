@@ -8,22 +8,23 @@ keys.json
 **.mp3
 
 # chroma
-chroma_db/chroma.sqlite3
 **.bin
 chroma.sqlite3
+chroma_db/chroma.sqlite3
 
 # dirs
+.pytest_cache/
+minio-storage/
 postgres-data/
+test-postgres-data/
+
+.venv/
 venv/
 .idea/
 **/__pycache__
-minio-storage/
-test-postgres-data/
-src/migrations/versions/**.py
-.pytest_cache/
 
 # conf
 nginx-prod.conf
-key
-key.pub
 docker-compose.yml
+google_credentials.json
+src/migrations/versions/**.py
