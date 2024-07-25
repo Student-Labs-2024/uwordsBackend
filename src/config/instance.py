@@ -51,6 +51,15 @@ ALLOWED_YOUTUBE_LINK_PATTERNS: set = {
 STUDY_DELAY: int = 86400  # seconds
 STUDY_MAX_PROGRESS: int = 3
 STUDY_WORDS_AMOUNT: int = 4
+IMAGE_SAFETY_INDEX: int = 3
+IMAGE_SAFETY_SCALE: list = [
+    "UNKNOWN",
+    "VERY_UNLIKELY",
+    "UNLIKELY",
+    "POSSIBLE",
+    "LIKELY",
+    "VERY_LIKELY",
+]
 
 # TOKEN SETTINGS
 JWT_ALGORITHM: str = "HS256"
@@ -75,3 +84,9 @@ EMAIL_CODE_LEN: str = os.environ.get("EMAIL_CODE_LEN")
 
 # VK
 SERVICE_TOKEN = os.environ.get("SERVICE_TOKEN")
+
+# GOOGLE CLOUD
+GOOGLE_APPLICATION_CREDENTIALS: Path = (
+    BASE_DIR / "src" / "config" / "json_configs" / "google_credentials.json"
+)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS.__str__()

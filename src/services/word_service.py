@@ -4,6 +4,7 @@ from typing import Union
 from src.database.models import Word
 from src.services.audio_service import AudioService
 from src.utils.repository import AbstractRepository
+from src.services.censore_service import ImageSafetyVision
 
 
 logger = logging.getLogger("[SERVICES WORDS]")
@@ -31,8 +32,19 @@ class WordService:
         self, en_value: str, ru_value: str, topic_title: str, subtopic_title: str
     ) -> Union[Word, None]:
         try:
+            image_content, picture_link = await AudioService.download_picture(
+                word=en_value
+            )
+
+            is_safe = await ImageSafetyVision.check_image_safety(
+                image_content=image_content
+            )
+
+            if not is_safe:
+                logger.info(f"[UPLOAD WORD] Image not safety: {picture_link}")
+                return None
+
             audio_link = await AudioService.word_to_speech(word=en_value)
-            picture_link = await AudioService.download_picture(word=en_value)
 
             word = await self.repo.add_one(
                 {
@@ -48,3 +60,4 @@ class WordService:
 
         except BaseException as e:
             logger.info(f"[UPLOAD WORD] ERROR: {e}")
+            return None

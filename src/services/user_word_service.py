@@ -126,6 +126,10 @@ class UserWordService:
                 logger.info(f"[UPLOAD WORD] CENSORE: {ru_value}")
                 return None
 
+            if CensoreFilter.is_censore(text=en_value):
+                logger.info(f"[UPLOAD WORD] CENSORE: {en_value}")
+                return None
+
             word = await word_service.get_word(en_value=en_value)
 
             if not word:
@@ -139,6 +143,10 @@ class UserWordService:
                     topic_title=subtopic.topic_title,
                     subtopic_title=subtopic_title,
                 )
+
+                if not word:
+                    return False
+
                 is_new = True
             user_word = await self.get_user_word(user_id=user_id, word_id=word.id)
             if not user_word:

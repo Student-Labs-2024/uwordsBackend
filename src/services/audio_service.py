@@ -187,9 +187,12 @@ class AudioService:
             return None
 
     @staticmethod
-    async def download_picture(word: str) -> Union[str, None]:
+    async def download_picture(
+        word: str,
+    ) -> Union[Tuple[bytes, str], Tuple[None, None]]:
         try:
             image_data = await ImageDownloader.get_image_data(word=word)
+
             bytes_file = BytesIO(image_data)
             bytes_file.seek(0)
 
@@ -203,8 +206,8 @@ class AudioService:
                 type="image/jpeg",
             )
 
-            return f"{MINIO_HOST}/{MINIO_BUCKET_PICTURE}/{object_name}"
+            return image_data, f"{MINIO_HOST}/{MINIO_BUCKET_PICTURE}/{object_name}"
 
         except BaseException as e:
             logger.info(f"[DOWNLOAD PICTURE] Error: {e}")
-            return None
+            return None, None
