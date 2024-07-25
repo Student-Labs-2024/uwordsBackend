@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 
 from src.database.models import User
 
+from src.schemes.enums import Providers
 from src.schemes.schemas import (
     UserCreateDB,
     TokenInfo,
@@ -37,19 +38,19 @@ class UserService:
     ) -> Union[User, None]:
         try:
             match provider:
-                case auth_utils.Providers.email.value:
+                case Providers.email.value:
                     return await self.repo.get_one(
                         [User.email == unique, User.provider == provider]
                     )
-                case auth_utils.Providers.vk.value:
+                case Providers.vk.value:
                     return await self.repo.get_one(
                         [User.vk_id == unique, User.provider == provider]
                     )
-                case auth_utils.Providers.google.value:
+                case Providers.google.value:
                     return await self.repo.get_one(
                         [User.google_id == unique, User.provider == provider]
                     )
-                case auth_utils.Providers.admin.value:
+                case Providers.admin.value:
                     return await self.repo.get_one(
                         [User.email == unique, User.provider == provider]
                     )
@@ -73,7 +74,7 @@ class UserService:
             except:
                 birth_date = None
             match provider:
-                case auth_utils.Providers.email.value:
+                case Providers.email.value:
                     hashed_password: bytes = auth_utils.hash_password(
                         password=data.password
                     )
@@ -83,7 +84,7 @@ class UserService:
                         hashed_password=hashed_password.decode(),
                         **user_data_db,
                     )
-                case auth_utils.Providers.admin.value:
+                case Providers.admin.value:
                     hashed_password: bytes = auth_utils.hash_password(
                         password=data.password
                     )
@@ -94,14 +95,14 @@ class UserService:
                         is_superuser=True,
                         **user_data_db,
                     )
-                case auth_utils.Providers.vk.value:
+                case Providers.vk.value:
                     user_data_db = UserCreateDB(
                         birth_date=birth_date,
                         vk_id=uid,
                         provider=provider,
                         **user_data_db,
                     )
-                case auth_utils.Providers.google.value:
+                case Providers.google.value:
                     user_data_db = UserCreateDB(
                         birth_date=birth_date, google_id=uid, provider=provider
                     )
@@ -117,9 +118,9 @@ class UserService:
         uid=None,
     ) -> TokenInfo:
         match provider:
-            case auth_utils.Providers.email.value:
+            case Providers.email.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=auth_utils.Providers.email.value
+                    unique=login_data.email, provider=Providers.email.value
                 )
                 if not user:
                     raise HTTPException(
@@ -137,9 +138,9 @@ class UserService:
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail={"msg": f"Incorrect password"},
                     )
-            case auth_utils.Providers.admin.value:
+            case Providers.admin.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=auth_utils.Providers.admin.value
+                    unique=login_data.email, provider=Providers.admin.value
                 )
                 if not user:
                     raise HTTPException(
@@ -157,18 +158,18 @@ class UserService:
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail={"msg": f"Incorrect password"},
                     )
-            case auth_utils.Providers.vk.value:
+            case Providers.vk.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=auth_utils.Providers.vk.value
+                    unique=uid, provider=Providers.vk.value
                 )
                 if not user:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail={"msg": f"User with vk {uid} does not exists"},
                     )
-            case auth_utils.Providers.google.value:
+            case Providers.google.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=auth_utils.Providers.google.value
+                    unique=uid, provider=Providers.google.value
                 )
                 if not user:
                     raise HTTPException(
@@ -207,18 +208,26 @@ class UserService:
 
     async def update_learning_days(self, uid):
         user = await self.get_user_by_id(uid)
-        user_time_delta = datetime.now() - user.latest_study
-        if not user.latest_study or (
-            timedelta(hours=24) < user_time_delta < timedelta(hours=48)
-        ):
+        try:
+            user_days_delta = (
+                datetime.date(datetime.now()) - user.latest_study.date()
+            ).days
+        except:
+            user_days_delta = None
+        if not user_days_delta or (user_days_delta == 1):
             await self.update_user(
                 user.id, {"latest_study": datetime.now(), "days": user.days + 1}
             )
-        if user_time_delta >= timedelta(hours=48):
+        if user_days_delta and user_days_delta >= 2:
             await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
 
     async def update_user_state(self, uid):
         user = await self.get_user_by_id(uid)
-        user_time_delta = datetime.now() - user.latest_study
-        if user_time_delta >= timedelta(hours=48):
+        try:
+            user_days_delta = (
+                datetime.date(datetime.now()) - user.latest_study.date()
+            ).days
+        except:
+            user_days_delta = None
+        if user_days_delta and user_days_delta >= 2:
             await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})

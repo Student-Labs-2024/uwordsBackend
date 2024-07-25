@@ -2,10 +2,15 @@ import logging
 from typing import Annotated
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
-from src.config import fastapi_docs_config as doc_data
+
 from src.database.models import User
+
+from src.config import fastapi_docs_config as doc_data
+
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
+
+from src.schemes.enums import Providers
 from src.schemes.schemas import (
     CustomResponse,
     TokenInfo,
@@ -17,10 +22,11 @@ from src.schemes.schemas import (
     UserCreateGoogle,
     UserGoogleLogin,
 )
+
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
-from src.utils.auth import Providers
 from src.utils.dependenes.user_service_fabric import user_service_fabric
+
 
 logger = logging.getLogger("[ROUTER AUTH]")
 logging.basicConfig(level=logging.INFO)
@@ -96,6 +102,13 @@ async def register_google_user(
     user_data: UserCreateGoogle,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
+    if await user_service.get_user_by_provider(
+        unique=user_data.google_id, provider=Providers.google.value
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": f"User with google id {user_data.google_id} already exists"},
+        )
     user = await user_service.create_user(
         data=user_data,
         uid=user_data.google_id,
@@ -212,7 +225,7 @@ async def delete_user(
 
 @auth_router_v1.get(
     "/{user_id}",
-    response_model=UserDump,
+    response_model=UserDump | None,
     name=doc_data.USER_PROFILE_TITLE,
     description=doc_data.USER_PROFILE_DESCRIPTION,
 )

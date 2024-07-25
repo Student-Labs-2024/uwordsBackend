@@ -37,6 +37,8 @@ jobs:
     - name: Run tests
       env:
         ENV: ${{ secrets.TEST_ENV }}
+        GOOGLE_CREDENTIALS: ${{ secrets.TEST_GOOGLE_CREDENTIALS }}
       run: |
         echo "$ENV" > .env
+        echo "$GOOGLE_CREDENTIALS" > ./src/config/json_configs/google_credentials.json
         python -m pytest -p no:warnings -o log_cli=true
