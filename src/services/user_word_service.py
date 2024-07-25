@@ -14,11 +14,15 @@ from src.services.minio_uploader import MinioUploader
 from src.services.censore_service import CensoreFilter
 
 from src.config.instance import (
-    MINIO_BUCKET_VOICEOVER,
-    MINIO_BUCKET_PICTURE,
     STUDY_DELAY,
     STUDY_MAX_PROGRESS,
     STUDY_WORDS_AMOUNT,
+    MINIO_BUCKET_PICTURE,
+    MINIO_BUCKET_VOICEOVER,
+    MINIO_BUCKET_PICTURE_RACY,
+    MINIO_BUCKET_PICTURE_ADULT,
+    MINIO_BUCKET_PICTURE_MEDICAL,
+    MINIO_BUCKET_PICTURE_VIOLENCE,
 )
 
 
@@ -189,6 +193,26 @@ class UserWordService:
             found_picture_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE)
             if not found_picture_bucket:
                 await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE)
+
+            found_picture_adult_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE_ADULT)
+            if not found_picture_adult_bucket:
+                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_ADULT)
+
+            found_picture_medical_bucket = mc.bucket_exists(
+                MINIO_BUCKET_PICTURE_MEDICAL
+            )
+            if not found_picture_medical_bucket:
+                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_MEDICAL)
+
+            found_picture_violence_bucket = mc.bucket_exists(
+                MINIO_BUCKET_PICTURE_VIOLENCE
+            )
+            if not found_picture_violence_bucket:
+                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_VIOLENCE)
+
+            found_picture_racy_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE_RACY)
+            if not found_picture_racy_bucket:
+                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_RACY)
 
             new_words = 0
             all_words = len(user_words)

@@ -2,10 +2,15 @@ import logging
 from typing import Annotated
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
-from src.config import fastapi_docs_config as doc_data
+
 from src.database.models import User
+
+from src.config import fastapi_docs_config as doc_data
+
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
+
+from src.schemes.enums import Providers
 from src.schemes.schemas import (
     CustomResponse,
     TokenInfo,
@@ -17,10 +22,11 @@ from src.schemes.schemas import (
     UserCreateGoogle,
     UserGoogleLogin,
 )
+
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
-from src.utils.auth import Providers
 from src.utils.dependenes.user_service_fabric import user_service_fabric
+
 
 logger = logging.getLogger("[ROUTER AUTH]")
 logging.basicConfig(level=logging.INFO)
