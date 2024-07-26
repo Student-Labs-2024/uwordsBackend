@@ -16,12 +16,12 @@ from src.schemes.schemas import (
 )
 
 from src.services.user_service import UserService
-from src.config import fastapi_docs_config as doc_data
 
 from src.utils import auth as auth_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
 from src.config.instance import FASTAPI_SECRET
+from src.config import fastapi_docs_config as doc_data
 
 
 logger = logging.getLogger("[ROUTER ADMIN]")

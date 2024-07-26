@@ -1,6 +1,6 @@
 import logging
-from datetime import datetime, timedelta
 from typing import Union
+from datetime import datetime
 from dateutil.parser import parse
 from fastapi import HTTPException, status
 
@@ -12,6 +12,9 @@ from src.schemes.schemas import (
     TokenInfo,
     UserEmailLogin,
     AdminEmailLogin,
+    UserCreateVk,
+    UserCreateEmail,
+    UserCreateGoogle,
 )
 
 from src.utils import auth as auth_utils
@@ -29,6 +32,7 @@ class UserService:
     async def get_user_by_id(self, user_id: int) -> Union[User, None]:
         try:
             return await self.repo.get_one(filters=[User.id == user_id])
+
         except Exception as e:
             logger.info(f"[GET USER by ID] Error: {e}")
             return None
@@ -65,7 +69,12 @@ class UserService:
             logger.info(f"[GET USER by EMAIL] Error: {e}")
             return None
 
-    async def create_user(self, data, provider, uid: str = None) -> Union[User, None]:
+    async def create_user(
+        self,
+        data: Union[UserCreateVk, UserCreateEmail, UserCreateGoogle],
+        provider: str,
+        uid: str = None,
+    ) -> Union[User, None]:
         try:
             user_data_db = data.model_dump()
             try:
@@ -113,8 +122,8 @@ class UserService:
 
     async def auth_user(
         self,
-        provider,
-        login_data: UserEmailLogin | AdminEmailLogin | None = None,
+        provider: str,
+        login_data: Union[UserEmailLogin, AdminEmailLogin, None] = None,
         uid=None,
     ) -> TokenInfo:
         match provider:
