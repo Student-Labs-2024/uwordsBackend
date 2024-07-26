@@ -1,4 +1,5 @@
 import jwt
+from typing import Dict
 from datetime import datetime, timedelta
 
 from src.database.models import User
@@ -12,7 +13,7 @@ from src.config.instance import (
 
 
 def encode_jwt(
-    payload: dict,
+    payload: Dict,
     key: str = FASTAPI_SECRET,
     algorithm: str = JWT_ALGORITHM,
 ) -> str:
@@ -36,14 +37,14 @@ def encode_jwt(
 
 def decode_jwt(
     token: str, key: str = FASTAPI_SECRET, algorithm: str = JWT_ALGORITHM
-) -> dict:
+) -> Dict:
 
     decode = jwt.decode(jwt=token, key=key, algorithms=[algorithm])
 
     return decode
 
 
-def create_jwt(token_type: str, payload: dict) -> str:
+def create_jwt(token_type: str, payload: Dict) -> str:
 
     jwt_payload = {"type": token_type}
     jwt_payload.update(payload)

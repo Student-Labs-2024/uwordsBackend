@@ -2,7 +2,7 @@ import json
 import bcrypt
 import logging
 import requests
-from enum import Enum
+from typing import List, Union, Dict
 from jwt import InvalidTokenError
 
 from fastapi import Depends, HTTPException, status
@@ -67,7 +67,7 @@ async def validate_token(payload: dict, token_type: str) -> bool:
 async def get_user_by_token(
     payload: dict, user_service: UserService = user_service_fabric()
 ) -> User:
-    user_id: int | None = payload.get("user_id")
+    user_id: Union[int, None] = payload.get("user_id")
 
     if not user_id:
         raise HTTPException(
@@ -80,14 +80,14 @@ async def get_user_by_token(
 
 
 async def get_current_user(
-    payload: dict = Depends(get_current_token_payload),
+    payload: Dict = Depends(get_current_token_payload),
 ) -> User:
     await validate_token(payload=payload, token_type="access")
     return await get_user_by_token(payload=payload)
 
 
 async def get_current_user_by_refresh(
-    payload: dict = Depends(get_current_token_payload),
+    payload: Dict = Depends(get_current_token_payload),
 ) -> User:
     await validate_token(payload=payload, token_type="refresh")
     return await get_user_by_token(payload=payload)

@@ -1,7 +1,7 @@
 import uuid
 from pathlib import Path
-from typing import Optional, Union
 from datetime import datetime
+from typing import Optional, Union
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
 

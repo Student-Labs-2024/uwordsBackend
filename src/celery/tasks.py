@@ -1,8 +1,8 @@
 import os
 import asyncio
 import logging
-from asgiref.sync import async_to_sync
 from langdetect import detect
+from asgiref.sync import async_to_sync
 from concurrent.futures import ThreadPoolExecutor
 from celery.exceptions import MaxRetriesExceededError
 
@@ -10,14 +10,15 @@ from src.config.celery_app import app
 
 from src.schemes.schemas import ErrorCreate
 
+from src.services.text_service import TextService
 from src.services.audio_service import AudioService
 from src.services.email_service import EmailService
 from src.services.error_service import ErrorService
-from src.services.text_service import TextService
 
+from src.services.word_service import WordService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
-from src.services.word_service import WordService
+
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
@@ -29,8 +30,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 @app.task(bind=True, name="Email_send", max_retries=2)
-def send_email_task(self, email, code):
-    EmailService.send_email(email, code)
+def send_email_task(self, email: str, code: str):
+    EmailService.send_email(email=email, code=code)
 
 
 @app.task(bind=True, name="upload_video", max_retries=2)

@@ -1,6 +1,6 @@
 import logging
+from typing import Union, List, Dict
 from datetime import datetime, timedelta
-from typing import Union, List
 
 from src.schemes.schemas import ErrorCreate
 from src.utils.repository import AbstractRepository
@@ -52,7 +52,7 @@ class UserWordService:
             return None
 
     async def get_user_words_for_study(
-        self, user_id: int, topic_title: str, subtopic_title: str | None = None
+        self, user_id: int, topic_title: str, subtopic_title: Union[str, None] = None
     ) -> Union[List[UserWord], List]:
         try:
             if not subtopic_title:
@@ -94,7 +94,7 @@ class UserWordService:
             logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
 
-    async def update_progress_word(self, user_id: int, words_ids: list[int]) -> None:
+    async def update_progress_word(self, user_id: int, words_ids: List[int]) -> None:
         try:
             time_now = datetime.now()
             learned = 0
@@ -114,7 +114,7 @@ class UserWordService:
 
     async def upload_user_word(
         self,
-        new_word: dict,
+        new_word: Dict,
         user_id: int,
         word_service: WordService,
         subtopic_service: TopicService,
@@ -179,7 +179,7 @@ class UserWordService:
 
     async def upload_user_words(
         self,
-        user_words: list[dict],
+        user_words: List[Dict],
         user_id: int,
         word_service: WordService,
         subtopic_service: TopicService,
