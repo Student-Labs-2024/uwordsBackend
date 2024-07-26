@@ -2,8 +2,11 @@ import logging
 from typing import Union
 
 from src.database.models import Word
-from src.services.audio_service import AudioService
+
 from src.utils.repository import AbstractRepository
+
+from src.services.audio_service import AudioService
+from src.services.image_service import ImageDownloader
 
 
 logger = logging.getLogger("[SERVICES WORDS]")
@@ -31,7 +34,7 @@ class WordService:
         self, en_value: str, ru_value: str, topic_title: str, subtopic_title: str
     ) -> Union[Word, None]:
         try:
-            picture_link = await AudioService.download_picture(word=en_value)
+            picture_link = await ImageDownloader.download_picture(word=en_value)
 
             if not picture_link:
                 return None

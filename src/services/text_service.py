@@ -1,10 +1,10 @@
 import string
-import asyncio
 import logging
 from typing import Union, List, Dict
 from deep_translator.google import GoogleTranslator
 
 from src.schemes.schemas import ErrorCreate
+
 from src.services.error_service import ErrorService
 from src.services.services_config import ma, STOPWORDS
 
@@ -37,7 +37,7 @@ class TextService:
 
     async def remove_stop_words(
         text: str, error_service: ErrorService, user_id: int
-    ) -> Union[list[str], None]:
+    ) -> Union[List[str], None]:
         try:
             return [word for word in text.split() if word not in STOPWORDS]
 
@@ -105,7 +105,7 @@ class TextService:
         to_lang: str,
         error_service: ErrorService,
         user_id: int,
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Union[str, int]]]:
 
         translated_words = []
 

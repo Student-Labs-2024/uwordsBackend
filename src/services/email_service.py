@@ -27,18 +27,24 @@ class EmailService:
         try:
             code_db: str = redis_connection.get(email).decode("utf-8")
             attempts: bytes = redis_connection.get(email + "attempts")
+
             if attempts:
                 attempts: int = int(attempts.decode("utf-8"))
+
             else:
                 attempts: int = 1
+
             if attempts > int(EMAIL_CODE_ATTEMPTS):
                 redis_connection.delete(*[email, email + "attempts"])
+
                 raise HTTPException(
                     detail="Too many attempts",
                     status_code=status.HTTP_408_REQUEST_TIMEOUT,
                 )
+
             if code_db == code:
                 return True
+
             redis_connection.set(email + "attempts", attempts + 1)
             return False
 
@@ -50,6 +56,7 @@ class EmailService:
     @staticmethod
     def send_email(email: str, code: str) -> None:
         context = ssl.create_default_context()
+
         with smtplib.SMTP_SSL(SMTP_SERVER, int(EMAIL_PORT), context=context) as server:
             server.login(SENDER_EMAIL, EMAIL_PASSWORD)
             server.sendmail(SENDER_EMAIL, email, f"Your code is {code}")
