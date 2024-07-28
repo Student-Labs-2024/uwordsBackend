@@ -207,18 +207,26 @@ class UserService:
 
     async def update_learning_days(self, uid):
         user = await self.get_user_by_id(uid)
-        user_time_delta = datetime.now() - user.latest_study
-        if not user.latest_study or (
-            timedelta(hours=24) < user_time_delta < timedelta(hours=48)
-        ):
+        try:
+            user_days_delta = (
+                datetime.date(datetime.now()) - user.latest_study.date()
+            ).days
+        except:
+            user_days_delta = None
+        if not user_days_delta or (user_days_delta == 1):
             await self.update_user(
                 user.id, {"latest_study": datetime.now(), "days": user.days + 1}
             )
-        if user_time_delta >= timedelta(hours=48):
+        if user_days_delta and user_days_delta >= 2:
             await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
 
     async def update_user_state(self, uid):
         user = await self.get_user_by_id(uid)
-        user_time_delta = datetime.now() - user.latest_study
-        if user_time_delta >= timedelta(hours=48):
+        try:
+            user_days_delta = (
+                datetime.date(datetime.now()) - user.latest_study.date()
+            ).days
+        except:
+            user_days_delta = None
+        if user_days_delta and user_days_delta >= 2:
             await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
