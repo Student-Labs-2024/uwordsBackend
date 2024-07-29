@@ -68,6 +68,7 @@ IMAGE_SAFETY_SCALE: list = [
     "LIKELY",
     "VERY_LIKELY",
 ]
+DEFAULT_SUBTOPIC: str = "Unsorted"
 
 # TOKEN SETTINGS
 JWT_ALGORITHM: str = "HS256"
