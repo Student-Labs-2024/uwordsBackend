@@ -18,6 +18,7 @@ class SubTopic(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
+    pictureLink = Column(String, nullable=True)
     topic_title = Column(String, ForeignKey(Topic.title))
     topic = relationship("Topic", back_populates="subtopics", lazy="selectin")
 

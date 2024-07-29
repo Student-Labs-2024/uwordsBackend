@@ -1,21 +1,32 @@
+from io import BytesIO
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
 from fastapi import HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File
 
 from src.database.models import User, Topic, SubTopic
 
-from src.schemes.schemas import TopicCreate, SubTopicCreate
+from src.schemes.schemas import (
+    SubTopicCreateDB,
+    TopicCreate,
+    SubTopicCreate,
+    SubTopicIcon,
+)
+
+from src.services.services_config import mc
 from src.services.topic_service import TopicService
+from src.services.minio_uploader import MinioUploader
 
 from src.utils import auth as auth_utils
+from src.utils import helpers as helper_utils
 from src.utils.dependenes.chroma_service_fabric import (
     topic_service_fabric,
     subtopic_service_fabric,
 )
 
 from src.config import fastapi_docs_config as doc_data
+from src.config.instance import MINIO_BUCKET_SUBTOPIC_ICONS, MINIO_HOST
 
 
 topic_router_v1 = APIRouter(prefix="/api/v1/topic", tags=["Topic"])
@@ -28,16 +39,16 @@ logging.basicConfig(level=logging.INFO)
     "/add", name=doc_data.TOPIC_ADD_TITLE, description=doc_data.TOPIC_ADD_DESCRIPTION
 )
 async def add_topic(
-    topic: TopicCreate,
+    topic_data: TopicCreate,
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
     user: User = Depends(auth_utils.get_admin_user),
 ):
-    res = await topic_service.add(topic.model_dump())
-    if not res:
-        return topic
-    raise HTTPException(
-        detail="Topic already exist", status_code=status.HTTP_400_BAD_REQUEST
-    )
+    if await topic_service.get([Topic.title == topic_data.title]):
+        raise HTTPException(
+            detail="Topic already exist", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    return await topic_service.add(topic_data.model_dump())
 
 
 @topic_router_v1.post(
@@ -46,22 +57,79 @@ async def add_topic(
     description=doc_data.SUBTOPIC_ADD_DESCRIPTION,
 )
 async def add_subtopic(
-    subtopic: SubTopicCreate,
+    subtopic_data: SubTopicCreate,
+    topic_title: str,
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
     topic_service: Annotated[TopicService, Depends(topic_service_fabric)],
     user: User = Depends(auth_utils.get_admin_user),
 ):
-    if await topic_service.get([Topic.title == subtopic.topic_title]):
-        res = await subtopic_service.add(subtopic.model_dump())
-        if not res:
-            return subtopic
-        raise HTTPException(
-            detail="Subtopic already exist", status_code=status.HTTP_400_BAD_REQUEST
-        )
-    else:
+    topic = await topic_service.get([Topic.title == topic_title])
+
+    if not topic:
         raise HTTPException(
             detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST
         )
+
+    if await subtopic_service.get(
+        [SubTopic.title == subtopic_data.title, SubTopic.topic_title == topic_title]
+    ):
+        raise HTTPException(
+            detail="Subtopic already exist", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    subtopic = SubTopicCreateDB(title=subtopic_data.title, topic_title=topic.title)
+
+    return await subtopic_service.add(subtopic.model_dump())
+
+
+@topic_router_v1.post(
+    "/subtopic/icon",
+    name=doc_data.SUBTOPIC_ADD_ICON_TITLE,
+    description=doc_data.SUBTOPIC_ADD_ICON_DESCRIPTION,
+)
+async def upload_subtopic_icon(
+    subtopic_id: int,
+    subtopic_icon: Annotated[UploadFile, File(description="A file read as UploadFile")],
+    subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user),
+):
+
+    subtopic = await subtopic_service.get([SubTopic.id == subtopic_id])
+
+    if not subtopic:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "Subtopic not found"},
+        )
+
+    mimetype = await helper_utils.check_mime_type_icon(filename=subtopic_icon.filename)
+
+    object_name = f"{subtopic.topic_title}_{subtopic.title}.svg"
+
+    filedata = await subtopic_icon.read()
+
+    bytes_file = BytesIO(filedata)
+    bytes_file.seek(0)
+
+    found_subtopic_icon_bucket = mc.bucket_exists(MINIO_BUCKET_SUBTOPIC_ICONS)
+    if not found_subtopic_icon_bucket:
+        await MinioUploader.create_bucket(MINIO_BUCKET_SUBTOPIC_ICONS)
+
+    await MinioUploader.upload_object(
+        bucket_name=MINIO_BUCKET_SUBTOPIC_ICONS,
+        object_name=object_name,
+        data=bytes_file,
+        lenght=bytes_file.getbuffer().nbytes,
+        type=mimetype,
+    )
+
+    pictureLink = f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/{object_name}"
+
+    subtopic_data = SubTopicIcon(pictureLink=pictureLink)
+
+    return await subtopic_service.update_icon(
+        subtopic_id=subtopic.id, subtopic_data=subtopic_data.model_dump()
+    )
 
 
 @topic_router_v1.get(
