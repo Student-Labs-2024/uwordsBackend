@@ -1,18 +1,25 @@
 import os
 import uuid
 import logging
-from typing import Annotated
+from typing import Annotated, List, Dict
 from datetime import datetime
 from pydub import AudioSegment
 
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, status
 
 from src.celery.tasks import upload_audio_task, upload_youtube_task
 
 from src.database.models import User, UserWord
-from src.schemes.schemas import Audio, WordsIdsSchema, YoutubeLink
+from src.schemes.schemas import (
+    Audio,
+    WordsIdsSchema,
+    YoutubeLink,
+    TopicWords,
+    SubtopicWords,
+    UserWordDumpSchema,
+)
 
-from src.config.instance import UPLOAD_DIR
+from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC
 from src.config import fastapi_docs_config as doc_data
 
 from src.utils import auth as auth_utils
@@ -32,6 +39,101 @@ user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
 
 logger = logging.getLogger("[ROUTER WORDS]")
 logging.basicConfig(level=logging.INFO)
+
+
+@user_router_v1.get(
+    "/topics",
+    name=doc_data.USER_TOPICS_GET_TITLE,
+    description=doc_data.USER_TOPICS_GET_DESCRIPTION,
+    response_model=List[TopicWords],
+)
+async def get_user_topics(
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    user_words = await user_words_service.get_user_words(user_id=user.id)
+
+    topic_dict: Dict[str, Dict[str, List[UserWord]]] = {}
+
+    for user_word in user_words:
+        topic = user_word.word.topic
+        subtopic = user_word.word.subtopic
+
+        if topic not in topic_dict:
+            topic_dict[topic] = {}
+        if subtopic not in topic_dict[topic]:
+            topic_dict[topic][subtopic] = []
+
+        topic_dict[topic][subtopic].append(user_word)
+
+    result = []
+
+    for topic, subtopics in topic_dict.items():
+        topic_entry = TopicWords(title=topic, subtopics=[])
+        unsorted_words = []
+
+        for subtopic, words in subtopics.items():
+            if len(words) < 8:
+                unsorted_words.extend(words)
+            else:
+                word_count = len(words)
+                progress = round(
+                    sum(word.progress for word in words) / (word_count * 4) * 100
+                )
+                subtopic_word = SubtopicWords(
+                    title=subtopic, word_count=word_count, progress=progress
+                )
+                topic_entry.subtopics.append(subtopic_word)
+
+        if unsorted_words:
+            word_count = len(unsorted_words)
+            progress = round(
+                sum(word.progress for word in unsorted_words) / (word_count * 4) * 100
+            )
+            subtopic_word = SubtopicWords(
+                title=DEFAULT_SUBTOPIC, word_count=word_count, progress=progress
+            )
+            topic_entry.subtopics.append(subtopic_word)
+
+        result.append(topic_entry)
+
+    return result
+
+
+@user_router_v1.get(
+    "/subtopic/words",
+    name=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_TITLE,
+    description=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_DESCRIPTION,
+)
+async def get_user_words_by_subtopic(
+    topic_title: str,
+    subtopic_title: str,
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    if subtopic_title != DEFAULT_SUBTOPIC:
+        return await user_words_service.get_user_words_by_filter(
+            user_id=user.id, topic_title=topic_title, subtopic_title=subtopic_title
+        )
+
+    result = []
+    subtopic_word_count = {}
+
+    user_words = await user_words_service.get_user_words_by_filter(
+        user_id=user.id, topic_title=topic_title
+    )
+
+    for user_word in user_words:
+        subtopic = user_word.word.subtopic
+        if subtopic not in subtopic_word_count:
+            subtopic_word_count[subtopic] = 0
+        subtopic_word_count[subtopic] += 1
+
+    for user_word in user_words:
+        if subtopic_word_count[user_word.word.subtopic] < 8:
+            result.append(user_word)
+
+    return result
 
 
 @user_router_v1.get(

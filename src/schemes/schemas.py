@@ -1,7 +1,7 @@
 import uuid
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Union
+from typing import List, Optional, Union
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
@@ -55,7 +55,6 @@ class UserWordDumpSchema(BaseModel):
 
 
 class TopicCreate(BaseModel):
-    id: int = Field(examples=[1])
     title: str = Field(examples=["Animal"])
 
     class ConfigDict:
@@ -63,9 +62,35 @@ class TopicCreate(BaseModel):
 
 
 class SubTopicCreate(BaseModel):
-    id: int = Field(examples=[1])
+    title: str = Field(examples=["Rat"])
+
+    class ConfigDict:
+        from_attributes = True
+
+
+class SubTopicCreateDB(BaseModel):
     title: str = Field(examples=["Rat"])
     topic_title: str = Field(examples=["Animal"])
+
+
+class SubTopicIcon(BaseModel):
+    pictureLink: Optional[str] = Field(
+        examples=["https://app.big-nose.ru/subtopic_icon.svg"], default=None
+    )
+
+
+class SubtopicWords(BaseModel):
+    title: str
+    word_count: int
+    progress: float
+
+    class ConfigDict:
+        from_attributes = True
+
+
+class TopicWords(BaseModel):
+    title: str
+    subtopics: List[SubtopicWords]
 
     class ConfigDict:
         from_attributes = True
