@@ -39,26 +39,26 @@ class UserWordService:
         return await self.repo.get_all_by_filter(
             [UserWord.user_id == user_id], UserWord.frequency.desc()
         )
-    
+
     async def get_user_words_by_filter(
-            self, user_id: int, topic_title: str, subtopic_title: Union[str, None] = None
+        self, user_id: int, topic_title: str, subtopic_title: Union[str, None] = None
     ) -> Union[List[UserWord], List]:
-        try: 
+        try:
             if not subtopic_title:
                 return await self.repo.get_all_by_filter(
                     filters=[
                         UserWord.user_id == user_id,
-                        UserWord.word.has(Word.topic == topic_title)
-                    ]
-                )
-            
-            return await self.repo.get_all_by_filter(
-                    filters=[
-                        UserWord.user_id == user_id,
                         UserWord.word.has(Word.topic == topic_title),
-                        UserWord.word.has(Word.subtopic == subtopic_title)
                     ]
                 )
+
+            return await self.repo.get_all_by_filter(
+                filters=[
+                    UserWord.user_id == user_id,
+                    UserWord.word.has(Word.topic == topic_title),
+                    UserWord.word.has(Word.subtopic == subtopic_title),
+                ]
+            )
 
         except Exception as e:
             logger.info(f"[GET USER WORDS By FILTER] ERROR: {e}")

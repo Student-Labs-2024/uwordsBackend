@@ -16,7 +16,7 @@ from src.schemes.schemas import (
     YoutubeLink,
     TopicWords,
     SubtopicWords,
-    UserWordDumpSchema
+    UserWordDumpSchema,
 )
 
 from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC
@@ -103,7 +103,7 @@ async def get_user_topics(
 @user_router_v1.get(
     "/subtopic/words",
     name=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_TITLE,
-    description=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_DESCRIPTION
+    description=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_DESCRIPTION,
 )
 async def get_user_words_by_subtopic(
     topic_title: str,
@@ -113,17 +113,14 @@ async def get_user_words_by_subtopic(
 ):
     if subtopic_title != DEFAULT_SUBTOPIC:
         return await user_words_service.get_user_words_by_filter(
-            user_id=user.id, 
-            topic_title=topic_title,
-            subtopic_title=subtopic_title
+            user_id=user.id, topic_title=topic_title, subtopic_title=subtopic_title
         )
-    
+
     result = []
     subtopic_word_count = {}
 
     user_words = await user_words_service.get_user_words_by_filter(
-        user_id=user.id, 
-        topic_title=topic_title
+        user_id=user.id, topic_title=topic_title
     )
 
     for user_word in user_words:
