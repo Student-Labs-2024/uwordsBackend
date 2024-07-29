@@ -24,6 +24,10 @@ class AbstractRepository(ABC):
         raise NotImplemented()
 
     @abc.abstractmethod
+    def update_one_db(self, filters, values):
+        raise NotImplemented()
+
+    @abc.abstractmethod
     def get_all_by_filter(self, filters=None, order=None, limit=None):
         raise NotImplemented()
 
@@ -67,6 +71,9 @@ class SQLAlchemyRepository(AbstractRepository):
             await session.commit()
             return res.scalar_one()
 
+    async def update_one_db(self, filters, values):
+        pass
+
     async def get_all_by_filter(self, filters=None, order=None, limit=None):
         async with async_session_maker() as session:
             session: AsyncSession
@@ -84,6 +91,9 @@ class SQLAlchemyRepository(AbstractRepository):
 
 class LocalFileRepository(AbstractRepository):
     async def update_one(self, filters, values):
+        pass
+
+    async def update_one_db(self, filters, values):
         pass
 
     async def get_all_by_filter(self, filters, order, limit=None):
@@ -107,6 +117,17 @@ class ChromaRepository(AbstractRepository):
     async def update_one(self, filters, values):
         return self.collection.query(query_texts=[filters], n_results=values)
 
+    async def update_one_db(self, filters, values):
+        async with async_session_maker() as session:
+            session: AsyncSession
+
+            stmt = (
+                update(self.model).filter(*filters).values(values).returning(self.model)
+            )
+            res = await session.execute(stmt)
+            await session.commit()
+            return res.scalar_one()
+
     async def get_all_by_filter(self, filters=None, order=None, limit=None):
         async with async_session_maker() as session:
             session: AsyncSession
@@ -122,15 +143,19 @@ class ChromaRepository(AbstractRepository):
             return res
 
     async def add_one(self, data):
-        self.collection.add(
-            documents=[data["title"]],
-            ids=[str(data["id"])],
-        )
         async with async_session_maker() as session:
             session: AsyncSession
-            stmt = insert(self.model).values(data)
-            await session.execute(stmt)
+            stmt = insert(self.model).values(data).returning(self.model)
+            res = await session.execute(stmt)
             await session.commit()
+            db_object = res.scalar_one_or_none()
+
+        self.collection.add(
+            documents=[db_object.title],
+            ids=[str(db_object.id)],
+        )
+
+        return db_object
 
     async def get_one(self, filters):
         async with async_session_maker() as session:

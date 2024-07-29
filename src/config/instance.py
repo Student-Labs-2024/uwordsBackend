@@ -30,6 +30,7 @@ MINIO_BUCKET_PICTURE_ADULT: str = os.environ.get("MINIO_BUCKET_PICTURE_ADULT")
 MINIO_BUCKET_PICTURE_MEDICAL: str = os.environ.get("MINIO_BUCKET_PICTURE_MEDICAL")
 MINIO_BUCKET_PICTURE_VIOLENCE: str = os.environ.get("MINIO_BUCKET_PICTURE_VIOLENCE")
 MINIO_BUCKET_PICTURE_RACY: str = os.environ.get("MINIO_BUCKET_PICTURE_RACY")
+MINIO_BUCKET_SUBTOPIC_ICONS: str = os.environ.get("MINIO_BUCKET_SUBTOPIC_ICONS")
 MINIO_POLICY_JSON: Path = (
     BASE_DIR / "src" / "config" / "json_configs" / "minio_policy.json"
 )
@@ -47,6 +48,9 @@ ALLOWED_AUDIO_MIME_TYPES: set = {
     "audio/x-m4a",
     "audio/x-wav",
 }
+
+ALLOWED_ICON_MIME_TYPES: set = {"image/svg+xml", "image/svg+xml-compressed"}
+
 ALLOWED_YOUTUBE_LINK_PATTERNS: set = {
     r"^(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
     r"^(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
