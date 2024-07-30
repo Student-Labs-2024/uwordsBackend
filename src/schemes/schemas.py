@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, EmailStr, field_validator
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
     extension: str = Field(examples=[".ogg"])
-    filepath: Union[str, Path] = Field(
+    filepath: str = Field(
         examples=[
             "audio_transfer/audio_6515bf33-e63c-4493-b29d-55f2b70a892d_converted.wav"
         ]
