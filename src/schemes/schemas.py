@@ -83,6 +83,7 @@ class SubtopicWords(BaseModel):
     title: str
     word_count: int
     progress: float
+    pictureLink: str
 
     class ConfigDict:
         from_attributes = True

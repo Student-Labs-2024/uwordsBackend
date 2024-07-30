@@ -19,7 +19,7 @@ from src.schemes.schemas import (
     UserWordDumpSchema,
 )
 
-from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC
+from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC, DEFAULT_SUBTOPIC_ICON
 from src.config import fastapi_docs_config as doc_data
 
 from src.utils import auth as auth_utils
@@ -28,11 +28,13 @@ from src.utils.dependenes.file_service_fabric import file_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
+from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 
 from src.services.file_service import FileService
+from src.services.user_service import UserService
 from src.services.error_service import ErrorService
 from src.services.audio_service import AudioService
-from src.services.user_service import UserService
+from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
 
 user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
@@ -49,9 +51,19 @@ logging.basicConfig(level=logging.INFO)
 )
 async def get_user_topics(
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     user_words = await user_words_service.get_user_words(user_id=user.id)
+
+    subtopics = await subtopic_service.get_all()
+
+    subtopics_icons: Dict[str, Dict[str, str]] = {}
+
+    for subtopic in subtopics:
+        if subtopic.topic_title not in subtopics_icons:
+            subtopics_icons[subtopic.topic_title] = {}
+        subtopics_icons[subtopic.topic_title][subtopic.title] = subtopic.pictureLink
 
     topic_dict: Dict[str, Dict[str, List[UserWord]]] = {}
 
@@ -72,6 +84,8 @@ async def get_user_topics(
         topic_entry = TopicWords(title=topic, subtopics=[])
         unsorted_words = []
 
+        pictureLink = subtopics_icons[topic][subtopic]
+
         for subtopic, words in subtopics.items():
             if len(words) < 8:
                 unsorted_words.extend(words)
@@ -81,7 +95,8 @@ async def get_user_topics(
                     sum(word.progress for word in words) / (word_count * 4) * 100
                 )
                 subtopic_word = SubtopicWords(
-                    title=subtopic, word_count=word_count, progress=progress
+                    title=subtopic, word_count=word_count, progress=progress,
+                    pictureLink=pictureLink
                 )
                 topic_entry.subtopics.append(subtopic_word)
 
@@ -91,7 +106,8 @@ async def get_user_topics(
                 sum(word.progress for word in unsorted_words) / (word_count * 4) * 100
             )
             subtopic_word = SubtopicWords(
-                title=DEFAULT_SUBTOPIC, word_count=word_count, progress=progress
+                title=DEFAULT_SUBTOPIC, word_count=word_count, progress=progress,
+                pictureLink=DEFAULT_SUBTOPIC_ICON
             )
             topic_entry.subtopics.append(subtopic_word)
 
