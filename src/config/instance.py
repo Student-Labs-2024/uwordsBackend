@@ -70,7 +70,7 @@ IMAGE_SAFETY_SCALE: list = [
 ]
 DEFAULT_SUBTOPIC: str = "Unsorted"
 DEFAULT_SUBTOPIC_ICON: str = (
-    f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/default_topic.svg"
+    f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/Default Subtopic.svg"
 )
 
 # TOKEN SETTINGS
