@@ -21,7 +21,9 @@ async def check_mime_type(filename: str) -> bool:
     mime_type = mimetypes.guess_type(filename)[0]
 
     if mime_type not in ALLOWED_AUDIO_MIME_TYPES:
-        logger.info(f"[MIMETYPE AUDIO] Error: Invalid file extension: {mime_type!r}. Expected: {ALLOWED_AUDIO_MIME_TYPES!r}")
+        logger.info(
+            f"[MIMETYPE AUDIO] Error: Invalid file extension: {mime_type!r}. Expected: {ALLOWED_AUDIO_MIME_TYPES!r}"
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -38,7 +40,9 @@ async def check_mime_type_icon(filename: str) -> str:
     mime_type = mimetypes.guess_type(filename)[0]
 
     if mime_type not in ALLOWED_ICON_MIME_TYPES:
-        logger.info(f"[MIMETYPE ICON] Error: Invalid file extension: {mime_type!r}. Expected: {ALLOWED_ICON_MIME_TYPES!r}")
+        logger.info(
+            f"[MIMETYPE ICON] Error: Invalid file extension: {mime_type!r}. Expected: {ALLOWED_ICON_MIME_TYPES!r}"
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -56,7 +60,7 @@ async def check_youtube_link(link: str) -> bool:
     for pattern in ALLOWED_YOUTUBE_LINK_PATTERNS:
         if re.match(pattern, link):
             return True
-        
+
     logger.info(f"[YOUTUBE] Error: Invalid URL: {link}")
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail={"msg": "Invalid URL"}
