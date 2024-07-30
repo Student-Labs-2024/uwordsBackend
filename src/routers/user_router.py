@@ -7,7 +7,7 @@ from pydub import AudioSegment
 
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, status
 
-from src.celery.tasks import upload_audio_task, upload_youtube_task
+from src.celery.tasks import process_audio_task, process_youtube_task
 
 from src.database.models import User, UserWord
 from src.schemes.schemas import (
@@ -276,7 +276,7 @@ async def upload_audio(
         await file_service.delete_file(destination)
 
     else:
-        filepath = destination
+        filepath = destination.__str__()
 
     response = Audio(
         filename=filename,
@@ -285,7 +285,7 @@ async def upload_audio(
         uploaded_at=uploaded_at,
     )
 
-    upload_audio_task.apply_async((filepath, user.id), countdown=1)
+    process_audio_task.apply_async((filepath, user.id), countdown=1)
 
     return response
 
@@ -300,5 +300,5 @@ async def upload_youtube_video(
     schema: YoutubeLink, user: User = Depends(auth_utils.get_active_current_user)
 ):
     await helper_utils.check_youtube_link(link=schema.link)
-    upload_youtube_task.apply_async((schema.link, user.id), countdown=1)
+    process_youtube_task.apply_async((schema.link, user.id), countdown=1)
     return schema

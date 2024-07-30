@@ -34,10 +34,10 @@ def send_email_task(self, email: str, code: str):
     EmailService.send_email(email=email, code=code)
 
 
-@app.task(bind=True, name="upload_video", max_retries=2)
-def upload_youtube_task(self, link: str, user_id: int):
+@app.task(bind=True, name="process_youtube", max_retries=2)
+def process_youtube_task(self, link: str, user_id: int):
     try:
-        result = async_to_sync(upload_youtube)(link=link, user_id=user_id)
+        result = async_to_sync(process_youtube)(link=link, user_id=user_id)
 
         if not result:
             raise self.retry(countdown=1)
@@ -48,7 +48,7 @@ def upload_youtube_task(self, link: str, user_id: int):
         return "Возникла ошибка загрузки видео"
 
 
-async def upload_youtube(
+async def process_youtube(
     link: str,
     user_id: int,
     user_word_service: UserWordService = user_word_service_fabric(),
@@ -177,10 +177,10 @@ async def upload_youtube(
                 continue
 
 
-@app.task(bind=True, name="upload_audio", max_retries=2)
-def upload_audio_task(self, path: str, user_id: int):
+@app.task(bind=True, name="process_audio", max_retries=2)
+def process_audio_task(self, path: str, user_id: int):
     try:
-        result = async_to_sync(upload_audio)(path=path, user_id=user_id)
+        result = async_to_sync(process_audio)(path=path, user_id=user_id)
 
         if not result:
             raise self.retry(countdown=5)
@@ -191,7 +191,7 @@ def upload_audio_task(self, path: str, user_id: int):
         return "Возникла ошибка загрузки аудио"
 
 
-async def upload_audio(
+async def process_audio(
     path: str,
     user_id: int,
     user_word_service: UserWordService = user_word_service_fabric(),

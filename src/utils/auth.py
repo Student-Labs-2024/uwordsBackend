@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.database.models import User
-from src.config.instance import SERVICE_TOKEN
+from src.config.instance import SERVICE_TOKEN, VK_API_VERSION
 
 from src.services.user_service import UserService
 
@@ -125,7 +125,7 @@ async def validate_vk_token(
     token = credentials.credentials
     service_token = SERVICE_TOKEN
     res = requests.get(
-        f"https://api.vk.com/method/secure.checkToken?v=5.199&token={token}",
+        f"https://api.vk.com/method/secure.checkToken?v={VK_API_VERSION}&token={token}",
         headers={"Authorization": f"Bearer {service_token}"},
     )
     response = json.loads(res.content.decode("utf-8"))
