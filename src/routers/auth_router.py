@@ -7,12 +7,16 @@ from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
 
+from src.services.feedback_service import FeedbackService
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
 
 from src.schemes.enums import Providers
 from src.schemes.schemas import (
     CustomResponse,
+    FeedbackCreate,
+    FeedbackDump,
+    FeedbackUpdate,
     TokenInfo,
     UserCreateEmail,
     UserDump,
@@ -25,6 +29,7 @@ from src.schemes.schemas import (
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
+from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
 
@@ -236,3 +241,65 @@ async def get_user_profile(
 ):
     await user_service.update_user_state(user.id)
     return await user_service.get_user_by_id(user_id=user_id)
+
+
+@auth_router_v1.post(
+    "/feedback",
+    response_model=FeedbackDump,
+    name=doc_data.FEEDBACK_TITLE,
+    description=doc_data.FEEDBACK_DESCRIPTION,
+)
+async def create_feedback(
+    feedback_data: FeedbackCreate,
+    feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    if await feedback_service.user_has_feedback(user.id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "User has already submitted a feedback"},
+        )
+    if feedback_data.stars < 1 or feedback_data.stars > 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "Stars must be between 1 and 5"},
+        )
+    if not await user_service.get_user_by_id(feedback_data.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"msg": f"User with id {feedback_data.user_id} does not exist"},
+        )
+    feedback = await feedback_service.add_one(feedback_data)
+    return feedback
+
+
+@auth_router_v1.post(
+    "/feedback/update",
+    response_model=FeedbackDump,
+    name=doc_data.FEEDBACK_UPDATE_TITLE,
+    description=doc_data.FEEDBACK_UPDATE_DESCRIPTION,
+)
+async def update_feedback(
+    feedback_data: FeedbackUpdate,
+    feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    if not await feedback_service.user_has_feedback(user.id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "User has not submitted a feedback yet"},
+        )
+    if feedback_data.stars < 1 or feedback_data.stars > 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "Stars must be between 1 and 5"},
+        )
+
+    existing_feedback = await feedback_service.get_user_feedback(user.id)
+    feedback_id = existing_feedback[0].id
+
+    updated_feedback = await feedback_service.update_feedback(
+        feedback_id, feedback_data.model_dump()
+    )
+    return updated_feedback
