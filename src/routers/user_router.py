@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 import logging
@@ -84,9 +85,9 @@ async def get_user_topics(
         topic_entry = TopicWords(title=topic, subtopics=[])
         unsorted_words = []
 
-        pictureLink = subtopics_icons[topic][subtopic]
-
         for subtopic, words in subtopics.items():
+            pictureLink = subtopics_icons[topic][subtopic]
+
             if len(words) < 8:
                 unsorted_words.extend(words)
             else:
