@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 from typing import Union
 from dateutil.parser import parse
 from fastapi import HTTPException, status
@@ -8,7 +9,6 @@ from src.database.models import User
 from src.schemes.schemas import (
     UserCreateDB,
     TokenInfo,
-    UserCreateVk,
     UserEmailLogin,
     AdminEmailLogin,
 )
@@ -73,7 +73,7 @@ class UserService:
             except:
                 birth_date = None
             match provider:
-                case auth_utils.Providers.email:
+                case auth_utils.Providers.email.value:
                     hashed_password: bytes = auth_utils.hash_password(
                         password=data.password
                     )
@@ -204,3 +204,21 @@ class UserService:
         except Exception as e:
             logger.info(f"[DELETE USER] Error: {e}")
             return None
+
+    async def update_learning_days(self, uid):
+        user = await self.get_user_by_id(uid)
+        user_time_delta = datetime.now() - user.latest_study
+        if not user.latest_study or (
+            timedelta(hours=24) < user_time_delta < timedelta(hours=48)
+        ):
+            await self.update_user(
+                user.id, {"latest_study": datetime.now(), "days": user.days + 1}
+            )
+        if user_time_delta >= timedelta(hours=48):
+            await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
+
+    async def update_user_state(self, uid):
+        user = await self.get_user_by_id(uid)
+        user_time_delta = datetime.now() - user.latest_study
+        if user_time_delta >= timedelta(hours=48):
+            await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
