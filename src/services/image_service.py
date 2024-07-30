@@ -106,4 +106,4 @@ class ImageDownloader:
 
         except BaseException as e:
             logger.info(f"[DOWNLOAD PICTURE] Error: {e}")
-            return None, None
+            return None
