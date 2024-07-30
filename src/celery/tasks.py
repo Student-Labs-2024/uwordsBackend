@@ -34,8 +34,8 @@ def send_email_task(self, email: str, code: str):
     EmailService.send_email(email=email, code=code)
 
 
-@app.task(bind=True, name="upload_video", max_retries=2)
-def upload_youtube_task(self, link: str, user_id: int):
+@app.task(bind=True, name="process_youtube", max_retries=2)
+def process_youtube_task(self, link: str, user_id: int):
     try:
         result = async_to_sync(process_youtube)(link=link, user_id=user_id)
 
@@ -177,8 +177,8 @@ async def process_youtube(
                 continue
 
 
-@app.task(bind=True, name="upload_audio", max_retries=2)
-def upload_audio_task(self, path: str, user_id: int):
+@app.task(bind=True, name="process_audio", max_retries=2)
+def process_audio_task(self, path: str, user_id: int):
     try:
         result = async_to_sync(process_audio)(path=path, user_id=user_id)
 
