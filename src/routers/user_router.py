@@ -95,8 +95,10 @@ async def get_user_topics(
                     sum(word.progress for word in words) / (word_count * 4) * 100
                 )
                 subtopic_word = SubtopicWords(
-                    title=subtopic, word_count=word_count, progress=progress,
-                    pictureLink=pictureLink
+                    title=subtopic,
+                    word_count=word_count,
+                    progress=progress,
+                    pictureLink=pictureLink,
                 )
                 topic_entry.subtopics.append(subtopic_word)
 
@@ -106,8 +108,10 @@ async def get_user_topics(
                 sum(word.progress for word in unsorted_words) / (word_count * 4) * 100
             )
             subtopic_word = SubtopicWords(
-                title=DEFAULT_SUBTOPIC, word_count=word_count, progress=progress,
-                pictureLink=DEFAULT_SUBTOPIC_ICON
+                title=DEFAULT_SUBTOPIC,
+                word_count=word_count,
+                progress=progress,
+                pictureLink=DEFAULT_SUBTOPIC_ICON,
             )
             topic_entry.subtopics.append(subtopic_word)
 
