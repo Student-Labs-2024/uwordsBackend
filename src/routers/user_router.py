@@ -279,10 +279,6 @@ async def upload_audio(
     try:
         await file_service.add_file(destination, filedata)
 
-        duration = int(len(AudioSegment.from_file(file=destination)) / 1000)
-
-        logger.info(f"DURATION: {duration}")
-
     except Exception as e:
         logger.info(e)
 
