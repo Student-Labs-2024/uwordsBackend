@@ -136,6 +136,7 @@ class UserDump(BaseModel):
     birth_date: Optional[datetime] = Field(
         examples=["2023-05-05 10:30:45.999999"], default=None
     )
+    subscription_type: Optional[int] = Field(examples=[1])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
 
 
@@ -310,3 +311,11 @@ class FeedbackDump(BaseModel):
 class FeedbackUpdate(BaseModel):
     stars: int = Field(examples=[5])
     message: str = Field(examples=["Отличный приложение!"])
+
+
+class Bill(BaseModel):
+    id: int = Field(examples=[1])
+    label: str = Field(examples=["1568642313854321354321543561"])
+    sub_type: int = Field(examples=[9])
+    amount: int = Field(examples=[1500])
+    success: bool = Field(examples=[False])
