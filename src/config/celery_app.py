@@ -26,8 +26,8 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour='*'),
         "options": {"queue": "scheduler"},
     },
-    "check-sub": {
-        "task": "check_sub",
+    "send-notifications": {
+        "task": "send_notifications",
         "schedule": crontab(minute=0, hour=18),
         "options": {"queue": "scheduler"},
     },
