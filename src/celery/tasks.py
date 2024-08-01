@@ -10,6 +10,8 @@ from celery.exceptions import MaxRetriesExceededError
 
 from src.config.celery_app import app
 
+from src.config.instance import METRIC_URL
+
 from src.schemes.schemas import ErrorCreate
 
 from src.services.text_service import TextService
@@ -22,6 +24,7 @@ from src.services.word_service import WordService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
 
+from src.utils.metric import send_user_data
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
@@ -118,13 +121,20 @@ async def general_process_audio(
 
                 if remained_seconds - duration < 0:
                     allowed_audio_seconds = 0
+                    metric_duration = remained_seconds
                 else:
+                    metric_duration = duration
                     allowed_audio_seconds = remained_seconds - duration
 
                 await user_service.update_user(
                     user_id=user_id,
                     user_data={"allowed_audio_seconds": allowed_audio_seconds},
                 )
+
+                metric_data = {
+                    "user_id": user_id,
+                    "speech_seconds": duration
+                }
 
             elif type == "video":
                 remained_seconds: int = user.allowed_video_seconds
@@ -134,7 +144,9 @@ async def general_process_audio(
 
                 if remained_seconds - duration < 0:
                     allowed_video_seconds = 0
+                    metric_duration = remained_seconds
                 else:
+                    metric_duration = duration
                     allowed_video_seconds = remained_seconds - duration
 
                 await user_service.update_user(
@@ -142,8 +154,19 @@ async def general_process_audio(
                     user_data={"allowed_video_seconds": allowed_video_seconds},
                 )
 
+                metric_data = {
+                    "user_id": user_id,
+                    "video_seconds": metric_duration
+                }
+
         else:
+            metric_data = {
+                "user_id": user_id,
+                "video_seconds": metric_duration
+            }
             allowed_iterations = None
+
+        await send_user_data(data=metric_data, server_url=METRIC_URL)
 
         if allowed_iterations == 0:
             logger.info("[GENERAL PROCESS AUDIO] Seconds limits ran out")
