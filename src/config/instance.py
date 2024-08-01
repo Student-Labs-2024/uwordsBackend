@@ -103,3 +103,6 @@ GOOGLE_APPLICATION_CREDENTIALS: Path = (
     BASE_DIR / "src" / "config" / "json_configs" / "google_credentials.json"
 )
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS.__str__()
+
+# METRIC
+METRIC_URL: str = os.environ.get("METRIC_URL")
