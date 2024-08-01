@@ -343,6 +343,53 @@ SENTRY_DESCRIPTION = """\
 DEBUG-метод для документирования ошибки в Sentry\
 """
 
+SUB_ADD_TITLE = """\
+Добавить вид подписки\
+"""
+
+SUB_ADD_DESCRIPTION = """\
+Метод для добавления подписки\
+"""
+SUB_GET_TITLE = """\
+Добавить вид подписки\
+"""
+
+SUB_GET_DESCRIPTION = """\
+Метод для добавления подписки\
+"""
+
+SUB_DELETE_TITLE = """\
+Добавить вид подписки\
+"""
+
+SUB_DELETE_DESCRIPTION = """\
+Метод для добавления подписки\
+"""
+
+SUB_UPDATE_TITLE = """\
+Добавить вид подписки\
+"""
+
+SUB_UPDATE_DESCRIPTION = """\
+Метод для добавления подписки\
+"""
+
+FORM_PAYMENT_TITLE = """\
+Добавить вид подписки\
+"""
+
+FORM_PAYMENT_DESCRIPTION = """\
+Метод для добавления подписки\
+"""
+
+CHECK_PAYMENT_TITLE = """\
+Добавить вид подписки\
+"""
+
+CHECK_PAYMENT_DESCRIPTION = """\
+Метод для добавления подписки\
+"""
+
 TAGS_METADATA = [
     {
         "name": "Users",

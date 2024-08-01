@@ -49,6 +49,15 @@ class UserWord(Base):
     word = relationship("Word", back_populates="userWords", lazy="selectin")
 
 
+class Subscription(Base):
+    __tablename__ = "subscription"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+    price = Column(Integer)
+    old_price = Column(Integer, nullable=True)
+    months = Column(Integer)
+
+
 class User(Base):
     __tablename__ = "user"
 
@@ -65,6 +74,8 @@ class User(Base):
     birth_date = Column(DateTime, nullable=True)
     hashed_password = Column(String, nullable=True)
     latest_study = Column(DateTime, nullable=True)
+    subscription_acquisition = Column(DateTime, nullable=True)
+    subscription_type = Column(ForeignKey(Subscription.id), nullable=True)
     days = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.now)
 

@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -32,7 +31,7 @@ MINIO_BUCKET_PICTURE_VIOLENCE: str = os.environ.get("MINIO_BUCKET_PICTURE_VIOLEN
 MINIO_BUCKET_PICTURE_RACY: str = os.environ.get("MINIO_BUCKET_PICTURE_RACY")
 MINIO_BUCKET_SUBTOPIC_ICONS: str = os.environ.get("MINIO_BUCKET_SUBTOPIC_ICONS")
 MINIO_POLICY_JSON: Path = (
-    BASE_DIR / "src" / "config" / "json_configs" / "minio_policy.json"
+        BASE_DIR / "src" / "config" / "json_configs" / "minio_policy.json"
 )
 
 # SYSTEM
@@ -100,6 +99,11 @@ VK_API_VERSION = "5.199"
 
 # GOOGLE CLOUD
 GOOGLE_APPLICATION_CREDENTIALS: Path = (
-    BASE_DIR / "src" / "config" / "json_configs" / "google_credentials.json"
+        BASE_DIR / "src" / "config" / "json_configs" / "google_credentials.json"
 )
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS.__str__()
+
+# PAYMENT
+
+PAYMENT_TOKEN: str = os.environ.get("PAYMENT_TOKEN")
+WALLET_ID: str = os.environ.get("WALLET_ID")
