@@ -131,10 +131,7 @@ async def general_process_audio(
                     user_data={"allowed_audio_seconds": allowed_audio_seconds},
                 )
 
-                metric_data = {
-                    "user_id": user_id,
-                    "speech_seconds": duration
-                }
+                metric_data = {"user_id": user_id, "speech_seconds": duration}
 
             elif type == "video":
                 remained_seconds: int = user.allowed_video_seconds
@@ -154,16 +151,10 @@ async def general_process_audio(
                     user_data={"allowed_video_seconds": allowed_video_seconds},
                 )
 
-                metric_data = {
-                    "user_id": user_id,
-                    "video_seconds": metric_duration
-                }
+                metric_data = {"user_id": user_id, "video_seconds": metric_duration}
 
         else:
-            metric_data = {
-                "user_id": user_id,
-                "video_seconds": metric_duration
-            }
+            metric_data = {"user_id": user_id, "video_seconds": metric_duration}
             allowed_iterations = None
 
         await send_user_data(data=metric_data, server_url=METRIC_URL)
