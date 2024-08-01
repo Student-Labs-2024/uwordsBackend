@@ -13,6 +13,7 @@ from src.celery.tasks import process_audio_task, process_youtube_task
 from src.database.models import User, UserWord
 from src.schemes.schemas import (
     Audio,
+    CustomResponse,
     WordsIdsSchema,
     YoutubeLink,
     TopicWords,
@@ -229,6 +230,11 @@ async def get_user_words_for_study(
     topic_title: str | None = None,
     subtopic_title: str | None = None,
 ):
+    if not user.subscription_type and user.energy < 10:
+        return CustomResponse(
+            status_code=status.HTTP_204_NO_CONTENT, message="Energy limit ran out"
+        )
+
     words_for_study = await user_words_service.get_user_words_for_study(
         user_id=user.id, topic_title=topic_title, subtopic_title=subtopic_title
     )
@@ -238,6 +244,7 @@ async def get_user_words_for_study(
 
 @user_router_v1.post(
     "/words/study",
+    response_model=CustomResponse,
     name=doc_data.USER_WORDS_POST_STUDY_TITLE,
     description=doc_data.USER_WORDS_POST_STUDY_DESCRIPTION,
 )
@@ -247,16 +254,27 @@ async def complete_user_words_learning(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
+    if not user.subscription_type and user.energy < 10:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT, detail="Energy limit ran out"
+        )
+
     await user_words_service.update_progress_word(
         user_id=user.id, words_ids=schema.words_ids
     )
-    await user_service.update_learning_days(user.id)
-    return schema
+
+    await user_service.update_learning_days(uid=user.id)
+
+    await user_service.update_user(
+        user_id=user.id, user_data={"energy": user.energy - 10}
+    )
+
+    return CustomResponse(status_code=status.HTTP_200_OK, message="Progress updated!")
 
 
 @user_router_v1.post(
     "/audio",
-    response_model=Audio,
+    response_model=CustomResponse,
     name=doc_data.UPLOAD_AUDIO_TITLE,
     description=doc_data.UPLOAD_AUDIO_DESCRIPTION,
 )
@@ -265,15 +283,23 @@ async def upload_audio(
     file_service: Annotated[FileService, Depends(file_service_fabric)],
     error_service: Annotated[ErrorService, Depends(error_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
-) -> Audio:
+):
+    if not user.subscription_type and user.allowed_audio_seconds == 0:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT, detail="Seconds limit ran out"
+        )
+
     filename = file.filename
+
     await helper_utils.check_mime_type(filename)
+
     _, extension = os.path.splitext(filename)
-    uploaded_at = datetime.now()
 
     filedata = await file.read()
 
-    audio_name = f"audio_{uuid.uuid4()}{extension}"
+    title = f"audio_{uuid.uuid4()}"
+
+    audio_name = f"{title}{extension}"
     destination = UPLOAD_DIR / audio_name
 
     try:
@@ -282,40 +308,40 @@ async def upload_audio(
     except Exception as e:
         logger.info(e)
 
-    if extension != ".wav":
-        title = f"{os.path.splitext(audio_name)[0]}_converted.wav"
-        filepath = await AudioService.convert_audio(
-            path=str(destination),
-            title=title,
-            error_service=error_service,
-            user_id=user.id,
-        )
-        await file_service.delete_file(destination)
-
-    else:
-        filepath = destination.__str__()
-
-    response = Audio(
-        filename=filename,
-        extension=extension,
-        filepath=filepath,
-        uploaded_at=uploaded_at,
+    process_audio_task.apply_async(
+        kwargs={"path": destination.__str__(), "title": title, "user_id": user.id},
+        countdown=1,
     )
 
-    process_audio_task.apply_async((filepath, user.id), countdown=1)
+    response = CustomResponse(
+        status_code=status.HTTP_200_OK, message="Processing started"
+    )
 
     return response
 
 
 @user_router_v1.post(
     "/youtube",
-    response_model=YoutubeLink,
+    response_model=CustomResponse,
     name=doc_data.UPLOAD_YOUTUBE_TITLE,
     description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
 )
 async def upload_youtube_video(
     schema: YoutubeLink, user: User = Depends(auth_utils.get_active_current_user)
 ):
+    if not user.subscription_type and user.allowed_video_seconds == 0:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT, detail="Seconds limit ran out"
+        )
+
     await helper_utils.check_youtube_link(link=schema.link)
-    process_youtube_task.apply_async((schema.link, user.id), countdown=1)
-    return schema
+
+    process_youtube_task.apply_async(
+        kwargs={
+            "link": schema.link,
+            "user_id": user.id,
+        },
+        countdown=1,
+    )
+
+    return CustomResponse(status_code=status.HTTP_200_OK, message="Processing started")

@@ -17,7 +17,7 @@ from src.schemes.schemas import (
     UserCreateGoogle,
 )
 
-from src.utils import auth as auth_utils
+from src.utils import password as password_utils
 from src.utils import tokens as token_utils
 from src.utils.repository import AbstractRepository
 
@@ -84,7 +84,7 @@ class UserService:
                 birth_date = None
             match provider:
                 case Providers.email.value:
-                    hashed_password: bytes = auth_utils.hash_password(
+                    hashed_password: bytes = password_utils.hash_password(
                         password=data.password
                     )
                     user_data_db = UserCreateDB(
@@ -94,7 +94,7 @@ class UserService:
                         **user_data_db,
                     )
                 case Providers.admin.value:
-                    hashed_password: bytes = auth_utils.hash_password(
+                    hashed_password: bytes = password_utils.hash_password(
                         password=data.password
                     )
                     user_data_db = UserCreateDB(
@@ -139,7 +139,7 @@ class UserService:
                         },
                     )
                 hashed_password: str = user.hashed_password
-                if not auth_utils.validate_password(
+                if not password_utils.validate_password(
                     password=login_data.password,
                     hashed_password=hashed_password.encode(),
                 ):
@@ -159,7 +159,7 @@ class UserService:
                         },
                     )
                 hashed_password: str = user.hashed_password
-                if not auth_utils.validate_password(
+                if not password_utils.validate_password(
                     password=login_data.password,
                     hashed_password=hashed_password.encode(),
                 ):

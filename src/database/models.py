@@ -2,6 +2,11 @@ from datetime import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime
 
+from src.config.instance import (
+    ALLOWED_AUDIO_SECONDS,
+    ALLOWED_VIDEO_SECONDS,
+    DEFAULT_ENERGY,
+)
 from src.database.db_config import Base
 
 
@@ -77,6 +82,9 @@ class User(Base):
     subscription_acquisition = Column(DateTime, nullable=True)
     subscription_type = Column(ForeignKey(Subscription.id), nullable=True)
     days = Column(Integer, default=0)
+    allowed_audio_seconds = Column(Integer, default=ALLOWED_AUDIO_SECONDS)
+    allowed_video_seconds = Column(Integer, default=ALLOWED_VIDEO_SECONDS)
+    energy = Column(Integer, default=DEFAULT_ENERGY)
     created_at = Column(DateTime, default=datetime.now)
 
     is_active = Column(Boolean, default=True, nullable=False)

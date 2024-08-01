@@ -28,3 +28,4 @@ check_swear==0.1.4
 better_profanity==0.7.0
 google-cloud-vision==3.7.3
 YooMoney==0.1.1
+librosa==0.10.2.post1
