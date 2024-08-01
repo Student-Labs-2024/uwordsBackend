@@ -93,3 +93,13 @@ class Error(Base):
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     is_send = Column(Boolean, default=False)
+
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer)
+    stars = Column(Integer, nullable=False)
+    message = Column(String)
+    created_at = Column(DateTime, default=datetime.now)

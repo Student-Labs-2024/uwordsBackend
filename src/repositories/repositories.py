@@ -1,5 +1,5 @@
 from src.database.chroma_config import subtopic_collection
-from src.database.models import Error, User, UserWord, Word, Topic, SubTopic, Subscription
+from src.database.models import Error, Feedback, User, UserWord, Word, Topic, SubTopic, Subscription
 
 from src.utils.repository import SQLAlchemyRepository, ChromaRepository
 
@@ -31,3 +31,7 @@ class UserRepository(SQLAlchemyRepository):
 
 class SubscriptionRepository(SQLAlchemyRepository):
     model = Subscription
+
+
+class FeedbackRepository(SQLAlchemyRepository):
+    model = Feedback

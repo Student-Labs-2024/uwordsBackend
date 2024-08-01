@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, EmailStr, field_validator
 class Audio(BaseModel):
     filename: str = Field(examples=["audio_2024-05-21_23-48-47.ogg"])
     extension: str = Field(examples=[".ogg"])
-    filepath: Union[str, Path] = Field(
+    filepath: str = Field(
         examples=[
             "audio_transfer/audio_6515bf33-e63c-4493-b29d-55f2b70a892d_converted.wav"
         ]
@@ -83,6 +83,7 @@ class SubtopicWords(BaseModel):
     title: str
     word_count: int
     progress: float
+    pictureLink: str
 
     class ConfigDict:
         from_attributes = True
@@ -277,11 +278,35 @@ class Subscription(BaseModel):
     price: int = Field(examples=[1500])
     months: int = Field(examples=[6])
 
+
 class SubscriptionUpdate(BaseModel):
     price: int = Field(examples=[1500])
     months: int = Field(examples=[6])
     old_price: Optional[int] = Field(examples=[1500])
 
+
 class SubscriptionDump(Subscription):
     id: int = Field(examples=[1])
     old_price: Optional[int] = Field(examples=[1500])
+
+
+class FeedbackCreate(BaseModel):
+    user_id: int = Field(examples=[1])
+    stars: int = Field(examples=[5])
+    message: str = Field(examples=["Отличное приложение!"])
+
+
+class FeedbackDump(BaseModel):
+    id: int = Field(examples=[1])
+    user_id: int = Field(examples=[1])
+    stars: int = Field(examples=[5])
+    message: str = Field(examples=["Отличное приложение!"])
+    created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
+
+    class ConfigDict:
+        from_attributes = True
+
+
+class FeedbackUpdate(BaseModel):
+    stars: int = Field(examples=[5])
+    message: str = Field(examples=["Отличный приложение!"])
