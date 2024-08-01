@@ -1,13 +1,15 @@
 import os
 import uuid
+import json
 import yt_dlp
 import ffmpeg
 import logging
+import requests
 from gtts import gTTS
 from io import BytesIO
 from pathlib import Path
 from pydub import AudioSegment
-from typing import Union, Tuple, List
+from typing import Optional, Union, Tuple, List
 from speech_recognition import AudioFile
 
 from src.schemes.schemas import ErrorCreate
@@ -17,6 +19,8 @@ from src.services.error_service import ErrorService
 from src.services.minio_uploader import MinioUploader
 
 from src.config.instance import (
+    HUGGING_FACE_TOKEN,
+    HUGGING_FACE_URL,
     MINIO_BUCKET_VOICEOVER,
     MINIO_HOST,
     UPLOAD_DIR,
@@ -33,7 +37,7 @@ class AudioService:
         path: str, title: str, error_service: ErrorService, user_id: int
     ) -> Union[str, None]:
         try:
-            out_path = UPLOAD_DIR / title
+            out_path = UPLOAD_DIR / f"{title}_converted.wav"
             logger.info(f"OUT_PATH: {out_path}")
             ffmpeg.input(path).output(str(out_path), ac=1).run()
             return str(out_path)
@@ -50,15 +54,22 @@ class AudioService:
 
     @staticmethod
     async def cut_audio(
-        path: str, error_service: ErrorService, user_id: int
+        path: str,
+        error_service: ErrorService,
+        user_id: int,
+        duration: int,
+        allowed_iterations: Optional[int] = None,
     ) -> List[str]:
         files = []
 
         try:
             index = 0
-            duration = int(len(AudioSegment.from_file(file=path)) / 1000)
 
             while index * 30 < duration:
+                if allowed_iterations:
+                    if index > allowed_iterations:
+                        break
+
                 filename, _ = os.path.splitext(path)
 
                 outpath = f"{filename}_{index + 1}.wav"
@@ -93,6 +104,31 @@ class AudioService:
             return files
 
     @staticmethod
+    def speech_to_text(filepath: str) -> str:
+        try:
+            with open(file=filepath, mode="rb") as audio:
+                audio_data = audio.read()
+
+            response = requests.post(
+                url=HUGGING_FACE_URL,
+                headers={
+                    "Authorization": f"Bearer {HUGGING_FACE_TOKEN}",
+                },
+                data=audio_data,
+            )
+
+            if response.status_code != 200:
+                logger.info(f"[STT HF] Error: {response.text}")
+
+            data: dict = json.loads(response.text)
+
+            return data.get("text")
+
+        except Exception as e:
+            logger.info(f"[STT HF] Error: {e}")
+            return " "
+
+    @staticmethod
     def speech_to_text_ru(filepath: str) -> str:
         try:
             with AudioFile(filepath) as source:
@@ -102,7 +138,6 @@ class AudioService:
                 return text.lower()
 
         except Exception as e:
-            logger.info(f"[STT RU] Error: {e}")
             return " "
 
     @staticmethod
@@ -115,13 +150,12 @@ class AudioService:
                 return text.lower()
 
         except Exception as e:
-            logger.info(f"[STT EN] Error: {e}")
             return " "
 
     @staticmethod
     async def upload_youtube_audio(
         link: str, error_service: ErrorService, user_id: int
-    ) -> Union[Tuple[Path, str, str], Tuple[None, None, None]]:
+    ) -> Union[Tuple[Path, str], Tuple[None, None]]:
         try:
             logger.info(link)
             uid = uuid.uuid4()
@@ -144,7 +178,7 @@ class AudioService:
                 info_dict = ydl.extract_info(link, download=False)
                 video_title = info_dict.get("title", None)
 
-            return download_path, filename, video_title
+            return download_path, filename_for_yt
 
         except Exception as e:
             logger.info(f"[UPLOAD YOUTUBE] Error: {e}")
@@ -156,7 +190,7 @@ class AudioService:
             )
 
             await error_service.add_one(error=error)
-            return None, None, None
+            return None, None
 
     @staticmethod
     async def word_to_speech(word: str) -> Union[str, None]:

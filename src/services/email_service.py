@@ -54,9 +54,9 @@ class EmailService:
             )
 
     @staticmethod
-    def send_email(email: str, code: str) -> None:
+    def send_email(email: str, text: str) -> None:
         context = ssl.create_default_context()
 
         with smtplib.SMTP_SSL(SMTP_SERVER, int(EMAIL_PORT), context=context) as server:
             server.login(SENDER_EMAIL, EMAIL_PASSWORD)
-            server.sendmail(SENDER_EMAIL, email, f"Your code is {code}")
+            server.sendmail(SENDER_EMAIL, email, text)

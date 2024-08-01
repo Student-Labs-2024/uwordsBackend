@@ -1,6 +1,6 @@
 import pytest
 
-from src.utils.auth import hash_password, validate_password
+from src.utils.password import hash_password, validate_password
 
 
 @pytest.mark.parametrize(
