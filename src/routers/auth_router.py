@@ -185,7 +185,6 @@ async def refresh_token(user: User = Depends(auth_utils.get_current_user_by_refr
 
 @auth_router_v1.get(
     "/me",
-    response_model=UserDump,
     name=doc_data.USER_ME_TITLE,
     description=doc_data.USER_ME_DESCRIPTION,
 )

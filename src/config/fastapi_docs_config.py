@@ -343,6 +343,69 @@ SENTRY_DESCRIPTION = """\
 DEBUG-метод для документирования ошибки в Sentry\
 """
 
+SUB_ADD_TITLE = """\
+Добавить тариф\
+"""
+
+SUB_ADD_DESCRIPTION = """\
+Метод для добавления тарифа\
+"""
+SUB_GET_TITLE = """\
+Получить тариф\
+"""
+
+SUB_GET_DESCRIPTION = """\
+Метод для получения подписки\
+"""
+
+SUB_DELETE_TITLE = """\
+Удалить тариф\
+"""
+
+SUB_DELETE_DESCRIPTION = """\
+Метод для удаления тарифа\
+"""
+
+SUB_UPDATE_TITLE = """\
+Обновить тариф\
+"""
+
+SUB_UPDATE_DESCRIPTION = """\
+Метод для обновления тарифа\
+"""
+
+FORM_PAYMENT_TITLE = """\
+Получить ссылку на оплату\
+"""
+
+FORM_PAYMENT_DESCRIPTION = """\
+Метод для получения ссылки оплаты\
+"""
+
+CHECK_PAYMENT_TITLE = """\
+Проверить статус платежа\
+"""
+
+CHECK_PAYMENT_DESCRIPTION = """\
+Метод для проверки статуса платежа\
+"""
+
+BILL_GET_TITLE = """\
+Получить чек\
+"""
+
+BILL_GET_DESCRIPTION = """\
+Метод для получения чека по id\
+"""
+
+BILL_ALL_TITLE = """\
+Получить все чеки\
+"""
+
+BILL_ALL_DESCRIPTION = """\
+Метод для получения всех чеков\
+"""
+
 TAGS_METADATA = [
     {
         "name": "Users",

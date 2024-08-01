@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -39,6 +38,7 @@ MINIO_POLICY_JSON: Path = (
 MINIO_HOST: str = os.environ.get("MINIO_HOST")
 UPLOAD_DIR: Path = BASE_DIR / "audio_transfer"
 FASTAPI_SECRET: str = os.environ.get("FASTAPI_SECRET")
+
 ALLOWED_AUDIO_MIME_TYPES: set = {
     "audio/ogg",
     "audio/mpeg",
@@ -48,17 +48,17 @@ ALLOWED_AUDIO_MIME_TYPES: set = {
     "audio/x-m4a",
     "audio/x-wav",
 }
-
 ALLOWED_ICON_MIME_TYPES: set = {"image/svg+xml", "image/svg+xml-compressed"}
-
 ALLOWED_YOUTUBE_LINK_PATTERNS: set = {
     r"^(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
     r"^(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
     r"^(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})(?:[&?].*)?$",
 }
+
 STUDY_DELAY: int = 86400  # seconds
 STUDY_MAX_PROGRESS: int = 3
 STUDY_WORDS_AMOUNT: int = 4
+
 IMAGE_SAFETY_INDEX: int = 3
 IMAGE_SAFETY_SCALE: list = [
     "UNKNOWN",
@@ -68,10 +68,15 @@ IMAGE_SAFETY_SCALE: list = [
     "LIKELY",
     "VERY_LIKELY",
 ]
+
 DEFAULT_SUBTOPIC: str = "Unsorted"
 DEFAULT_SUBTOPIC_ICON: str = (
     f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/Default Subtopic.svg"
 )
+
+ALLOWED_AUDIO_SECONDS: int = 1800
+ALLOWED_VIDEO_SECONDS: int = 900
+DEFAULT_ENERGY: int = 100
 
 # TOKEN SETTINGS
 JWT_ALGORITHM: str = "HS256"
@@ -106,3 +111,13 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS.__
 
 # METRIC
 METRIC_URL: str = os.environ.get("METRIC_URL")
+
+# PAYMENT
+PAYMENT_TOKEN: str = os.environ.get("PAYMENT_TOKEN")
+WALLET_ID: str = os.environ.get("WALLET_ID")
+
+# HUGGINGFACE
+HUGGING_FACE_URL: str = (
+    "https://api-inference.huggingface.co/models/openai/whisper-large-v2"
+)
+HUGGING_FACE_TOKEN: str = os.environ.get("HUGGING_FACE_TOKEN")
