@@ -103,3 +103,12 @@ class Feedback(Base):
     stars = Column(Integer, nullable=False)
     message = Column(String)
     created_at = Column(DateTime, default=datetime.now)
+
+
+class Bill(Base):
+    __tablename__ = "bill"
+    id = Column(Integer, primary_key=True, index=True)
+    label = Column(String)
+    sub_type = Column(ForeignKey(Subscription.id))
+    amount = Column(Integer)
+    success = Column(Boolean, default=False)

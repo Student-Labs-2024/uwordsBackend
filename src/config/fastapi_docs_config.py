@@ -390,6 +390,22 @@ CHECK_PAYMENT_DESCRIPTION = """\
 Метод для добавления подписки\
 """
 
+BILL_GET_TITLE = """\
+Получить чек\
+"""
+
+BILL_GET_DESCRIPTION = """\
+Метод для получения чека по id\
+"""
+
+BILL_ALL_TITLE = """\
+Получить все чеки\
+"""
+
+BILL_ALL_DESCRIPTION = """\
+Метод для получения всех чеков\
+"""
+
 TAGS_METADATA = [
     {
         "name": "Users",
