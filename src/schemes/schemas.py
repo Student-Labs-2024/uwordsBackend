@@ -138,6 +138,10 @@ class UserDump(BaseModel):
     )
     subscription_type: Optional[int] = Field(examples=[1])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
+    metrics: Optional[dict] = Field(
+        examples=[{"hours": 10, "learned": 50, "days": 5}],
+        default={"hours": 0, "learned": 0, "days": 0},
+    )
 
 
 class UserCreateEmail(BaseModel):
@@ -292,7 +296,6 @@ class SubscriptionDump(Subscription):
 
 
 class FeedbackCreate(BaseModel):
-    user_id: int = Field(examples=[1])
     stars: int = Field(examples=[5])
     message: str = Field(examples=["Отличное приложение!"])
 

@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
 
+from src.config.instance import METRIC_URL
 from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
@@ -29,6 +30,7 @@ from src.schemes.schemas import (
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
+from src.utils.metric import get_user_data
 from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
@@ -190,6 +192,11 @@ async def get_user_me(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
+    additional_data = await get_user_data(user.id, METRIC_URL)
+
+    if additional_data:
+        user.metrics = additional_data
+
     await user_service.update_user_state(user.id)
     return user
 
@@ -264,12 +271,8 @@ async def create_feedback(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "Stars must be between 1 and 5"},
         )
-    if not await user_service.get_user_by_id(feedback_data.user_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"msg": f"User with id {feedback_data.user_id} does not exist"},
-        )
-    feedback = await feedback_service.add_one(feedback_data)
+
+    feedback = await feedback_service.add_one(user_id=user.id, feedback=feedback_data)
     return feedback
 
 
