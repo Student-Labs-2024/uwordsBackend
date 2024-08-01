@@ -5,7 +5,11 @@ from dateutil.relativedelta import relativedelta
 
 from src.config.celery_app import app
 
-from src.config.instance import ALLOWED_AUDIO_SECONDS, ALLOWED_VIDEO_SECONDS, DEFAULT_ENERGY
+from src.config.instance import (
+    ALLOWED_AUDIO_SECONDS,
+    ALLOWED_VIDEO_SECONDS,
+    DEFAULT_ENERGY,
+)
 from src.database.models import User, Subscription
 from src.services.subscription_service import SubscriptionService
 from src.services.user_service import UserService
@@ -23,7 +27,6 @@ def test_task():
     logger.info("Ежеминутная задача")
 
 
-
 @app.task(name="check_sub")
 def check_sub_receiver():
     logger.info("[CHECK SUB] Received")
@@ -33,7 +36,7 @@ def check_sub_receiver():
 
 async def check_sub(
     user_service: UserService = user_service_fabric(),
-    sub_service: SubscriptionService = sub_service_fabric()
+    sub_service: SubscriptionService = sub_service_fabric(),
 ):
     users = await user_service.get_users_with_sub()
 
@@ -44,10 +47,7 @@ async def check_sub(
 
         if date + relativedelta(months=sub.months) > datetime.now():
             await user_service.update_user(
-                user_id=user.id,
-                user_data={
-                    "subscription_type": None
-                }
+                user_id=user.id, user_data={"subscription_type": None}
             )
 
 
@@ -58,9 +58,7 @@ def reset_limits_receiver():
     logger.info("[RESET LIMITS] Completed")
 
 
-async def reset_limits(
-    user_service: UserService = user_service_fabric()
-):
+async def reset_limits(user_service: UserService = user_service_fabric()):
     users = await user_service.get_users_without_sub()
 
     for user in users:
@@ -69,8 +67,8 @@ async def reset_limits(
             user_data={
                 "allowed_audio_seconds": ALLOWED_AUDIO_SECONDS,
                 "allowed_video_seconds": ALLOWED_VIDEO_SECONDS,
-                "energy": DEFAULT_ENERGY
-            }
+                "energy": DEFAULT_ENERGY,
+            },
         )
 
 
@@ -81,9 +79,7 @@ def send_notifications_receiver():
     logger.info("[SEND NOTIFICATIONS] Completed")
 
 
-async def send_notifications(
-    user_service: UserService = user_service_fabric()
-):
+async def send_notifications(user_service: UserService = user_service_fabric()):
     users = await user_service.get_users()
 
     now = datetime.now()
@@ -91,9 +87,10 @@ async def send_notifications(
     for user in users:
         date: datetime = user.latest_study
 
-        user_delta_days = (
-            now.date() - date.date()
-        )
+        user_delta_days = now.date() - date.date()
 
         if user_delta_days == 1:
-            EmailService.send_email(email=user.email, text=f"Time to learn! Otherwise your progress will be reset!")
+            EmailService.send_email(
+                email=user.email,
+                text=f"Time to learn! Otherwise your progress will be reset!",
+            )

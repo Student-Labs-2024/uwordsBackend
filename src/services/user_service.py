@@ -36,7 +36,7 @@ class UserService:
         except Exception as e:
             logger.info(f"[GET USER by ID] Error: {e}")
             return None
-        
+
     async def get_users_with_sub(self) -> List[User]:
         try:
             return await self.repo.get_all_by_filter(
@@ -45,7 +45,7 @@ class UserService:
         except Exception as e:
             logger.info(f"[GET USER with SUB] Error: {e}")
             return None
-        
+
     async def get_users_without_sub(self) -> List[User]:
         try:
             return await self.repo.get_all_by_filter(
@@ -54,12 +54,10 @@ class UserService:
         except Exception as e:
             logger.info(f"[GET USER without SUB] Error: {e}")
             return None
-        
+
     async def get_users(self) -> List[User]:
         try:
-            return await self.repo.get_all_by_filter(
-                filters=None
-            )
+            return await self.repo.get_all_by_filter(filters=None)
         except Exception as e:
             logger.info(f"[GET USERS] Error: {e}")
             return None

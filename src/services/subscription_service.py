@@ -12,7 +12,7 @@ class SubscriptionService:
 
     async def get_sub(self, name: str):
         return await self.repo.get_one([models.Subscription.name == name])
-    
+
     async def get_sub_by_id(self, id: int) -> Subscription:
         return await self.repo.get_one([models.Subscription.id == id])
 
