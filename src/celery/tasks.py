@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.INFO)
 
 @app.task(bind=True, name="Email_send", max_retries=2)
 def send_email_task(self, email: str, code: str):
-    EmailService.send_email(email=email, code=code)
+    EmailService.send_email(email=email, text=f"Your code is {code}")
 
 
 @app.task(bind=True, name="process_youtube", max_retries=2)
@@ -149,7 +149,7 @@ async def general_process_audio(
             logger.info("[GENERAL PROCESS AUDIO] Seconds limits ran out")
             return True
 
-        files_paths += await AudioService.cut_audio(
+        cutted_files = await AudioService.cut_audio(
             path=converted_file,
             error_service=error_service,
             user_id=user_id,
@@ -157,13 +157,41 @@ async def general_process_audio(
             allowed_iterations=allowed_iterations,
         )
 
+        files_paths += cutted_files
+
         with ThreadPoolExecutor(max_workers=20) as executor:
             try:
-                results = list(executor.map(AudioService.speech_to_text, files_paths))
+                results_ru = list(
+                    executor.map(AudioService.speech_to_text_ru, cutted_files)
+                )
             except Exception as e:
-                pass
+                logger.info(f"[STT RU] Error {e}")
 
-        text = " ".join(results)
+                error = ErrorCreate(
+                    user_id=user_id, message="[STT RU] ERROR", description=str(e)
+                )
+
+                await error_service.add_one(error=error)
+
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            try:
+                results_en = list(
+                    executor.map(AudioService.speech_to_text_en, cutted_files)
+                )
+
+            except Exception as e:
+                logger.info(f"[STT EN] Error {e}")
+
+                error = ErrorCreate(
+                    user_id=user_id, message="[STT EN] ERROR", description=str(e)
+                )
+
+                await error_service.add_one(error=error)
+
+        if len(" ".join(results_ru)) > len(" ".join(results_en)):
+            text = " ".join(results_ru)
+        else:
+            text = " ".join(results_en)
 
         logger.info(text)
 

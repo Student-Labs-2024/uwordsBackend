@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import List, Union
 from datetime import datetime
 from dateutil.parser import parse
 from fastapi import HTTPException, status
@@ -35,6 +35,33 @@ class UserService:
 
         except Exception as e:
             logger.info(f"[GET USER by ID] Error: {e}")
+            return None
+        
+    async def get_users_with_sub(self) -> List[User]:
+        try:
+            return await self.repo.get_all_by_filter(
+                filters=[User.subscription_type != None]
+            )
+        except Exception as e:
+            logger.info(f"[GET USER with SUB] Error: {e}")
+            return None
+        
+    async def get_users_without_sub(self) -> List[User]:
+        try:
+            return await self.repo.get_all_by_filter(
+                filters=[User.subscription_type == None]
+            )
+        except Exception as e:
+            logger.info(f"[GET USER without SUB] Error: {e}")
+            return None
+        
+    async def get_users(self) -> List[User]:
+        try:
+            return await self.repo.get_all_by_filter(
+                filters=None
+            )
+        except Exception as e:
+            logger.info(f"[GET USERS] Error: {e}")
             return None
 
     async def get_user_by_provider(

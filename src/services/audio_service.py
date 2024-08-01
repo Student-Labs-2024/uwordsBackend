@@ -138,7 +138,6 @@ class AudioService:
                 return text.lower()
 
         except Exception as e:
-            logger.info(f"[STT RU] Error: {e}")
             return " "
 
     @staticmethod
@@ -151,7 +150,6 @@ class AudioService:
                 return text.lower()
 
         except Exception as e:
-            logger.info(f"[STT EN] Error: {e}")
             return " "
 
     @staticmethod
