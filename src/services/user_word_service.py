@@ -3,6 +3,7 @@ from typing import Union, List, Dict
 from datetime import datetime, timedelta
 
 from src.schemes.schemas import ErrorCreate
+from src.utils.metric import send_user_data
 from src.utils.repository import AbstractRepository
 from src.database.models import UserWord, Word, SubTopic
 
@@ -14,6 +15,7 @@ from src.services.minio_uploader import MinioUploader
 from src.services.censore_service import CensoreFilter
 
 from src.config.instance import (
+    METRIC_URL,
     STUDY_DELAY,
     STUDY_MAX_PROGRESS,
     STUDY_WORDS_AMOUNT,
@@ -128,11 +130,17 @@ class UserWordService:
                     [UserWord.user_id == user_id, UserWord.id == word_id]
                 )
                 if user_word.progress < STUDY_MAX_PROGRESS:
-                    await self.repo.update_one(
+                    upd_user_word = await self.repo.update_one(
                         [UserWord.user_id == user_id, UserWord.id == word_id],
                         {"latest_study": time_now, "progress": user_word.progress + 1},
                     )
-                    learned += 1
+                    if upd_user_word.progress == STUDY_MAX_PROGRESS:
+                        learned += 1
+
+            data = {"user_id": user_id, "learned_amount": learned}
+
+            await send_user_data(data=data, server_url=METRIC_URL)
+
         except BaseException as e:
             logger.info(f"[UPLOAD USER WORD] ERROR: {e}")
 
@@ -238,15 +246,23 @@ class UserWordService:
             if not found_picture_racy_bucket:
                 await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_RACY)
 
-            new_words = 0
-            all_words = len(user_words)
+            add_words_amount = 0
+            add_userwords_amount = len(user_words)
 
             for user_word in user_words:
                 is_new = await self.upload_user_word(
                     user_word, user_id, word_service, subtopic_service, error_service
                 )
                 if is_new:
-                    new_words += 1
+                    add_words_amount += 1
+
+            data = {
+                "user_id": user_id,
+                "add_words_amount": add_words_amount,
+                "add_userwords_amount": add_userwords_amount,
+            }
+
+            await send_user_data(data=data, server_url=METRIC_URL)
 
             return True
 

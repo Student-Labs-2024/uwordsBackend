@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import List, Union
 from datetime import datetime
 from dateutil.parser import parse
 from fastapi import HTTPException, status
@@ -17,7 +17,7 @@ from src.schemes.schemas import (
     UserCreateGoogle,
 )
 
-from src.utils import auth as auth_utils
+from src.utils import password as password_utils
 from src.utils import tokens as token_utils
 from src.utils.repository import AbstractRepository
 
@@ -35,6 +35,31 @@ class UserService:
 
         except Exception as e:
             logger.info(f"[GET USER by ID] Error: {e}")
+            return None
+
+    async def get_users_with_sub(self) -> List[User]:
+        try:
+            return await self.repo.get_all_by_filter(
+                filters=[User.subscription_type != None]
+            )
+        except Exception as e:
+            logger.info(f"[GET USER with SUB] Error: {e}")
+            return None
+
+    async def get_users_without_sub(self) -> List[User]:
+        try:
+            return await self.repo.get_all_by_filter(
+                filters=[User.subscription_type == None]
+            )
+        except Exception as e:
+            logger.info(f"[GET USER without SUB] Error: {e}")
+            return None
+
+    async def get_users(self) -> List[User]:
+        try:
+            return await self.repo.get_all_by_filter(filters=None)
+        except Exception as e:
+            logger.info(f"[GET USERS] Error: {e}")
             return None
 
     async def get_user_by_provider(
@@ -84,7 +109,7 @@ class UserService:
                 birth_date = None
             match provider:
                 case Providers.email.value:
-                    hashed_password: bytes = auth_utils.hash_password(
+                    hashed_password: bytes = password_utils.hash_password(
                         password=data.password
                     )
                     user_data_db = UserCreateDB(
@@ -94,7 +119,7 @@ class UserService:
                         **user_data_db,
                     )
                 case Providers.admin.value:
-                    hashed_password: bytes = auth_utils.hash_password(
+                    hashed_password: bytes = password_utils.hash_password(
                         password=data.password
                     )
                     user_data_db = UserCreateDB(
@@ -139,7 +164,7 @@ class UserService:
                         },
                     )
                 hashed_password: str = user.hashed_password
-                if not auth_utils.validate_password(
+                if not password_utils.validate_password(
                     password=login_data.password,
                     hashed_password=hashed_password.encode(),
                 ):
@@ -159,7 +184,7 @@ class UserService:
                         },
                     )
                 hashed_password: str = user.hashed_password
-                if not auth_utils.validate_password(
+                if not password_utils.validate_password(
                     password=login_data.password,
                     hashed_password=hashed_password.encode(),
                 ):

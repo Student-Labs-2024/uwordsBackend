@@ -136,7 +136,12 @@ class UserDump(BaseModel):
     birth_date: Optional[datetime] = Field(
         examples=["2023-05-05 10:30:45.999999"], default=None
     )
+    subscription_type: Optional[int] = Field(examples=[1])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
+    metrics: Optional[dict] = Field(
+        examples=[{"hours": 10, "learned": 50, "days": 5}],
+        default={"hours": 0, "learned": 0, "days": 0},
+    )
 
 
 class UserCreateEmail(BaseModel):
@@ -273,8 +278,24 @@ class SendEmailCode(BaseModel):
     code: str = Field(examples=["Wh18QI"])
 
 
+class Subscription(BaseModel):
+    name: str = Field(examples=["Premium"])
+    price: int = Field(examples=[1500])
+    months: int = Field(examples=[6])
+
+
+class SubscriptionUpdate(BaseModel):
+    price: int = Field(examples=[1500])
+    months: int = Field(examples=[6])
+    old_price: Optional[int] = Field(examples=[1500])
+
+
+class SubscriptionDump(Subscription):
+    id: int = Field(examples=[1])
+    old_price: Optional[int] = Field(examples=[1500])
+
+
 class FeedbackCreate(BaseModel):
-    user_id: int = Field(examples=[1])
     stars: int = Field(examples=[5])
     message: str = Field(examples=["Отличное приложение!"])
 
@@ -293,3 +314,11 @@ class FeedbackDump(BaseModel):
 class FeedbackUpdate(BaseModel):
     stars: int = Field(examples=[5])
     message: str = Field(examples=["Отличный приложение!"])
+
+
+class Bill(BaseModel):
+    id: int = Field(examples=[1])
+    label: str = Field(examples=["1568642313854321354321543561"])
+    sub_type: int = Field(examples=[9])
+    amount: int = Field(examples=[1500])
+    success: bool = Field(examples=[False])

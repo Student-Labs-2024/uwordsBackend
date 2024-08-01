@@ -2,6 +2,11 @@ from datetime import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime
 
+from src.config.instance import (
+    ALLOWED_AUDIO_SECONDS,
+    ALLOWED_VIDEO_SECONDS,
+    DEFAULT_ENERGY,
+)
 from src.database.db_config import Base
 
 
@@ -49,6 +54,15 @@ class UserWord(Base):
     word = relationship("Word", back_populates="userWords", lazy="selectin")
 
 
+class Subscription(Base):
+    __tablename__ = "subscription"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+    price = Column(Integer)
+    old_price = Column(Integer, nullable=True)
+    months = Column(Integer)
+
+
 class User(Base):
     __tablename__ = "user"
 
@@ -65,7 +79,12 @@ class User(Base):
     birth_date = Column(DateTime, nullable=True)
     hashed_password = Column(String, nullable=True)
     latest_study = Column(DateTime, nullable=True)
+    subscription_acquisition = Column(DateTime, nullable=True)
+    subscription_type = Column(ForeignKey(Subscription.id), nullable=True)
     days = Column(Integer, default=0)
+    allowed_audio_seconds = Column(Integer, default=ALLOWED_AUDIO_SECONDS)
+    allowed_video_seconds = Column(Integer, default=ALLOWED_VIDEO_SECONDS)
+    energy = Column(Integer, default=DEFAULT_ENERGY)
     created_at = Column(DateTime, default=datetime.now)
 
     is_active = Column(Boolean, default=True, nullable=False)
@@ -92,3 +111,12 @@ class Feedback(Base):
     stars = Column(Integer, nullable=False)
     message = Column(String)
     created_at = Column(DateTime, default=datetime.now)
+
+
+class Bill(Base):
+    __tablename__ = "bill"
+    id = Column(Integer, primary_key=True, index=True)
+    label = Column(String)
+    sub_type = Column(ForeignKey(Subscription.id))
+    amount = Column(Integer)
+    success = Column(Boolean, default=False)

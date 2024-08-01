@@ -7,8 +7,10 @@ class FeedbackService:
     def __init__(self, repo: AbstractRepository):
         self.repo = repo
 
-    async def add_one(self, feedback: FeedbackCreate) -> Feedback:
-        return await self.repo.add_one(dict(feedback))
+    async def add_one(self, user_id: int, feedback: FeedbackCreate) -> Feedback:
+        feedback_data = feedback.model_dump()
+        feedback_data["user_id"] = user_id
+        return await self.repo.add_one(feedback_data)
 
     async def get_all(self) -> list[Feedback]:
         return await self.repo.get_all_by_filter()
