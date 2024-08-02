@@ -8,7 +8,6 @@ import requests
 from gtts import gTTS
 from io import BytesIO
 from pathlib import Path
-from pydub import AudioSegment
 from typing import Optional, Union, Tuple, List
 from speech_recognition import AudioFile
 
