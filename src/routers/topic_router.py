@@ -123,9 +123,9 @@ async def upload_subtopic_icon(
         type=mimetype,
     )
 
-    pictureLink = f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/{object_name}"
+    picture_link = f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/{object_name}"
 
-    subtopic_data = SubTopicIcon(pictureLink=pictureLink)
+    subtopic_data = SubTopicIcon(pictureLink=picture_link)
 
     return await subtopic_service.update_icon(
         subtopic_id=subtopic.id, subtopic_data=subtopic_data.model_dump()

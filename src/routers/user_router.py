@@ -1,12 +1,10 @@
-import json
 import os
 import uuid
 import logging
 from typing import Annotated, List, Dict
 from datetime import datetime
-from pydub import AudioSegment
 
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, status
+from fastapi import APIRouter, File, UploadFile, Depends
 
 from src.celery.tasks import process_audio_task, process_youtube_task
 
@@ -18,7 +16,6 @@ from src.schemes.schemas import (
     YoutubeLink,
     TopicWords,
     SubtopicWords,
-    UserWordDumpSchema,
 )
 
 from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC, DEFAULT_SUBTOPIC_ICON
