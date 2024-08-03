@@ -85,12 +85,16 @@ async def send_notifications(user_service: UserService = user_service_fabric()):
     now = datetime.now()
 
     for user in users:
-        date: datetime = user.latest_study
+        if not user.latest_study:
+            continue
 
-        user_delta_days = now.date() - date.date()
+        latest_study: datetime = user.latest_study
 
-        if user_delta_days == 1:
+        time_delta = now - latest_study
+
+        if time_delta.days == 1:
             EmailService.send_email(
                 email=user.email,
-                text=f"Time to learn! Otherwise your progress will be reset!",
+                theme="Uwords - Stroke Days",
+                text=f"Hello, Dear {user.username}!\n\nTime to learn! Otherwise your progress will be reset!",
             )

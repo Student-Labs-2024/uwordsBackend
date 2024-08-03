@@ -38,7 +38,9 @@ logging.basicConfig(level=logging.INFO)
 
 @app.task(bind=True, name="Email_send", max_retries=2)
 def send_email_task(self, email: str, code: str):
-    EmailService.send_email(email=email, text=f"Your code is {code}")
+    EmailService.send_email(
+        email=email, theme="Uwords - Confirantion Code", text=f"Your code is {code}"
+    )
 
 
 @app.task(bind=True, name="process_youtube", max_retries=2)
