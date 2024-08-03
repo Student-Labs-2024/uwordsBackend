@@ -77,15 +77,15 @@ class ImageDownloader:
                 return f"{MINIO_HOST}/{MINIO_BUCKET_PICTURE}/{object_name}"
 
             for annotation in annotations:
-                match annotation["type"]:
-                    case ImageAnnotations.adult.value:
-                        bucket_name = MINIO_BUCKET_PICTURE_ADULT
-                    case ImageAnnotations.medical.value:
-                        bucket_name = MINIO_BUCKET_PICTURE_MEDICAL
-                    case ImageAnnotations.violence.value:
-                        bucket_name = MINIO_BUCKET_PICTURE_VIOLENCE
-                    case ImageAnnotations.racy.value:
-                        bucket_name = MINIO_BUCKET_PICTURE_RACY
+                annotation_type = annotation["type"]
+                if annotation_type == ImageAnnotations.adult.value:
+                    bucket_name = MINIO_BUCKET_PICTURE_ADULT
+                elif annotation_type == ImageAnnotations.medical.value:
+                    bucket_name = MINIO_BUCKET_PICTURE_MEDICAL
+                elif annotation_type == ImageAnnotations.violence.value:
+                    bucket_name = MINIO_BUCKET_PICTURE_VIOLENCE
+                elif annotation_type == ImageAnnotations.racy.value:
+                    bucket_name = MINIO_BUCKET_PICTURE_RACY
 
                 annotation_value = annotation["value"]
 

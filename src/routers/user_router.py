@@ -9,7 +9,6 @@ from src.celery.tasks import process_audio_task, process_youtube_task
 
 from src.database.models import User, UserWord
 from src.schemes.schemas import (
-    Audio,
     CustomResponse,
     WordsIdsSchema,
     YoutubeLink,
