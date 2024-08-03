@@ -3,7 +3,7 @@ import uuid
 import logging
 from typing import Annotated, List, Dict
 
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 
 from src.celery.tasks import process_audio_task, process_youtube_task
 
