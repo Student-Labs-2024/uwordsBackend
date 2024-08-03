@@ -2,7 +2,7 @@ import requests
 import logging
 from urllib.parse import urlencode
 
-logger = logging.getLogger("[AUTH UTILS]")
+logger = logging.getLogger("[METRIC UTILS]")
 logging.basicConfig(level=logging.INFO)
 
 
