@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from src.celery.tasks import send_email_task
-from src.schemes.schemas import SendEmailCode
+from src.schemes.util_schemas import SendEmailCode
 from src.services.email_service import EmailService
 from src.database.redis_config import redis_connection
 

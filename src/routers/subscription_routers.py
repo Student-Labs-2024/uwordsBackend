@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.database.models import User
-from src.schemes.schemas import Subscription, SubscriptionDump, SubscriptionUpdate
+from src.schemes.subscription_schemas import SubscriptionDump, Subscription, SubscriptionUpdate
 from src.services.subscription_service import SubscriptionService
 from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils import auth as auth_utils

@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi.websockets import WebSocket
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.schemes.schemas import ErrorCreate
+from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 

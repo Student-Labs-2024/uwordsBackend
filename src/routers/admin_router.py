@@ -5,15 +5,11 @@ from fastapi.security import HTTPBearer
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.database.models import User
+from src.schemes.admin_schemas import AdminCreate, AdminEmailLogin
 
-from src.schemes.enums import Providers
-from src.schemes.schemas import (
-    UserDump,
-    AdminCreate,
-    CustomResponse,
-    TokenInfo,
-    AdminEmailLogin,
-)
+from src.schemes.enums.enums import Providers
+from src.schemes.user_schemas import UserDump
+from src.schemes.util_schemas import TokenInfo, CustomResponse
 
 from src.services.user_service import UserService
 

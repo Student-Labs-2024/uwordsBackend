@@ -5,17 +5,11 @@ from dateutil.parser import parse
 from fastapi import HTTPException, status
 
 from src.database.models import User
+from src.schemes.admin_schemas import AdminEmailLogin
 
-from src.schemes.enums import Providers
-from src.schemes.schemas import (
-    UserCreateDB,
-    TokenInfo,
-    UserEmailLogin,
-    AdminEmailLogin,
-    UserCreateVk,
-    UserCreateEmail,
-    UserCreateGoogle,
-)
+from src.schemes.enums.enums import Providers
+from src.schemes.user_schemas import UserCreateVk, UserCreateEmail, UserCreateGoogle, UserCreateDB, UserEmailLogin
+from src.schemes.util_schemas import TokenInfo
 
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils

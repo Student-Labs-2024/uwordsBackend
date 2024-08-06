@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.schemes.schemas import Bill
+from src.schemes.util_schemas import Bill
 from src.utils import auth as auth_utils
 from src.config.instance import WALLET_ID, PAYMENT_TOKEN
 from src.database.models import User, Subscription

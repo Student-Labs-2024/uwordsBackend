@@ -7,26 +7,16 @@ from src.config.instance import METRIC_URL
 from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
+from src.schemes.fead_back_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+from src.schemes.user_schemas import UserDump, UserCreateEmail, UserCreateVk, UserCreateGoogle, UserEmailLogin, \
+    UserGoogleLogin, UserUpdate
+from src.schemes.util_schemas import TokenInfo, CustomResponse
 
 from src.services.feedback_service import FeedbackService
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
 
-from src.schemes.enums import Providers
-from src.schemes.schemas import (
-    CustomResponse,
-    FeedbackCreate,
-    FeedbackDump,
-    FeedbackUpdate,
-    TokenInfo,
-    UserCreateEmail,
-    UserDump,
-    UserUpdate,
-    UserCreateVk,
-    UserEmailLogin,
-    UserCreateGoogle,
-    UserGoogleLogin,
-)
+from src.schemes.enums.enums import Providers
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils

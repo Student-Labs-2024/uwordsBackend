@@ -1,6 +1,6 @@
 from src.database.models import Feedback
+from src.schemes.fead_back_schemas import FeedbackCreate, FeedbackDump
 from src.utils.repository import AbstractRepository
-from src.schemes.schemas import FeedbackCreate, FeedbackDump
 
 
 class FeedbackService:
