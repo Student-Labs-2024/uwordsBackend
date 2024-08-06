@@ -57,42 +57,21 @@ class UserService:
             return None
 
     async def get_user_by_provider(
-        self, unique: str, provider: str
+            self, unique: str, provider: str, user_field
     ) -> Union[User, None]:
         try:
-            match provider:
-                case Providers.email.value:
-                    return await self.repo.get_one(
-                        [User.email == unique, User.provider == provider]
-                    )
-                case Providers.vk.value:
-                    return await self.repo.get_one(
-                        [User.vk_id == unique, User.provider == provider]
-                    )
-                case Providers.google.value:
-                    return await self.repo.get_one(
-                        [User.google_id == unique, User.provider == provider]
-                    )
-                case Providers.admin.value:
-                    return await self.repo.get_one(
-                        [User.email == unique, User.provider == provider]
-                    )
-        except Exception as e:
-            logger.info(f"[GET USER by EMAIL] Error: {e}")
-            return None
-
-    async def get_user_by_email(self, email: str) -> Union[User, None]:
-        try:
-            return await self.repo.get_one(filters=[User.email == email])
+            return await self.repo.get_one(
+                [user_field == unique, User.provider == provider]
+            )
         except Exception as e:
             logger.info(f"[GET USER by EMAIL] Error: {e}")
             return None
 
     async def create_user(
-        self,
-        data: Union[UserCreateVk, UserCreateEmail, UserCreateGoogle],
-        provider: str,
-        uid: str = None,
+            self,
+            data: Union[UserCreateVk, UserCreateEmail, UserCreateGoogle],
+            provider: str,
+            uid: str = None,
     ) -> Union[User, None]:
         try:
             user_data_db = data.model_dump()
@@ -140,15 +119,15 @@ class UserService:
             return None
 
     async def auth_user(
-        self,
-        provider: str,
-        login_data: Union[UserEmailLogin, AdminEmailLogin, None] = None,
-        uid=None,
+            self,
+            provider: str,
+            login_data: Union[UserEmailLogin, AdminEmailLogin, None] = None,
+            uid=None,
     ) -> TokenInfo:
         match provider:
             case Providers.email.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=Providers.email.value
+                    unique=login_data.email, provider=Providers.email.value, user_field=User.email
                 )
                 if not user:
                     raise HTTPException(
@@ -159,8 +138,8 @@ class UserService:
                     )
                 hashed_password: str = user.hashed_password
                 if not password_utils.validate_password(
-                    password=login_data.password,
-                    hashed_password=hashed_password.encode(),
+                        password=login_data.password,
+                        hashed_password=hashed_password.encode(),
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -168,7 +147,7 @@ class UserService:
                     )
             case Providers.admin.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=Providers.admin.value
+                    unique=login_data.email, provider=Providers.admin.value, user_field=User.email
                 )
                 if not user:
                     raise HTTPException(
@@ -179,8 +158,8 @@ class UserService:
                     )
                 hashed_password: str = user.hashed_password
                 if not password_utils.validate_password(
-                    password=login_data.password,
-                    hashed_password=hashed_password.encode(),
+                        password=login_data.password,
+                        hashed_password=hashed_password.encode(),
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -188,7 +167,7 @@ class UserService:
                     )
             case Providers.vk.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=Providers.vk.value
+                    unique=uid, provider=Providers.vk.value, user_field=User.vk_id
                 )
                 if not user:
                     raise HTTPException(
@@ -197,7 +176,7 @@ class UserService:
                     )
             case Providers.google.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=Providers.google.value
+                    unique=uid, provider=Providers.google.value, user_field=User.google_id
                 )
                 if not user:
                     raise HTTPException(
@@ -238,7 +217,7 @@ class UserService:
         user = await self.get_user_by_id(uid)
         try:
             user_days_delta = (
-                datetime.date(datetime.now()) - user.latest_study.date()
+                    datetime.date(datetime.now()) - user.latest_study.date()
             ).days
         except:
             user_days_delta = None
@@ -253,7 +232,7 @@ class UserService:
         user = await self.get_user_by_id(uid)
         try:
             user_days_delta = (
-                datetime.date(datetime.now()) - user.latest_study.date()
+                    datetime.date(datetime.now()) - user.latest_study.date()
             ).days
         except:
             user_days_delta = None

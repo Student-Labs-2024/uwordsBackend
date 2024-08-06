@@ -38,7 +38,7 @@ async def create_admin(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
     if await user_service.get_user_by_provider(
-        unique=admin_data.email, provider=Providers.admin.value
+        unique=admin_data.email, provider=Providers.admin.value, user_field=User.email
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
