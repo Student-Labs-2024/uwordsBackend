@@ -1,7 +1,7 @@
 import json
 import logging
 import requests
-from typing import List, Union, Dict
+from typing import Union, Dict
 from jwt import InvalidTokenError
 
 from fastapi import Depends, HTTPException, status

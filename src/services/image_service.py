@@ -14,7 +14,7 @@ from src.config.instance import (
     PIX_TOKEN,
 )
 
-from src.schemes.enums import ImageAnnotations
+from src.schemes.enums.enums import ImageAnnotations
 from src.services.censore_service import ImageSafetyVision
 from src.services.minio_uploader import MinioUploader
 

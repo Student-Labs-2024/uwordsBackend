@@ -1,7 +1,5 @@
 import os
-import asyncio
 import logging
-from typing import List
 from langdetect import detect
 from librosa import get_duration
 from asgiref.sync import async_to_sync
@@ -11,8 +9,7 @@ from celery.exceptions import MaxRetriesExceededError
 from src.config.celery_app import app
 
 from src.config.instance import METRIC_URL
-
-from src.schemes.schemas import ErrorCreate
+from src.schemes.error_schemas import ErrorCreate
 
 from src.services.text_service import TextService
 from src.services.audio_service import AudioService

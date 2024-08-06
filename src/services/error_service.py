@@ -1,7 +1,7 @@
 from src.database.models import Error
+from src.schemes.error_schemas import ErrorCreate, ErrorDump
 
 from src.utils.repository import AbstractRepository
-from src.schemes.schemas import ErrorCreate, ErrorDump
 
 
 class ErrorService:

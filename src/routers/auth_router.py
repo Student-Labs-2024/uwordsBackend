@@ -7,26 +7,23 @@ from src.config.instance import METRIC_URL
 from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
+from src.schemes.fead_back_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+from src.schemes.user_schemas import (
+    UserDump,
+    UserCreateEmail,
+    UserCreateVk,
+    UserCreateGoogle,
+    UserEmailLogin,
+    UserGoogleLogin,
+    UserUpdate,
+)
+from src.schemes.util_schemas import TokenInfo, CustomResponse
 
 from src.services.feedback_service import FeedbackService
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
 
-from src.schemes.enums import Providers
-from src.schemes.schemas import (
-    CustomResponse,
-    FeedbackCreate,
-    FeedbackDump,
-    FeedbackUpdate,
-    TokenInfo,
-    UserCreateEmail,
-    UserDump,
-    UserUpdate,
-    UserCreateVk,
-    UserEmailLogin,
-    UserCreateGoogle,
-    UserGoogleLogin,
-)
+from src.schemes.enums.enums import Providers
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
@@ -53,7 +50,7 @@ async def register_user(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
     if await user_service.get_user_by_provider(
-        unique=user_data.email, provider=Providers.email.value
+        unique=user_data.email, provider=Providers.email.value, user_field=User.email
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -83,7 +80,9 @@ async def register_vk_user(
 ):
     if stat["response"]["success"] == 1:
         if await user_service.get_user_by_provider(
-            unique=str(stat["response"]["user_id"]), provider=Providers.vk.value
+            unique=str(stat["response"]["user_id"]),
+            provider=Providers.vk.value,
+            user_field=User.vk_id,
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -110,7 +109,9 @@ async def register_google_user(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
     if await user_service.get_user_by_provider(
-        unique=user_data.google_id, provider=Providers.google.value
+        unique=user_data.google_id,
+        provider=Providers.google.value,
+        user_field=User.google_id,
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

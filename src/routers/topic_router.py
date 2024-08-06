@@ -6,11 +6,10 @@ from fastapi import HTTPException, status
 from fastapi import APIRouter, Depends, UploadFile, File
 
 from src.database.models import User, Topic, SubTopic
-
-from src.schemes.schemas import (
-    SubTopicCreateDB,
+from src.schemes.topic_schemas import (
     TopicCreate,
     SubTopicCreate,
+    SubTopicCreateDB,
     SubTopicIcon,
 )
 

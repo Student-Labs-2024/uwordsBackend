@@ -8,16 +8,13 @@ from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 from src.celery.tasks import process_audio_task, process_youtube_task
 
 from src.database.models import User, UserWord
-from src.schemes.schemas import (
-    CustomResponse,
-    WordsIdsSchema,
-    YoutubeLink,
-    TopicWords,
-    SubtopicWords,
-)
 
 from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC, DEFAULT_SUBTOPIC_ICON
 from src.config import fastapi_docs_config as doc_data
+from src.schemes.audio_schemas import YoutubeLink
+from src.schemes.topic_schemas import TopicWords, SubtopicWords
+from src.schemes.util_schemas import CustomResponse
+from src.schemes.word_schemas import WordsIdsSchema
 
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
@@ -30,7 +27,6 @@ from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 from src.services.file_service import FileService
 from src.services.user_service import UserService
 from src.services.error_service import ErrorService
-from src.services.audio_service import AudioService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
 

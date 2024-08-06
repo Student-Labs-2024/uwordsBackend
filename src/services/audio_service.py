@@ -11,8 +11,7 @@ from pathlib import Path
 from typing import Optional, Union, Tuple, List
 from speech_recognition import AudioFile
 
-from src.schemes.schemas import ErrorCreate
-
+from src.schemes.error_schemas import ErrorCreate
 from src.services.services_config import sr
 from src.services.error_service import ErrorService
 from src.services.minio_uploader import MinioUploader

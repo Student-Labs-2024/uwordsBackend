@@ -5,7 +5,7 @@ from google.cloud.vision import Image
 from src.services.services_config import google_vision, profanity, swear_check
 from src.config.instance import IMAGE_SAFETY_INDEX, IMAGE_SAFETY_SCALE
 
-from src.schemes.enums import ImageAnnotations
+from src.schemes.enums.enums import ImageAnnotations
 
 
 logger = logging.getLogger("[SERVICES CENSORE]")

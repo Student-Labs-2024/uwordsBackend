@@ -5,17 +5,17 @@ from dateutil.parser import parse
 from fastapi import HTTPException, status
 
 from src.database.models import User
+from src.schemes.admin_schemas import AdminEmailLogin
 
-from src.schemes.enums import Providers
-from src.schemes.schemas import (
-    UserCreateDB,
-    TokenInfo,
-    UserEmailLogin,
-    AdminEmailLogin,
+from src.schemes.enums.enums import Providers
+from src.schemes.user_schemas import (
     UserCreateVk,
     UserCreateEmail,
     UserCreateGoogle,
+    UserCreateDB,
+    UserEmailLogin,
 )
+from src.schemes.util_schemas import TokenInfo
 
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils
@@ -63,33 +63,12 @@ class UserService:
             return None
 
     async def get_user_by_provider(
-        self, unique: str, provider: str
+        self, unique: str, provider: str, user_field
     ) -> Union[User, None]:
         try:
-            match provider:
-                case Providers.email.value:
-                    return await self.repo.get_one(
-                        [User.email == unique, User.provider == provider]
-                    )
-                case Providers.vk.value:
-                    return await self.repo.get_one(
-                        [User.vk_id == unique, User.provider == provider]
-                    )
-                case Providers.google.value:
-                    return await self.repo.get_one(
-                        [User.google_id == unique, User.provider == provider]
-                    )
-                case Providers.admin.value:
-                    return await self.repo.get_one(
-                        [User.email == unique, User.provider == provider]
-                    )
-        except Exception as e:
-            logger.info(f"[GET USER by EMAIL] Error: {e}")
-            return None
-
-    async def get_user_by_email(self, email: str) -> Union[User, None]:
-        try:
-            return await self.repo.get_one(filters=[User.email == email])
+            return await self.repo.get_one(
+                [user_field == unique, User.provider == provider]
+            )
         except Exception as e:
             logger.info(f"[GET USER by EMAIL] Error: {e}")
             return None
@@ -154,7 +133,9 @@ class UserService:
         match provider:
             case Providers.email.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=Providers.email.value
+                    unique=login_data.email,
+                    provider=Providers.email.value,
+                    user_field=User.email,
                 )
                 if not user:
                     raise HTTPException(
@@ -174,7 +155,9 @@ class UserService:
                     )
             case Providers.admin.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=Providers.admin.value
+                    unique=login_data.email,
+                    provider=Providers.admin.value,
+                    user_field=User.email,
                 )
                 if not user:
                     raise HTTPException(
@@ -194,7 +177,7 @@ class UserService:
                     )
             case Providers.vk.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=Providers.vk.value
+                    unique=uid, provider=Providers.vk.value, user_field=User.vk_id
                 )
                 if not user:
                     raise HTTPException(
@@ -203,7 +186,9 @@ class UserService:
                     )
             case Providers.google.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=Providers.google.value
+                    unique=uid,
+                    provider=Providers.google.value,
+                    user_field=User.google_id,
                 )
                 if not user:
                     raise HTTPException(

@@ -3,8 +3,7 @@ import logging
 from typing import Union, List, Dict
 from deep_translator.google import GoogleTranslator
 
-from src.schemes.schemas import ErrorCreate
-
+from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.services.services_config import ma, STOPWORDS
 
