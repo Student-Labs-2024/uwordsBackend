@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
-from src.schemes.util_schemas import WordDumpSchema
+from src.schemes.word_schemas import WordDumpSchema
 
 
 class UserWordDumpSchema(BaseModel):

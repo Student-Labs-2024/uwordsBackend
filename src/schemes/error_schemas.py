@@ -1,3 +1,9 @@
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+
 class ErrorCreate(BaseModel):
     user_id: int = Field(examples=[1])
     message: str = Field(examples=["Ошибка обработки списка слов"])
