@@ -8,8 +8,15 @@ from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
 from src.schemes.fead_back_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
-from src.schemes.user_schemas import UserDump, UserCreateEmail, UserCreateVk, UserCreateGoogle, UserEmailLogin, \
-    UserGoogleLogin, UserUpdate
+from src.schemes.user_schemas import (
+    UserDump,
+    UserCreateEmail,
+    UserCreateVk,
+    UserCreateGoogle,
+    UserEmailLogin,
+    UserGoogleLogin,
+    UserUpdate,
+)
 from src.schemes.util_schemas import TokenInfo, CustomResponse
 
 from src.services.feedback_service import FeedbackService
@@ -73,7 +80,9 @@ async def register_vk_user(
 ):
     if stat["response"]["success"] == 1:
         if await user_service.get_user_by_provider(
-            unique=str(stat["response"]["user_id"]), provider=Providers.vk.value, user_field=User.vk_id
+            unique=str(stat["response"]["user_id"]),
+            provider=Providers.vk.value,
+            user_field=User.vk_id,
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -100,7 +109,9 @@ async def register_google_user(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
 ):
     if await user_service.get_user_by_provider(
-        unique=user_data.google_id, provider=Providers.google.value, user_field=User.google_id
+        unique=user_data.google_id,
+        provider=Providers.google.value,
+        user_field=User.google_id,
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

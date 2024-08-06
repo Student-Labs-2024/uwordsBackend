@@ -8,7 +8,13 @@ from src.database.models import User
 from src.schemes.admin_schemas import AdminEmailLogin
 
 from src.schemes.enums.enums import Providers
-from src.schemes.user_schemas import UserCreateVk, UserCreateEmail, UserCreateGoogle, UserCreateDB, UserEmailLogin
+from src.schemes.user_schemas import (
+    UserCreateVk,
+    UserCreateEmail,
+    UserCreateGoogle,
+    UserCreateDB,
+    UserEmailLogin,
+)
 from src.schemes.util_schemas import TokenInfo
 
 from src.utils import password as password_utils
@@ -57,7 +63,7 @@ class UserService:
             return None
 
     async def get_user_by_provider(
-            self, unique: str, provider: str, user_field
+        self, unique: str, provider: str, user_field
     ) -> Union[User, None]:
         try:
             return await self.repo.get_one(
@@ -68,10 +74,10 @@ class UserService:
             return None
 
     async def create_user(
-            self,
-            data: Union[UserCreateVk, UserCreateEmail, UserCreateGoogle],
-            provider: str,
-            uid: str = None,
+        self,
+        data: Union[UserCreateVk, UserCreateEmail, UserCreateGoogle],
+        provider: str,
+        uid: str = None,
     ) -> Union[User, None]:
         try:
             user_data_db = data.model_dump()
@@ -119,15 +125,17 @@ class UserService:
             return None
 
     async def auth_user(
-            self,
-            provider: str,
-            login_data: Union[UserEmailLogin, AdminEmailLogin, None] = None,
-            uid=None,
+        self,
+        provider: str,
+        login_data: Union[UserEmailLogin, AdminEmailLogin, None] = None,
+        uid=None,
     ) -> TokenInfo:
         match provider:
             case Providers.email.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=Providers.email.value, user_field=User.email
+                    unique=login_data.email,
+                    provider=Providers.email.value,
+                    user_field=User.email,
                 )
                 if not user:
                     raise HTTPException(
@@ -138,8 +146,8 @@ class UserService:
                     )
                 hashed_password: str = user.hashed_password
                 if not password_utils.validate_password(
-                        password=login_data.password,
-                        hashed_password=hashed_password.encode(),
+                    password=login_data.password,
+                    hashed_password=hashed_password.encode(),
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -147,7 +155,9 @@ class UserService:
                     )
             case Providers.admin.value:
                 user = await self.get_user_by_provider(
-                    unique=login_data.email, provider=Providers.admin.value, user_field=User.email
+                    unique=login_data.email,
+                    provider=Providers.admin.value,
+                    user_field=User.email,
                 )
                 if not user:
                     raise HTTPException(
@@ -158,8 +168,8 @@ class UserService:
                     )
                 hashed_password: str = user.hashed_password
                 if not password_utils.validate_password(
-                        password=login_data.password,
-                        hashed_password=hashed_password.encode(),
+                    password=login_data.password,
+                    hashed_password=hashed_password.encode(),
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -176,7 +186,9 @@ class UserService:
                     )
             case Providers.google.value:
                 user = await self.get_user_by_provider(
-                    unique=uid, provider=Providers.google.value, user_field=User.google_id
+                    unique=uid,
+                    provider=Providers.google.value,
+                    user_field=User.google_id,
                 )
                 if not user:
                     raise HTTPException(
@@ -217,7 +229,7 @@ class UserService:
         user = await self.get_user_by_id(uid)
         try:
             user_days_delta = (
-                    datetime.date(datetime.now()) - user.latest_study.date()
+                datetime.date(datetime.now()) - user.latest_study.date()
             ).days
         except:
             user_days_delta = None
@@ -232,7 +244,7 @@ class UserService:
         user = await self.get_user_by_id(uid)
         try:
             user_days_delta = (
-                    datetime.date(datetime.now()) - user.latest_study.date()
+                datetime.date(datetime.now()) - user.latest_study.date()
             ).days
         except:
             user_days_delta = None
