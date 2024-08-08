@@ -112,7 +112,7 @@ async def general_process_audio(
 
         allowed_iterations, user_data, metric_data = (
             await get_allowed_iterations_and_metric_data(
-                type=type, user=user, duration=duration
+                type=type, user=user, duration=int(duration)
             )
         )
 

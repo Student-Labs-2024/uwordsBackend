@@ -70,7 +70,7 @@ async def check_youtube_link(link: str) -> bool:
 
 
 async def get_allowed_iterations_and_metric_data(
-    type: str, user: User, duration: float
+    type: str, user: User, duration: int
 ) -> Tuple[int, Dict, Dict]:
     if not user.subscription_type:
         if type == "audio":
