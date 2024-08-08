@@ -23,6 +23,7 @@ from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
 
 from src.utils.metric import send_user_data
+from src.utils.helpers import get_allowed_iterations_and_metric_data
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
@@ -109,52 +110,14 @@ async def general_process_audio(
 
         duration = get_duration(path=converted_file)
 
-        if not user.subscription_type:
-            if type == "audio":
-                remained_seconds: int = user.allowed_audio_seconds
+        allowed_iterations, user_data, metric_data = (
+            await get_allowed_iterations_and_metric_data(
+                type=type, user=user, duration=duration
+            )
+        )
 
-                allowed_iterations = remained_seconds // 30
-
-                if remained_seconds % 30 != 0:
-                    allowed_iterations += 1
-
-                if remained_seconds - duration < 0:
-                    allowed_audio_seconds = 0
-                    metric_duration = remained_seconds
-                else:
-                    metric_duration = duration
-                    allowed_audio_seconds = remained_seconds - duration
-
-                await user_service.update_user(
-                    user_id=user_id,
-                    user_data={"allowed_audio_seconds": allowed_audio_seconds},
-                )
-
-                metric_data = {"user_id": user_id, "speech_seconds": duration}
-
-            elif type == "video":
-                remained_seconds: int = user.allowed_video_seconds
-                allowed_iterations = remained_seconds // 30
-                if remained_seconds % 30 != 0:
-                    allowed_iterations += 1
-
-                if remained_seconds - duration < 0:
-                    allowed_video_seconds = 0
-                    metric_duration = remained_seconds
-                else:
-                    metric_duration = duration
-                    allowed_video_seconds = remained_seconds - duration
-
-                await user_service.update_user(
-                    user_id=user_id,
-                    user_data={"allowed_video_seconds": allowed_video_seconds},
-                )
-
-                metric_data = {"user_id": user_id, "video_seconds": metric_duration}
-
-        else:
-            metric_data = {"user_id": user_id, "video_seconds": metric_duration}
-            allowed_iterations = None
+        if user_data:
+            await user_service.update_user(user_id=user.id, user_data=user_data)
 
         await send_user_data(data=metric_data, server_url=METRIC_URL)
 

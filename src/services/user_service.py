@@ -231,9 +231,15 @@ class UserService:
 
         today = datetime(now.year, now.month, now.day)
 
-        if user.latest_update >= today:
-            return
-        
+        if user.latest_study:
+            if user.latest_study >= today:
+                days = 0
+            else:
+                days = 1
+
+        else:
+            days = 1
+
         try:
             user_days_delta = (
                 datetime.date(datetime.now()) - user.latest_study.date()
@@ -242,7 +248,7 @@ class UserService:
             user_days_delta = None
         if not user_days_delta or (user_days_delta == 1):
             await self.update_user(
-                user.id, {"latest_study": datetime.now(), "days": user.days + 1}
+                user.id, {"latest_study": datetime.now(), "days": user.days + days}
             )
         if user_days_delta and user_days_delta >= 2:
             await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
