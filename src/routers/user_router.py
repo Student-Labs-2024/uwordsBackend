@@ -247,7 +247,7 @@ async def complete_user_words_learning(
 ):
     if not user.subscription_type and user.energy < 10:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT, detail="Energy limit ran out"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Energy limit ran out"
         )
 
     await user_words_service.update_progress_word(
@@ -277,7 +277,7 @@ async def upload_audio(
 ):
     if not user.subscription_type and user.allowed_audio_seconds == 0:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT, detail="Seconds limit ran out"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seconds limit ran out"
         )
 
     filename = file.filename
@@ -322,7 +322,7 @@ async def upload_youtube_video(
 ):
     if not user.subscription_type and user.allowed_video_seconds == 0:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT, detail="Seconds limit ran out"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seconds limit ran out"
         )
 
     await helper_utils.check_youtube_link(link=schema.link)
