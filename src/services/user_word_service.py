@@ -167,7 +167,6 @@ class UserWordService:
                 return None
 
             word = await word_service.get_word(en_value=en_value)
-
             if not word:
                 subtopic_title = await subtopic_service.check_word(en_value)
                 subtopic = await subtopic_service.get(

@@ -18,6 +18,10 @@ class SendEmailCode(BaseModel):
     code: str = Field(examples=["Wh18QI"])
 
 
+class TelegramCode(BaseModel):
+    code: str = Field(examples=["Wh18QI"])
+
+
 class Bill(BaseModel):
     id: int = Field(examples=[1])
     label: str = Field(examples=["1568642313854321354321543561"])

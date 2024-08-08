@@ -1,5 +1,6 @@
 import os
 import logging
+
 from langdetect import detect
 from librosa import get_duration
 from asgiref.sync import async_to_sync
@@ -27,7 +28,6 @@ from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
-
 
 logger = logging.getLogger("[CELERY TASKS WORDS]")
 logging.basicConfig(level=logging.INFO)
@@ -171,7 +171,6 @@ async def general_process_audio(
         )
 
         files_paths += cutted_files
-
         with ThreadPoolExecutor(max_workers=20) as executor:
             try:
                 results_ru = list(
@@ -207,45 +206,9 @@ async def general_process_audio(
             text = " ".join(results_en)
 
         logger.info(text)
-
-        text_language = detect(text=text)
-
-        text_without_spec_chars = await TextService.remove_spec_chars(
-            text=text, error_service=error_service, user_id=user_id
+        translated_words = await TextService.get_translated_clear_text(
+            text, error_service, user_id
         )
-
-        words = await TextService.remove_stop_words(
-            text=text_without_spec_chars,
-            error_service=error_service,
-            user_id=user_id,
-        )
-
-        norm_words = await TextService.normalize_words(
-            words=words, error_service=error_service, user_id=user_id
-        )
-
-        freq_dict = await TextService.create_freq_dict(
-            words=norm_words, error_service=error_service, user_id=user_id
-        )
-
-        if text_language == "ru":
-            translated_words = await TextService.translate(
-                words=freq_dict,
-                from_lang="russian",
-                to_lang="english",
-                error_service=error_service,
-                user_id=user_id,
-            )
-
-        else:
-            translated_words = await TextService.translate(
-                words=freq_dict,
-                from_lang="english",
-                to_lang="russian",
-                error_service=error_service,
-                user_id=user_id,
-            )
-
         await user_word_service.upload_user_words(
             user_words=translated_words,
             user_id=user_id,
