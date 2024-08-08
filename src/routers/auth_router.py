@@ -3,10 +3,11 @@ from typing import Annotated
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from src.config.instance import METRIC_URL
+from src.config.instance import METRIC_URL, EMAIL_CODE_LEN, EMAIL_CODE_EXP
 from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
+from src.database.redis_config import redis_connection
 from src.schemes.fead_back_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
 from src.schemes.user_schemas import (
     UserDump,
@@ -17,7 +18,7 @@ from src.schemes.user_schemas import (
     UserGoogleLogin,
     UserUpdate,
 )
-from src.schemes.util_schemas import TokenInfo, CustomResponse
+from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
 
 from src.services.feedback_service import FeedbackService
 from src.services.user_service import UserService
@@ -27,10 +28,10 @@ from src.schemes.enums.enums import Providers
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
+from src.utils.email import generate_verification_code
 from src.utils.metric import get_user_data
 from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
-
 
 logger = logging.getLogger("[ROUTER AUTH]")
 logging.basicConfig(level=logging.INFO)
@@ -307,3 +308,34 @@ async def update_feedback(
         feedback_id, feedback_data.model_dump()
     )
     return updated_feedback
+
+
+@auth_router_v1.post(
+    "/telegram/get_link",
+    # response_model=FeedbackDump,
+    # name=doc_data.FEEDBACK_UPDATE_TITLE,
+    # description=doc_data.FEEDBACK_UPDATE_DESCRIPTION,
+)
+async def get_telegram_link(
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    code = generate_verification_code(int(EMAIL_CODE_LEN))
+    redis_connection.set(code, user.id, ex=int(EMAIL_CODE_EXP))
+    return f"https://t.me/uwords_bot?start={code}"
+
+
+@auth_router_v1.post(
+    "/telegram/check_code",
+    # response_model=bool,
+    # name=doc_data.CHECK_CODE_TITLE,
+    # description=doc_data.CHECK_CODE_DESCRIPTION,
+)
+async def check_code(code: TelegramCode) -> int | bool:
+    try:
+        user_id = redis_connection.get(code.code).decode("utf-8")
+        return user_id
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "No code"},
+        )
