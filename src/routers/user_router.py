@@ -231,8 +231,8 @@ async def get_user_words_for_study(
     subtopic_title: str | None = None,
 ):
     if not user.subscription_type and user.energy < 10:
-        return CustomResponse(
-            status_code=status.HTTP_204_NO_CONTENT, message="Energy limit ran out"
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Energy limit ran out"
         )
 
     words_for_study = await user_words_service.get_user_words_for_study(
