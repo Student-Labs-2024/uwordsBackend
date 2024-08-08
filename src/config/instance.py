@@ -97,7 +97,8 @@ EMAIL_PORT: str = os.environ.get("EMAIL_PORT")
 SMTP_SERVER: str = os.environ.get("SMTP_SERVER")
 SENDER_EMAIL: str = os.environ.get("SENDER_EMAIL")
 EMAIL_PASSWORD: str = os.environ.get("EMAIL_PASSWORD")
-EMAIL_CODE_LEN: str = os.environ.get("EMAIL_CODE_LEN")
+EMAIL_CODE_LEN: int = 4
+TELEGRAM_CODE_LEN: int = 12
 
 # VK
 SERVICE_TOKEN = os.environ.get("SERVICE_TOKEN")
