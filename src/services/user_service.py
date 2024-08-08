@@ -227,6 +227,13 @@ class UserService:
 
     async def update_learning_days(self, uid):
         user = await self.get_user_by_id(uid)
+        now = datetime.now()
+
+        today = datetime(now.year, now.month, now.day)
+
+        if user.latest_update >= today:
+            return
+        
         try:
             user_days_delta = (
                 datetime.date(datetime.now()) - user.latest_study.date()
