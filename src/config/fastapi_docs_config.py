@@ -406,6 +406,46 @@ BILL_ALL_DESCRIPTION = """\
 Метод для получения всех чеков\
 """
 
+ACHIEVEMENT_ADD_TITLE = """\
+Создать достижение\
+"""
+
+ACHIEVEMENT_ADD_DESCRIPTION = """\
+Создайте достижения для пользователей\
+"""
+
+ACHIEVEMENT_GET_TITLE = """\
+Получить достижение\
+"""
+
+ACHIEVEMENT_GET_DESCRIPTION = """\
+Получить существующее достижение по его id\
+"""
+
+ACHIEVEMENT_GET_ALL_TITLE = """\
+Получить все достижения\
+"""
+
+ACHIEVEMENT_GET_ALL_DESCRIPTION = """\
+Получить все существующие достижения\
+"""
+
+ACHIEVEMENT_DELETE_TITLE = """\
+Удалить достижение\
+"""
+
+ACHIEVEMENT_DELETE_DESCRIPTION = """\
+Удалить достижение по его id\
+"""
+
+ACHIEVEMENT_UPDATE_TITLE = """\
+Обновить достижение\
+"""
+
+ACHIEVEMENT_UPDATE_DESCRIPTION = """\
+Обновить достижение по его id\
+"""
+
 TAGS_METADATA = [
     {
         "name": "Users",

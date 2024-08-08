@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import relationship
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Float, Integer, String, ForeignKey, DateTime
 
 from src.config.instance import (
     ALLOWED_AUDIO_SECONDS,
@@ -56,6 +56,7 @@ class UserWord(Base):
 
 class Subscription(Base):
     __tablename__ = "subscription"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
     price = Column(Integer)
@@ -91,6 +92,10 @@ class User(Base):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
 
+    user_achievements = relationship(
+        "UserAchievement", back_populates="user", lazy="selectin"
+    )
+
 
 class Error(Base):
     __tablename__ = "error"
@@ -115,8 +120,39 @@ class Feedback(Base):
 
 class Bill(Base):
     __tablename__ = "bill"
+
     id = Column(Integer, primary_key=True, index=True)
     label = Column(String)
     sub_type = Column(ForeignKey(Subscription.id))
     amount = Column(Integer)
     success = Column(Boolean, default=False)
+
+
+class Achievement(Base):
+    __tablename__ = "achievement"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String)
+    pictureLink = Column(String, nullable=True)
+    category = Column(String)
+    stage = Column(Integer)
+    target = Column(Integer, nullable=False)
+    user_achievements = relationship(
+        "UserAchievement", back_populates="achievement", lazy="selectin"
+    )
+
+
+class UserAchievement(Base):
+    __tablename__ = "user_achievement"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    achievement_id = Column(Integer, ForeignKey(Achievement.id))
+    progress = Column(Integer, default=0)
+    progress_percent = Column(Float, default=0)
+    is_completed = Column(Boolean, default=False)
+    achievement = relationship(
+        "Achievement", back_populates="user_achievements", lazy="selectin"
+    )
+    user = relationship("User", back_populates="user_achievements", lazy="selectin")
