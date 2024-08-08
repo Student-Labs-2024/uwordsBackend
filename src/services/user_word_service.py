@@ -2,7 +2,7 @@ import logging
 from typing import Union, List, Dict
 from datetime import datetime, timedelta
 
-from src.schemes.schemas import ErrorCreate
+from src.schemes.error_schemas import ErrorCreate
 from src.utils.metric import send_user_data
 from src.utils.repository import AbstractRepository
 from src.database.models import UserWord, Word, SubTopic
@@ -167,7 +167,6 @@ class UserWordService:
                 return None
 
             word = await word_service.get_word(en_value=en_value)
-
             if not word:
                 subtopic_title = await subtopic_service.check_word(en_value)
                 subtopic = await subtopic_service.get(

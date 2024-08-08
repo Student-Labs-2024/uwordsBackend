@@ -3,11 +3,10 @@ import logging
 from typing import Union, List, Dict
 from deep_translator.google import GoogleTranslator
 
-from src.schemes.schemas import ErrorCreate
-
+from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.services.services_config import ma, STOPWORDS
-
+from langdetect import detect
 
 logger = logging.getLogger("[SERVICES TEXT]")
 logging.basicConfig(level=logging.INFO)
@@ -97,6 +96,47 @@ class TextService:
 
             await error_service.add_one(error=error)
             return None
+
+    @staticmethod
+    async def get_translated_clear_text(text, error_service, user_id):
+        text_language = detect(text=text)
+
+        text_without_spec_chars = await TextService.remove_spec_chars(
+            text=text, error_service=error_service, user_id=user_id
+        )
+
+        words = await TextService.remove_stop_words(
+            text=text_without_spec_chars,
+            error_service=error_service,
+            user_id=user_id,
+        )
+
+        norm_words = await TextService.normalize_words(
+            words=words, error_service=error_service, user_id=user_id
+        )
+
+        freq_dict = await TextService.create_freq_dict(
+            words=norm_words, error_service=error_service, user_id=user_id
+        )
+
+        if text_language == "ru":
+            translated_words = await TextService.translate(
+                words=freq_dict,
+                from_lang="russian",
+                to_lang="english",
+                error_service=error_service,
+                user_id=user_id,
+            )
+
+        else:
+            translated_words = await TextService.translate(
+                words=freq_dict,
+                from_lang="english",
+                to_lang="russian",
+                error_service=error_service,
+                user_id=user_id,
+            )
+        return translated_words
 
     @staticmethod
     async def translate(

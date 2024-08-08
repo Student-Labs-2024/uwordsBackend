@@ -10,7 +10,7 @@ from src.config.instance import (
     ALLOWED_VIDEO_SECONDS,
     DEFAULT_ENERGY,
 )
-from src.database.models import User, Subscription
+from src.database.models import Subscription
 from src.services.subscription_service import SubscriptionService
 from src.services.user_service import UserService
 from src.services.email_service import EmailService

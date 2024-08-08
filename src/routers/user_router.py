@@ -8,16 +8,21 @@ from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 from src.celery.tasks import process_audio_task, process_youtube_task
 
 from src.database.models import User, UserWord
-from src.schemes.schemas import (
-    CustomResponse,
-    WordsIdsSchema,
-    YoutubeLink,
-    TopicWords,
-    SubtopicWords,
-)
 
-from src.config.instance import UPLOAD_DIR, DEFAULT_SUBTOPIC, DEFAULT_SUBTOPIC_ICON
+from src.config.instance import (
+    UPLOAD_DIR,
+    DEFAULT_SUBTOPIC,
+    DEFAULT_SUBTOPIC_ICON,
+    FASTAPI_SECRET,
+)
 from src.config import fastapi_docs_config as doc_data
+from src.schemes.admin_schemas import BotWords
+from src.schemes.audio_schemas import YoutubeLink
+from src.schemes.topic_schemas import TopicWords, SubtopicWords
+from src.schemes.util_schemas import CustomResponse
+from src.schemes.word_schemas import WordsIdsSchema
+from src.services.text_service import TextService
+from src.services.word_service import WordService
 
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
@@ -30,9 +35,9 @@ from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 from src.services.file_service import FileService
 from src.services.user_service import UserService
 from src.services.error_service import ErrorService
-from src.services.audio_service import AudioService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
+from src.utils.dependenes.word_service_fabric import word_service_fabric
 
 user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
 
@@ -251,7 +256,7 @@ async def complete_user_words_learning(
 ):
     if not user.subscription_type and user.energy < 10:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT, detail="Energy limit ran out"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Energy limit ran out"
         )
 
     await user_words_service.update_progress_word(
@@ -281,7 +286,7 @@ async def upload_audio(
 ):
     if not user.subscription_type and user.allowed_audio_seconds == 0:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT, detail="Seconds limit ran out"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seconds limit ran out"
         )
 
     filename = file.filename
@@ -326,7 +331,7 @@ async def upload_youtube_video(
 ):
     if not user.subscription_type and user.allowed_video_seconds == 0:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT, detail="Seconds limit ran out"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seconds limit ran out"
         )
 
     await helper_utils.check_youtube_link(link=schema.link)
@@ -340,3 +345,41 @@ async def upload_youtube_video(
     )
 
     return CustomResponse(status_code=status.HTTP_200_OK, message="Processing started")
+
+
+@user_router_v1.post(
+    "/bot_word",
+    response_model=BotWords,
+    # name=doc_data.UPLOAD_YOUTUBE_TITLE,
+    # description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
+)
+async def words_from_bot(
+    data: BotWords,
+    user_word_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    error_service: Annotated[ErrorService, Depends(error_service_fabric)],
+    word_service: Annotated[WordService, Depends(word_service_fabric)],
+    subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+):
+    user: User = await user_service.get_user_by_id(data.user_id)
+    if not user.subscription_type:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "You are not subscribed"},
+        )
+    if data.secret == FASTAPI_SECRET:
+        translated_words = await TextService.get_translated_clear_text(
+            data.text, error_service, data.user_id
+        )
+
+        await user_word_service.upload_user_words(
+            user_words=translated_words,
+            user_id=data.user_id,
+            word_service=word_service,
+            subtopic_service=subtopic_service,
+            error_service=error_service,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail={"msg": "Wrong secret"},
+    )

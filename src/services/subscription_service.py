@@ -1,5 +1,5 @@
 from src.database import models
-from src.schemes.schemas import Subscription
+from src.schemes.subscription_schemas import Subscription
 from src.utils.repository import AbstractRepository
 
 
