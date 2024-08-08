@@ -11,6 +11,7 @@ from src.routers.topic_router import topic_router_v1
 from src.routers.auth_router import auth_router_v1
 from src.routers.admin_router import admin_router_v1
 from src.routers.websocket_router import websocket_router_v1, add_error_router
+from src.routers.achievement_router import achievement_router_v1
 
 from src.config.instance import SENTRY_URL
 from src.config.fastapi_docs_config import TAGS_METADATA
@@ -50,3 +51,4 @@ app.include_router(admin_router_v1)
 app.include_router(mail_router_v1)
 app.include_router(payment_router_v1)
 app.include_router(subscription_router_v1)
+app.include_router(achievement_router_v1)

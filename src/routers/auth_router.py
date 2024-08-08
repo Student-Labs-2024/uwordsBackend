@@ -7,8 +7,8 @@ from src.config.instance import METRIC_URL, TELEGRAM_CODE_LEN, EMAIL_CODE_EXP
 from src.database.models import User
 
 from src.config import fastapi_docs_config as doc_data
+from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
 from src.database.redis_config import redis_connection
-from src.schemes.fead_back_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
 from src.schemes.user_schemas import (
     UserDump,
     UserCreateEmail,
@@ -20,6 +20,7 @@ from src.schemes.user_schemas import (
 )
 from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
 
+from src.services.achievement_service import AchievementService
 from src.services.feedback_service import FeedbackService
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
@@ -28,6 +29,7 @@ from src.schemes.enums.enums import Providers
 
 from src.utils import auth as auth_utils
 from src.utils import tokens as token_utils
+from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils.email import generate_telegram_verification_code
 from src.utils.metric import get_user_data
 from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
@@ -193,12 +195,24 @@ async def refresh_token(user: User = Depends(auth_utils.get_current_user_by_refr
 )
 async def get_user_me(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    achievements_service: Annotated[
+        AchievementService, Depends(achievement_service_fabric)
+    ],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     additional_data = await get_user_data(user.id, METRIC_URL)
 
     if additional_data:
         user.metrics = additional_data
+
+    user_achivements = await achievements_service.get_user_achievements(user.id)
+
+    achievements_data = await user_service.check_user_achivemets(
+        user.id, user_achivements
+    )
+
+    if achievements_data:
+        user.achievements = achievements_data
 
     await user_service.update_user_state(user.id)
     return user
