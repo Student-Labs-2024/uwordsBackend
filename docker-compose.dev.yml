@@ -60,7 +60,7 @@ services:
 
   scheduler:
     build: .
-    command: celery -A src.config.celery_app worker -Q scheduler --loglevel=info --beat
+    command: celery -A src.config.celery_app beat --loglevel=info
     volumes:
       - ./:/backend
     env_file:

@@ -1,5 +1,6 @@
 import os
 import logging
+
 from langdetect import detect
 from librosa import get_duration
 from asgiref.sync import async_to_sync
@@ -22,12 +23,12 @@ from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
 
 from src.utils.metric import send_user_data
+from src.utils.helpers import get_allowed_iterations_and_metric_data
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
-
 
 logger = logging.getLogger("[CELERY TASKS WORDS]")
 logging.basicConfig(level=logging.INFO)
@@ -65,7 +66,7 @@ async def process_youtube(
         link=link, error_service=error_service, user_id=user_id
     )
 
-    await general_process_audio(
+    return await general_process_audio(
         file_path=file_path, type="video", title=title, user_id=user_id
     )
 
@@ -109,52 +110,14 @@ async def general_process_audio(
 
         duration = get_duration(path=converted_file)
 
-        if not user.subscription_type:
-            if type == "audio":
-                remained_seconds: int = user.allowed_audio_seconds
+        allowed_iterations, user_data, metric_data = (
+            await get_allowed_iterations_and_metric_data(
+                type=type, user=user, duration=int(duration)
+            )
+        )
 
-                allowed_iterations = remained_seconds // 30
-
-                if remained_seconds % 30 != 0:
-                    allowed_iterations += 1
-
-                if remained_seconds - duration < 0:
-                    allowed_audio_seconds = 0
-                    metric_duration = remained_seconds
-                else:
-                    metric_duration = duration
-                    allowed_audio_seconds = remained_seconds - duration
-
-                await user_service.update_user(
-                    user_id=user_id,
-                    user_data={"allowed_audio_seconds": allowed_audio_seconds},
-                )
-
-                metric_data = {"user_id": user_id, "speech_seconds": duration}
-
-            elif type == "video":
-                remained_seconds: int = user.allowed_video_seconds
-                allowed_iterations = remained_seconds // 30
-                if remained_seconds % 30 != 0:
-                    allowed_iterations += 1
-
-                if remained_seconds - duration < 0:
-                    allowed_video_seconds = 0
-                    metric_duration = remained_seconds
-                else:
-                    metric_duration = duration
-                    allowed_video_seconds = remained_seconds - duration
-
-                await user_service.update_user(
-                    user_id=user_id,
-                    user_data={"allowed_video_seconds": allowed_video_seconds},
-                )
-
-                metric_data = {"user_id": user_id, "video_seconds": metric_duration}
-
-        else:
-            metric_data = {"user_id": user_id, "video_seconds": metric_duration}
-            allowed_iterations = None
+        if user_data:
+            await user_service.update_user(user_id=user.id, user_data=user_data)
 
         await send_user_data(data=metric_data, server_url=METRIC_URL)
 
@@ -171,7 +134,6 @@ async def general_process_audio(
         )
 
         files_paths += cutted_files
-
         with ThreadPoolExecutor(max_workers=20) as executor:
             try:
                 results_ru = list(
@@ -207,45 +169,9 @@ async def general_process_audio(
             text = " ".join(results_en)
 
         logger.info(text)
-
-        text_language = detect(text=text)
-
-        text_without_spec_chars = await TextService.remove_spec_chars(
-            text=text, error_service=error_service, user_id=user_id
+        translated_words = await TextService.get_translated_clear_text(
+            text, error_service, user_id
         )
-
-        words = await TextService.remove_stop_words(
-            text=text_without_spec_chars,
-            error_service=error_service,
-            user_id=user_id,
-        )
-
-        norm_words = await TextService.normalize_words(
-            words=words, error_service=error_service, user_id=user_id
-        )
-
-        freq_dict = await TextService.create_freq_dict(
-            words=norm_words, error_service=error_service, user_id=user_id
-        )
-
-        if text_language == "ru":
-            translated_words = await TextService.translate(
-                words=freq_dict,
-                from_lang="russian",
-                to_lang="english",
-                error_service=error_service,
-                user_id=user_id,
-            )
-
-        else:
-            translated_words = await TextService.translate(
-                words=freq_dict,
-                from_lang="english",
-                to_lang="russian",
-                error_service=error_service,
-                user_id=user_id,
-            )
-
         await user_word_service.upload_user_words(
             user_words=translated_words,
             user_id=user_id,

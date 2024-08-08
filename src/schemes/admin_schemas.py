@@ -17,3 +17,9 @@ class AdminCreate(BaseModel):
         if value == "":
             return None
         return value
+
+
+class BotWords(BaseModel):
+    secret: str = Field(examples=["ff4d8sdaE5ga8"])
+    user_id: int = Field(examples=[1])
+    text: str = Field(examples=["word"])

@@ -13,7 +13,7 @@ async def send_user_data(data: dict, server_url: str):
             logger.info(f"Successfully sent data to server")
         else:
             logger.error(
-                f"Failed to send data to server. Status code: {response.status_code}"
+                f"Failed to send data to server. Status code: {response.status_code}. Response: {response.text}"
             )
     except requests.exceptions.RequestException as e:
         logger.error(f"Request exception occurred: {e}")
@@ -31,7 +31,7 @@ async def get_user_data(user_id: int, server_url: str):
             return data
         else:
             logger.error(
-                f"Failed to retrieve additional user data. Status code: {response.status_code}"
+                f"Failed to retrieve additional user data. Status code: {response.status_code}. Response: {response.text}"
             )
             return None
     except requests.exceptions.RequestException as e:

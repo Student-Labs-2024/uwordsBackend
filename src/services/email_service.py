@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from fastapi import HTTPException, status
 
 from src.database.redis_config import redis_connection
-from src.utils.email import generate_verification_code
+from src.utils.email import generate_email_verification_code
 
 from src.config.instance import (
     EMAIL_CODE_ATTEMPTS,
@@ -22,12 +22,12 @@ from src.config.instance import (
 class EmailService:
     @staticmethod
     def generate_code(code_len=EMAIL_CODE_LEN) -> str:
-        return generate_verification_code(int(code_len))
+        return generate_email_verification_code(code_len)
 
     @staticmethod
     def check_code(email: EmailStr, code: str) -> bool:
         try:
-            code_db: str = redis_connection.get(email).decode("utf-8")
+            codes_db: str = redis_connection.get(email).decode("utf-8")
             attempts: bytes = redis_connection.get(email + "attempts")
 
             if attempts:
@@ -44,8 +44,9 @@ class EmailService:
                     status_code=status.HTTP_408_REQUEST_TIMEOUT,
                 )
 
-            if code_db == code:
-                return True
+            for code_db in codes_db.split():
+                if code_db == code:
+                    return True
 
             redis_connection.set(email + "attempts", attempts + 1)
             return False

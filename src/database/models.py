@@ -80,6 +80,7 @@ class User(Base):
     birth_date = Column(DateTime, nullable=True)
     hashed_password = Column(String, nullable=True)
     latest_study = Column(DateTime, nullable=True)
+    latest_update = Column(DateTime, nullable=True)
     subscription_acquisition = Column(DateTime, nullable=True)
     subscription_type = Column(ForeignKey(Subscription.id), nullable=True)
     days = Column(Integer, default=0)
