@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
 from src.schemes.achievement_schemas import UserAchievementDump
@@ -47,7 +47,10 @@ class UserDump(BaseModel):
         examples=[{"hours": 10, "learned": 50, "days": 5}],
         default={"hours": 0, "learned": 0, "days": 0},
     )
-    achievements: Optional[UserAchievementDump] = Field(examples=[], default=[])
+    achievements: List[UserAchievementDump] = Field(examples=[], default=[])
+
+    class ConfigDict:
+        from_attributes = True
 
 
 class UserCreateEmail(BaseModel):

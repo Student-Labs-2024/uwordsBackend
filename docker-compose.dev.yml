@@ -29,7 +29,7 @@ services:
 
   redis:
     image: redis:latest
-    command: redis-server --requirepass "{{ REDIS_PASSWORD }}"
+    command: redis-server --requirepass 7333d651
     restart: always
     ports:
       - "6379:6379"

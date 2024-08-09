@@ -3,6 +3,9 @@ from typing import Union, List, Dict
 from datetime import datetime, timedelta
 
 from src.schemes.error_schemas import ErrorCreate
+from src.services.achievement_service import AchievementService
+from src.services.user_achievement_service import UserAchievementService
+from src.services.user_service import UserService
 from src.utils.metric import send_user_data
 from src.utils.repository import AbstractRepository
 from src.database.models import UserWord, Word, SubTopic
@@ -215,6 +218,8 @@ class UserWordService:
         word_service: WordService,
         subtopic_service: TopicService,
         error_service: ErrorService,
+        user_achievement_service: UserAchievementService,
+        user_service: UserService,
     ) -> bool:
         try:
             found_voiceover_bucket = mc.bucket_exists(MINIO_BUCKET_VOICEOVER)
@@ -262,6 +267,16 @@ class UserWordService:
             }
 
             await send_user_data(data=data, server_url=METRIC_URL)
+
+            user_achievements = await user_achievement_service.get_user_achievements(
+                user_id=user_id
+            )
+
+            await user_service.check_user_achievemets(
+                user_id=user_id,
+                user_achievements=user_achievements,
+                user_achievement_service=user_achievement_service,
+            )
 
             return True
 

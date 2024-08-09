@@ -3,12 +3,12 @@ from typing import Annotated
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from src.config.instance import METRIC_URL, TELEGRAM_CODE_LEN, EMAIL_CODE_EXP
-from src.database.models import User
-
 from src.config import fastapi_docs_config as doc_data
-from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+from src.config.instance import METRIC_URL, TELEGRAM_CODE_LEN, EMAIL_CODE_EXP
+
+from src.database.models import User
 from src.database.redis_config import redis_connection
+
 from src.schemes.user_schemas import (
     UserDump,
     UserCreateEmail,
@@ -18,22 +18,24 @@ from src.schemes.user_schemas import (
     UserGoogleLogin,
     UserUpdate,
 )
-from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
-
-from src.services.achievement_service import AchievementService
-from src.services.feedback_service import FeedbackService
-from src.services.user_service import UserService
-from src.services.email_service import EmailService
 
 from src.schemes.enums.enums import Providers
+from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
+from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+
+from src.services.user_service import UserService
+from src.services.email_service import EmailService
+from src.services.feedback_service import FeedbackService
+from src.services.user_achievement_service import UserAchievementService
 
 from src.utils import auth as auth_utils
-from src.utils import tokens as token_utils
-from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
-from src.utils.email import generate_telegram_verification_code
 from src.utils.metric import get_user_data
-from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
+from src.utils import tokens as token_utils
+from src.utils.email import generate_telegram_verification_code
+
 from src.utils.dependenes.user_service_fabric import user_service_fabric
+from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
+from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
 
 logger = logging.getLogger("[ROUTER AUTH]")
 logging.basicConfig(level=logging.INFO)
@@ -195,8 +197,8 @@ async def refresh_token(user: User = Depends(auth_utils.get_current_user_by_refr
 )
 async def get_user_me(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
-    achievements_service: Annotated[
-        AchievementService, Depends(achievement_service_fabric)
+    user_achievements_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
     ],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
@@ -205,14 +207,15 @@ async def get_user_me(
     if additional_data:
         user.metrics = additional_data
 
-    user_achivements = await achievements_service.get_user_achievements(user.id)
+    user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
-    achievements_data = await user_service.check_user_achivemets(
-        user.id, user_achivements
+    achievements_data = await user_service.check_user_achievemets(
+        user_id=user.id,
+        user_achievements=user_achivements,
+        user_achievement_service=user_achievements_service,
     )
 
-    if achievements_data:
-        user.achievements = achievements_data
+    user.achievements = await user_achievements_service.get_user_achievements(user.id)
 
     await user_service.update_user_state(user.id)
     return user
@@ -326,9 +329,9 @@ async def update_feedback(
 
 @auth_router_v1.post(
     "/telegram/get_link",
-    # response_model=FeedbackDump,
-    # name=doc_data.FEEDBACK_UPDATE_TITLE,
-    # description=doc_data.FEEDBACK_UPDATE_DESCRIPTION,
+    response_model=FeedbackDump,
+    name=doc_data.GET_TELEGRAM_LINK_TITLE,
+    description=doc_data.GET_TELEGRAM_LINK_DESCRIPTION,
 )
 async def get_telegram_link(
     user: User = Depends(auth_utils.get_active_current_user),
@@ -340,9 +343,9 @@ async def get_telegram_link(
 
 @auth_router_v1.post(
     "/telegram/check_code",
-    # response_model=bool,
-    # name=doc_data.CHECK_CODE_TITLE,
-    # description=doc_data.CHECK_CODE_DESCRIPTION,
+    response_model=bool,
+    name=doc_data.CHECK_CODE_TITLE,
+    description=doc_data.CHECK_CODE_DESCRIPTION,
 )
 async def check_code(code: TelegramCode) -> int | bool:
     try:

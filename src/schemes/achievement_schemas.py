@@ -37,6 +37,14 @@ class AchievementUpdate(BaseModel):
     target: int = Field(examples=[10])
 
 
+class UserAchievementCreate(BaseModel):
+    user_id: int
+    achievement_id: int
+    progress: Optional[int] = Field(examples=[50], default=0)
+    progress_percent: Optional[float] = Field(examples=[50.0], default=0)
+    is_completed: Optional[bool] = Field(examples=[False], default=False)
+
+
 class UserAchievementDump(BaseModel):
     id: int = Field(examples=[1])
     user_id: int = Field(examples=[1])

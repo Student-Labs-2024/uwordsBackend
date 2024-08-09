@@ -1,7 +1,7 @@
 import os
 import uuid
 import logging
-from typing import Annotated, List, Dict
+from typing import Annotated, List
 
 from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 
@@ -12,21 +12,25 @@ from src.database.models import User, UserWord
 from src.config.instance import (
     UPLOAD_DIR,
     DEFAULT_SUBTOPIC,
-    DEFAULT_SUBTOPIC_ICON,
     FASTAPI_SECRET,
 )
 from src.config import fastapi_docs_config as doc_data
 from src.schemes.admin_schemas import BotWords
 from src.schemes.audio_schemas import YoutubeLink
-from src.schemes.topic_schemas import TopicWords, SubtopicWords
+from src.schemes.topic_schemas import TopicWords
 from src.schemes.util_schemas import CustomResponse
 from src.schemes.word_schemas import WordsIdsSchema
+from src.services.achievement_service import AchievementService
+from src.services.response_service import ResponseService
 from src.services.text_service import TextService
+from src.services.user_achievement_service import UserAchievementService
 from src.services.word_service import WordService
 
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
+from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils.dependenes.file_service_fabric import file_service_fabric
+from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
@@ -57,69 +61,11 @@ async def get_user_topics(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     user_words = await user_words_service.get_user_words(user_id=user.id)
-
     subtopics = await subtopic_service.get_all()
 
-    subtopics_icons: Dict[str, Dict[str, str]] = {}
-
-    for subtopic in subtopics:
-        if subtopic.topic_title not in subtopics_icons:
-            subtopics_icons[subtopic.topic_title] = {}
-        subtopics_icons[subtopic.topic_title][subtopic.title] = subtopic.pictureLink
-
-    topic_dict: Dict[str, Dict[str, List[UserWord]]] = {}
-
-    for user_word in user_words:
-        topic = user_word.word.topic
-        subtopic = user_word.word.subtopic
-
-        if topic not in topic_dict:
-            topic_dict[topic] = {}
-        if subtopic not in topic_dict[topic]:
-            topic_dict[topic][subtopic] = []
-
-        topic_dict[topic][subtopic].append(user_word)
-
-    result = []
-
-    for topic, subtopics in topic_dict.items():
-        topic_entry = TopicWords(title=topic, subtopics=[])
-        unsorted_words = []
-
-        for subtopic, words in subtopics.items():
-            pictureLink = subtopics_icons[topic][subtopic]
-
-            if len(words) < 8:
-                unsorted_words.extend(words)
-            else:
-                word_count = len(words)
-                progress = round(
-                    sum(word.progress for word in words) / (word_count * 4) * 100
-                )
-                subtopic_word = SubtopicWords(
-                    title=subtopic,
-                    word_count=word_count,
-                    progress=progress,
-                    pictureLink=pictureLink,
-                )
-                topic_entry.subtopics.append(subtopic_word)
-
-        if unsorted_words:
-            word_count = len(unsorted_words)
-            progress = round(
-                sum(word.progress for word in unsorted_words) / (word_count * 4) * 100
-            )
-            subtopic_word = SubtopicWords(
-                title=DEFAULT_SUBTOPIC,
-                word_count=word_count,
-                progress=progress,
-                pictureLink=DEFAULT_SUBTOPIC_ICON,
-            )
-            topic_entry.subtopics.append(subtopic_word)
-
-        result.append(topic_entry)
-
-    return result
+    return await ResponseService.get_user_topic(
+        subtopics=subtopics, user_words=user_words
+    )
 
 
 @user_router_v1.get(
@@ -138,24 +84,11 @@ async def get_user_words_by_subtopic(
             user_id=user.id, topic_title=topic_title, subtopic_title=subtopic_title
         )
 
-    result = []
-    subtopic_word_count = {}
-
     user_words = await user_words_service.get_user_words_by_filter(
         user_id=user.id, topic_title=topic_title
     )
 
-    for user_word in user_words:
-        subtopic = user_word.word.subtopic
-        if subtopic not in subtopic_word_count:
-            subtopic_word_count[subtopic] = 0
-        subtopic_word_count[subtopic] += 1
-
-    for user_word in user_words:
-        if subtopic_word_count[user_word.word.subtopic] < 8:
-            result.append(user_word)
-
-    return result
+    return await ResponseService.get_user_words_by_subtopic(user_words=user_words)
 
 
 @user_router_v1.get(
@@ -168,55 +101,8 @@ async def get_user_words(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     user_words: list[UserWord] = await user_words_service.get_user_words(user.id)
-    topics = []
-    topics_titles = []
-    titles: dict[str:list] = {}
-    for user_word in user_words:
-        if user_word.word.topic not in titles:
-            titles[user_word.word.topic] = []
-            topics_titles.append(user_word.word.topic)
-            titles[user_word.word.topic].append(user_word.word.subtopic)
-            topics.append(
-                {
-                    "topic_title": user_word.word.topic,
-                    "subtopics": [
-                        {
-                            "subtopic_title": user_word.word.subtopic,
-                            "words": [user_word],
-                        }
-                    ],
-                }
-            )
-        else:
-            index = topics_titles.index(user_word.word.topic)
-            if user_word.word.subtopic in titles[user_word.word.topic]:
-                sub_index = titles[user_word.word.topic].index(user_word.word.subtopic)
-                topics[index]["subtopics"][sub_index]["words"].append(user_word)
-            else:
-                titles[user_word.word.topic].append(user_word.word.subtopic)
-                topics[index]["subtopics"].append(
-                    {"subtopic_title": user_word.word.subtopic, "words": [user_word]}
-                )
-    for topic in topics:
-        not_in_subtopics = []
-        subtopics_to_remove = []
-        subtopics = topic["subtopics"]
-        for subtopic in subtopics:
-            if len(subtopic["words"]) < 8:
-                not_in_subtopics.extend(subtopic["words"])
-                subtopics_to_remove.append(subtopic["subtopic_title"])
-        while True:
-            if len(subtopics_to_remove) == 0:
-                break
-            index = titles[topic["topic_title"]].index(subtopics_to_remove[0])
-            del titles[topic["topic_title"]][index]
-            del subtopics[index]
-            del subtopics_to_remove[0]
-        subtopics.append(
-            {"subtopic_title": "not_in_subtopics", "words": not_in_subtopics}
-        )
 
-    return topics
+    return await ResponseService.get_words(user_words=user_words)
 
 
 @user_router_v1.get(
@@ -252,6 +138,12 @@ async def complete_user_words_learning(
     schema: WordsIdsSchema,
     user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    achievements_service: Annotated[
+        AchievementService, Depends(achievement_service_fabric)
+    ],
+    user_achievements_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
+    ],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     if not user.subscription_type and user.energy < 10:
@@ -263,10 +155,20 @@ async def complete_user_words_learning(
         user_id=user.id, words_ids=schema.words_ids
     )
 
+    user_achievements = await achievements_service.get_user_achievements(
+        user_id=user.id
+    )
+
     await user_service.update_learning_days(uid=user.id)
 
     await user_service.update_user(
         user_id=user.id, user_data={"energy": user.energy - 10}
+    )
+
+    await user_service.check_user_achievemets(
+        user_id=user.id,
+        user_achievements=user_achievements,
+        user_achievement_service=user_achievements_service,
     )
 
     return CustomResponse(status_code=status.HTTP_200_OK, message="Progress updated!")
@@ -350,8 +252,8 @@ async def upload_youtube_video(
 @user_router_v1.post(
     "/bot_word",
     response_model=BotWords,
-    # name=doc_data.UPLOAD_YOUTUBE_TITLE,
-    # description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
+    name=doc_data.UPLOAD_YOUTUBE_TITLE,
+    description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
 )
 async def words_from_bot(
     data: BotWords,
