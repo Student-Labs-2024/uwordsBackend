@@ -143,6 +143,15 @@ SEND_CODE_DESCRIPTION = """\
 не через внешних провайдеров, на указанную почту\
 """
 
+GET_TELEGRAM_LINK_TITLE = """\
+Получить ссылку на бота
+"""
+
+GET_TELEGRAM_LINK_DESCRIPTION = """\
+Данный метод генерирует код подтверждения и выдаёт ссылку для перехода в ТГ \
+для связи бота с приложением
+"""
+
 CHECK_CODE_TITLE = """\
 Проверить код\
 """
@@ -404,6 +413,46 @@ BILL_ALL_TITLE = """\
 
 BILL_ALL_DESCRIPTION = """\
 Метод для получения всех чеков\
+"""
+
+ACHIEVEMENT_ADD_TITLE = """\
+Создать достижение\
+"""
+
+ACHIEVEMENT_ADD_DESCRIPTION = """\
+Создайте достижения для пользователей\
+"""
+
+ACHIEVEMENT_GET_TITLE = """\
+Получить достижение\
+"""
+
+ACHIEVEMENT_GET_DESCRIPTION = """\
+Получить существующее достижение по его id\
+"""
+
+ACHIEVEMENT_GET_ALL_TITLE = """\
+Получить все достижения\
+"""
+
+ACHIEVEMENT_GET_ALL_DESCRIPTION = """\
+Получить все существующие достижения\
+"""
+
+ACHIEVEMENT_DELETE_TITLE = """\
+Удалить достижение\
+"""
+
+ACHIEVEMENT_DELETE_DESCRIPTION = """\
+Удалить достижение по его id\
+"""
+
+ACHIEVEMENT_UPDATE_TITLE = """\
+Обновить достижение\
+"""
+
+ACHIEVEMENT_UPDATE_DESCRIPTION = """\
+Обновить достижение по его id\
 """
 
 TAGS_METADATA = [

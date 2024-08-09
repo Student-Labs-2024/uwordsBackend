@@ -1,5 +1,6 @@
 from src.database.chroma_config import subtopic_collection
 from src.database.models import (
+    Achievement,
     Error,
     Feedback,
     User,
@@ -9,6 +10,7 @@ from src.database.models import (
     SubTopic,
     Subscription,
     Bill,
+    UserAchievement,
 )
 
 from src.utils.repository import SQLAlchemyRepository, ChromaRepository
@@ -49,3 +51,11 @@ class FeedbackRepository(SQLAlchemyRepository):
 
 class PaymentRepository(SQLAlchemyRepository):
     model = Bill
+
+
+class AchievementRepository(SQLAlchemyRepository):
+    model = Achievement
+
+
+class UserAchievementRepository(SQLAlchemyRepository):
+    model = UserAchievement

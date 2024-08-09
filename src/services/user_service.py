@@ -4,7 +4,8 @@ from datetime import datetime
 from dateutil.parser import parse
 from fastapi import HTTPException, status
 
-from src.database.models import User
+from src.config.instance import METRIC_URL
+from src.database.models import User, UserAchievement
 from src.schemes.admin_schemas import AdminEmailLogin
 
 from src.schemes.enums.enums import Providers
@@ -17,8 +18,11 @@ from src.schemes.user_schemas import (
 )
 from src.schemes.util_schemas import TokenInfo
 
+from src.services.achievement_service import AchievementService
+from src.services.user_achievement_service import UserAchievementService
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils
+from src.utils.metric import get_user_data
 from src.utils.repository import AbstractRepository
 
 logger = logging.getLogger("[SERVICES USER]")
@@ -263,3 +267,44 @@ class UserService:
             user_days_delta = None
         if user_days_delta and user_days_delta >= 2:
             await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
+
+    async def check_user_achievemets(
+        self,
+        user_id: int,
+        user_achievements: List[UserAchievement],
+        user_achievement_service: UserAchievementService,
+    ):
+
+        metric = await get_user_data(user_id, METRIC_URL)
+
+        for user_achievement in user_achievements:
+            progress = user_achievement.progress
+            if user_achievement.achievement.category == "learned_words":
+                progress = metric["alltime_learned_amount"]
+            elif user_achievement.achievement.category == "speech_seconds":
+                progress = metric["alltime_speech_seconds"]
+            elif user_achievement.achievement.category == "video_seconds":
+                progress = metric["alltime_video_seconds"]
+            elif user_achievement.achievement.category == "added_words":
+                progress = metric["alltime_userwords_amount"]
+
+            if user_achievement.progress >= user_achievement.achievement.target:
+                await user_achievement_service.update_one(
+                    user_achievement_id=user_achievement.id,
+                    update_data={
+                        "is_completed": True,
+                        "progress": user_achievement.achievement.target,
+                        "progress_percent": 100,
+                    },
+                )
+
+            else:
+                await user_achievement_service.update_one(
+                    user_achievement_id=user_achievement.id,
+                    update_data={
+                        "progress": progress,
+                        "progress_percent": round(
+                            (progress / user_achievement.achievement.target) * 100
+                        ),
+                    },
+                )
