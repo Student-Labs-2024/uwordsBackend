@@ -10,6 +10,7 @@ from src.database.models import (
     SubTopic,
     Subscription,
     Bill,
+    UserAchievement,
 )
 
 from src.utils.repository import SQLAlchemyRepository, ChromaRepository
@@ -54,3 +55,7 @@ class PaymentRepository(SQLAlchemyRepository):
 
 class AchievementRepository(SQLAlchemyRepository):
     model = Achievement
+
+
+class UserAchievementRepository(SQLAlchemyRepository):
+    model = UserAchievement

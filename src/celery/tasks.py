@@ -21,6 +21,7 @@ from src.services.user_service import UserService
 from src.services.word_service import WordService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
+from src.services.user_achievement_service import UserAchievementService
 
 from src.utils.metric import send_user_data
 from src.utils.helpers import get_allowed_iterations_and_metric_data
@@ -29,6 +30,8 @@ from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
+from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
+
 
 logger = logging.getLogger("[CELERY TASKS WORDS]")
 logging.basicConfig(level=logging.INFO)
@@ -97,6 +100,7 @@ async def general_process_audio(
     word_service: WordService = word_service_fabric(),
     subtopic_service: TopicService = subtopic_service_fabric(),
     error_service: ErrorService = error_service_fabric(),
+    user_achievement_service: UserAchievementService = user_achievement_service_fabric(),
 ):
     try:
         files_paths = [file_path]
@@ -120,6 +124,16 @@ async def general_process_audio(
             await user_service.update_user(user_id=user.id, user_data=user_data)
 
         await send_user_data(data=metric_data, server_url=METRIC_URL)
+
+        user_achievements = await user_achievement_service.get_user_achievements(
+            user_id=user_id
+        )
+
+        await user_service.check_user_achievemets(
+            user_id=user_id,
+            user_achievements=user_achievements,
+            user_achievement_service=user_achievement_service,
+        )
 
         if allowed_iterations == 0:
             logger.info("[GENERAL PROCESS AUDIO] Seconds limits ran out")
@@ -178,6 +192,8 @@ async def general_process_audio(
             word_service=word_service,
             subtopic_service=subtopic_service,
             error_service=error_service,
+            user_achievement_service=user_achievement_service,
+            user_service=user_service,
         )
 
         logger.info(f"[GENERAL PROCESS AUDIO] Processing ended successfully!")

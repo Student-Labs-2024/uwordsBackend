@@ -8,9 +8,13 @@ from src.schemes.achievement_schemas import (
     AchievementUpdate,
 )
 from src.services.achievement_service import AchievementService
+from src.services.user_achievement_service import UserAchievementService
+from src.services.user_service import UserService
 from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils import auth as auth_utils
 from src.config import fastapi_docs_config as doc_data
+from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
+from src.utils.dependenes.user_service_fabric import user_service_fabric
 
 achievement_router_v1 = APIRouter(prefix="/api/achievement", tags=["Achievement"])
 
@@ -26,13 +30,27 @@ async def add_achievement(
     achivement_service: Annotated[
         AchievementService, Depends(achievement_service_fabric)
     ],
+    user_achivement_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
+    ],
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_admin_user),
 ):
     if await achivement_service.get([Achievement.title == achievement_data.title]):
         raise HTTPException(
             detail="Achievement already exist", status_code=status.HTTP_400_BAD_REQUEST
         )
-    return await achivement_service.add_one(achievement_data.model_dump())
+
+    achievement = await achivement_service.add_one(achievement_data.model_dump())
+    users = await user_service.get_users()
+
+    achievements = await achivement_service.get_all()
+
+    await user_achivement_service.update_user_achievements(
+        users=users, achievements=achievements
+    )
+
+    return achievement
 
 
 @achievement_router_v1.get(
