@@ -92,20 +92,6 @@ async def get_user_words_by_subtopic(
 
 
 @user_router_v1.get(
-    "/words/get_words",
-    name=doc_data.USER_WORDS_GET_TITLE,
-    description=doc_data.USER_WORDS_GET_DESCRIPTION,
-)
-async def get_user_words(
-    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-    user: User = Depends(auth_utils.get_active_current_user),
-):
-    user_words: list[UserWord] = await user_words_service.get_user_words(user.id)
-
-    return await ResponseService.get_words(user_words=user_words)
-
-
-@user_router_v1.get(
     "/words/study",
     name=doc_data.USER_WORDS_GET_STUDY_TITLE,
     description=doc_data.USER_WORDS_GET_STUDY_DESCRIPTION,
