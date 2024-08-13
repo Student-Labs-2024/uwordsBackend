@@ -3,7 +3,11 @@ from typing import List, Dict
 from src.database.models import SubTopic, UserWord
 from src.schemes.topic_schemas import SubtopicWords, TopicWords
 
-from src.config.instance import DEFAULT_SUBTOPIC, DEFAULT_SUBTOPIC_ICON
+from src.config.instance import (
+    DEFAULT_SUBTOPIC,
+    DEFAULT_SUBTOPIC_ICON,
+    SUBTOPIC_COUNT_WORDS,
+)
 
 
 class ResponseService:
@@ -40,7 +44,7 @@ class ResponseService:
             for subtopic, words in subtopics.items():
                 pictureLink = subtopics_icons[topic][subtopic]
 
-                if len(words) < 8:
+                if len(words) < SUBTOPIC_COUNT_WORDS:
                     unsorted_words.extend(words)
                 else:
                     word_count = len(words)

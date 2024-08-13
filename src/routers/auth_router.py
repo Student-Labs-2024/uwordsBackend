@@ -329,7 +329,6 @@ async def update_feedback(
 
 @auth_router_v1.post(
     "/telegram/get_link",
-    response_model=FeedbackDump,
     name=doc_data.GET_TELEGRAM_LINK_TITLE,
     description=doc_data.GET_TELEGRAM_LINK_DESCRIPTION,
 )
