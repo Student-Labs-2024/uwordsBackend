@@ -101,7 +101,8 @@ EMAIL_CODE_LEN: int = 4
 TELEGRAM_CODE_LEN: int = 12
 
 # VK
-SERVICE_TOKEN = os.environ.get("SERVICE_TOKEN")
+IOS_SERVICE_TOKEN = os.environ.get("IOS_SERVICE_TOKEN")
+ANDROID_SERVICE_TOKEN = os.environ.get("ANDROID_SERVICE_TOKEN")
 VK_API_VERSION = "5.199"
 
 # GOOGLE CLOUD
@@ -122,3 +123,4 @@ HUGGING_FACE_URL: str = (
     "https://api-inference.huggingface.co/models/openai/whisper-large-v2"
 )
 HUGGING_FACE_TOKEN: str = os.environ.get("HUGGING_FACE_TOKEN")
+SUBTOPIC_COUNT_WORDS = 8
