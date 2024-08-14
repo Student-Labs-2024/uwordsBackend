@@ -40,6 +40,7 @@ class ResponseService:
         for topic, subtopics in topic_dict.items():
             topic_entry = TopicWords(title=topic, subtopics=[])
             unsorted_words = []
+            in_progress_subtopics = []
 
             for subtopic, words in subtopics.items():
                 pictureLink = subtopics_icons[topic][subtopic]
@@ -57,7 +58,10 @@ class ResponseService:
                         progress=progress,
                         pictureLink=pictureLink,
                     )
-                    topic_entry.subtopics.append(subtopic_word)
+                    if progress > 0:
+                        in_progress_subtopics.append(subtopic_word)
+                    else:
+                        topic_entry.subtopics.append(subtopic_word)
 
             if unsorted_words:
                 word_count = len(unsorted_words)
@@ -73,6 +77,12 @@ class ResponseService:
                     pictureLink=DEFAULT_SUBTOPIC_ICON,
                 )
                 topic_entry.subtopics.append(subtopic_word)
+
+            if in_progress_subtopics:
+                in_progress_topic = TopicWords(
+                    title="in_progress", subtopics=in_progress_subtopics
+                )
+                result.append(in_progress_topic)
 
             result.append(topic_entry)
 

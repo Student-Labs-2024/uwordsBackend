@@ -2,7 +2,6 @@ import json
 import logging
 
 import aiohttp
-import requests
 from typing import Union, Dict
 from jwt import InvalidTokenError
 
@@ -12,7 +11,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.database.models import User
 from src.config.instance import VK_API_VERSION, IOS_SERVICE_TOKEN, ANDROID_SERVICE_TOKEN
 from src.schemes.enums.enums import Platform
-from src.schemes.user_schemas import UserCreateVk
 
 from src.services.user_service import UserService
 
