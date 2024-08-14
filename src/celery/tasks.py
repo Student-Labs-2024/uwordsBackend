@@ -182,7 +182,14 @@ async def general_process_audio(
         else:
             text = " ".join(results_en)
 
-        logger.info(text)
+        logger.info(f"[GENERAL PROCESS AUDIO] Recognized text: {text}")
+
+        for file_path in files_paths:
+            try:
+                os.remove(path=file_path)
+            except:
+                continue
+
         translated_words = await TextService.get_translated_clear_text(
             text, error_service, user_id
         )
@@ -201,9 +208,3 @@ async def general_process_audio(
     except Exception as e:
         logger.info(f"[GENERAL PROCESS AUDIO] Error: {e}")
         return False
-    finally:
-        for file_path in files_paths:
-            try:
-                os.remove(path=file_path)
-            except:
-                continue
