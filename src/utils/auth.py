@@ -1,6 +1,7 @@
 import json
 import logging
-import requests
+
+import aiohttp
 from typing import Union, Dict
 from jwt import InvalidTokenError
 
@@ -8,7 +9,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.database.models import User
-from src.config.instance import SERVICE_TOKEN, VK_API_VERSION
+from src.config.instance import VK_API_VERSION, IOS_SERVICE_TOKEN, ANDROID_SERVICE_TOKEN
+from src.schemes.enums.enums import Platform
 
 from src.services.user_service import UserService
 
@@ -108,15 +110,25 @@ async def get_admin_user(user: User = Depends(get_active_current_user)) -> User:
 
 
 async def validate_vk_token(
+    platform: str,
     credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     token = credentials.credentials
-    service_token = SERVICE_TOKEN
-    res = requests.get(
-        f"https://api.vk.com/method/secure.checkToken?v={VK_API_VERSION}&token={token}",
-        headers={"Authorization": f"Bearer {service_token}"},
-    )
-    response = json.loads(res.content.decode("utf-8"))
+    if platform == Platform.ios.value:
+        service_token = IOS_SERVICE_TOKEN
+    elif platform == Platform.android.value:
+        service_token = ANDROID_SERVICE_TOKEN
+    else:
+        raise HTTPException(
+            detail="Invalid platform", status_code=status.HTTP_400_BAD_REQUEST
+        )
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"https://api.vk.com/method/secure.checkToken?v={VK_API_VERSION}&token={token}",
+            headers={"Authorization": f"Bearer {service_token}"},
+        ) as res:
+            response_text = await res.text()
+            response = json.loads(response_text)
     try:
         if response["response"]:
             return response

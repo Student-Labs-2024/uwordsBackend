@@ -13,3 +13,8 @@ class ImageAnnotations(Enum):
     medical = "medical"
     violence = "violence"
     racy = "racy"
+
+
+class Platform(Enum):
+    ios = "ios"
+    android = "android"

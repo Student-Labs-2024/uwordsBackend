@@ -3,7 +3,11 @@ from typing import List, Dict
 from src.database.models import SubTopic, UserWord
 from src.schemes.topic_schemas import SubtopicWords, TopicWords
 
-from src.config.instance import DEFAULT_SUBTOPIC, DEFAULT_SUBTOPIC_ICON
+from src.config.instance import (
+    DEFAULT_SUBTOPIC,
+    DEFAULT_SUBTOPIC_ICON,
+    SUBTOPIC_COUNT_WORDS,
+)
 
 
 class ResponseService:
@@ -36,11 +40,12 @@ class ResponseService:
         for topic, subtopics in topic_dict.items():
             topic_entry = TopicWords(title=topic, subtopics=[])
             unsorted_words = []
+            in_progress_subtopics = []
 
             for subtopic, words in subtopics.items():
                 pictureLink = subtopics_icons[topic][subtopic]
 
-                if len(words) < 8:
+                if len(words) < SUBTOPIC_COUNT_WORDS:
                     unsorted_words.extend(words)
                 else:
                     word_count = len(words)
@@ -53,7 +58,10 @@ class ResponseService:
                         progress=progress,
                         pictureLink=pictureLink,
                     )
-                    topic_entry.subtopics.append(subtopic_word)
+                    if progress > 0:
+                        in_progress_subtopics.append(subtopic_word)
+                    else:
+                        topic_entry.subtopics.append(subtopic_word)
 
             if unsorted_words:
                 word_count = len(unsorted_words)
@@ -69,6 +77,12 @@ class ResponseService:
                     pictureLink=DEFAULT_SUBTOPIC_ICON,
                 )
                 topic_entry.subtopics.append(subtopic_word)
+
+            if in_progress_subtopics:
+                in_progress_topic = TopicWords(
+                    title="in_progress", subtopics=in_progress_subtopics
+                )
+                result.append(in_progress_topic)
 
             result.append(topic_entry)
 
@@ -90,60 +104,3 @@ class ResponseService:
                 result.append(user_word)
 
         return result
-
-    @staticmethod
-    async def get_words(user_words: List[UserWord]) -> List:
-        topics = []
-        topics_titles = []
-        titles: dict[str:list] = {}
-        for user_word in user_words:
-            if user_word.word.topic not in titles:
-                titles[user_word.word.topic] = []
-                topics_titles.append(user_word.word.topic)
-                titles[user_word.word.topic].append(user_word.word.subtopic)
-                topics.append(
-                    {
-                        "topic_title": user_word.word.topic,
-                        "subtopics": [
-                            {
-                                "subtopic_title": user_word.word.subtopic,
-                                "words": [user_word],
-                            }
-                        ],
-                    }
-                )
-            else:
-                index = topics_titles.index(user_word.word.topic)
-                if user_word.word.subtopic in titles[user_word.word.topic]:
-                    sub_index = titles[user_word.word.topic].index(
-                        user_word.word.subtopic
-                    )
-                    topics[index]["subtopics"][sub_index]["words"].append(user_word)
-                else:
-                    titles[user_word.word.topic].append(user_word.word.subtopic)
-                    topics[index]["subtopics"].append(
-                        {
-                            "subtopic_title": user_word.word.subtopic,
-                            "words": [user_word],
-                        }
-                    )
-        for topic in topics:
-            not_in_subtopics = []
-            subtopics_to_remove = []
-            subtopics = topic["subtopics"]
-            for subtopic in subtopics:
-                if len(subtopic["words"]) < 8:
-                    not_in_subtopics.extend(subtopic["words"])
-                    subtopics_to_remove.append(subtopic["subtopic_title"])
-            while True:
-                if len(subtopics_to_remove) == 0:
-                    break
-                index = titles[topic["topic_title"]].index(subtopics_to_remove[0])
-                del titles[topic["topic_title"]][index]
-                del subtopics[index]
-                del subtopics_to_remove[0]
-            subtopics.append(
-                {"subtopic_title": "not_in_subtopics", "words": not_in_subtopics}
-            )
-
-        return topics

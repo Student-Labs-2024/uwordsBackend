@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 
 from src.celery.tasks import process_audio_task, process_youtube_task
 
-from src.database.models import User, UserWord
+from src.database.models import User
 
 from src.config.instance import (
     UPLOAD_DIR,
@@ -89,20 +89,6 @@ async def get_user_words_by_subtopic(
     )
 
     return await ResponseService.get_user_words_by_subtopic(user_words=user_words)
-
-
-@user_router_v1.get(
-    "/words/get_words",
-    name=doc_data.USER_WORDS_GET_TITLE,
-    description=doc_data.USER_WORDS_GET_DESCRIPTION,
-)
-async def get_user_words(
-    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-    user: User = Depends(auth_utils.get_active_current_user),
-):
-    user_words: list[UserWord] = await user_words_service.get_user_words(user.id)
-
-    return await ResponseService.get_words(user_words=user_words)
 
 
 @user_router_v1.get(
