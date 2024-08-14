@@ -87,9 +87,6 @@ REFRESH_TOKEN_LIFETIME: int = 30  # days
 # SENTRY
 SENTRY_URL: str = os.environ.get("SENTRY_URL")
 
-# PIXABAY
-PIX_TOKEN: str = os.environ.get("PIX_TOKEN")
-
 # EMAIl
 EMAIL_CODE_EXP: str = os.environ.get("EMAIL_CODE_EXP")
 EMAIL_CODE_ATTEMPTS: str = os.environ.get("EMAIL_CODE_ATTEMPTS")
@@ -113,6 +110,10 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS.__
 
 # METRIC
 METRIC_URL: str = os.environ.get("METRIC_URL")
+
+# DOWNLOADER
+DOWNLOADER_URL: str = os.environ.get("DOWNLOADER_URL")
+DOWNLOADER_TOKEN: str = os.environ.get("DOWNLOADER_TOKEN")
 
 # PAYMENT
 PAYMENT_TOKEN: str = os.environ.get("PAYMENT_TOKEN")

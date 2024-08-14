@@ -1,9 +1,9 @@
 import os
 import uuid
 import json
-import yt_dlp
 import ffmpeg
 import logging
+import aiohttp
 import requests
 from gtts import gTTS
 from io import BytesIO
@@ -22,6 +22,8 @@ from src.config.instance import (
     MINIO_BUCKET_VOICEOVER,
     MINIO_HOST,
     UPLOAD_DIR,
+    DOWNLOADER_URL,
+    DOWNLOADER_TOKEN,
 )
 
 
@@ -155,28 +157,26 @@ class AudioService:
         link: str, error_service: ErrorService, user_id: int
     ) -> Union[Tuple[Path, str], Tuple[None, None]]:
         try:
-            logger.info(link)
-            uid = uuid.uuid4()
-            filename_for_yt = f"audio_{uid}"
-            filename = f"audio_{uid}.mp3"
-            download_path_for_yt = UPLOAD_DIR / filename_for_yt
-            download_path = UPLOAD_DIR / filename
-            ydl_opts = {
-                "format": "mp3/bestaudio/best",
-                "outtmpl": "{}.%(ext)s".format(download_path_for_yt),
-                "postprocessors": [
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "mp3",
-                    }
-                ],
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download(link)
-                info_dict = ydl.extract_info(link, download=False)
-                video_title = info_dict.get("title", None)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url=f"{DOWNLOADER_URL}/api/v1/youtube/download",
+                    params={"link": link},
+                    headers={"Authorization": f"Bearer {DOWNLOADER_TOKEN}"},
+                ) as response:
+                    response.raise_for_status()
 
-            return download_path, filename_for_yt
+                    uid = uuid.uuid4()
+                    file_name = f"audio_{uid}.mp3"
+                    upload_path = UPLOAD_DIR / file_name
+
+                    with open(file=upload_path, mode="wb") as f:
+                        while True:
+                            chunk = await response.content.read()
+                            if not chunk:
+                                break
+                            f.write(chunk)
+
+                    return upload_path, file_name
 
         except Exception as e:
             logger.info(f"[UPLOAD YOUTUBE] Error: {e}")

@@ -275,36 +275,40 @@ class UserService:
         user_achievement_service: UserAchievementService,
     ):
 
-        metric = await get_user_data(user_id, METRIC_URL)
+        try:
 
-        for user_achievement in user_achievements:
-            progress = user_achievement.progress
-            if user_achievement.achievement.category == "learned_words":
-                progress = metric["alltime_learned_amount"]
-            elif user_achievement.achievement.category == "speech_seconds":
-                progress = metric["alltime_speech_seconds"]
-            elif user_achievement.achievement.category == "video_seconds":
-                progress = metric["alltime_video_seconds"]
-            elif user_achievement.achievement.category == "added_words":
-                progress = metric["alltime_userwords_amount"]
+            metric = await get_user_data(user_id, METRIC_URL)
 
-            if user_achievement.progress >= user_achievement.achievement.target:
-                await user_achievement_service.update_one(
-                    user_achievement_id=user_achievement.id,
-                    update_data={
-                        "is_completed": True,
-                        "progress": user_achievement.achievement.target,
-                        "progress_percent": 100,
-                    },
-                )
+            for user_achievement in user_achievements:
+                progress = user_achievement.progress
+                if user_achievement.achievement.category == "learned_words":
+                    progress = metric["alltime_learned_amount"]
+                elif user_achievement.achievement.category == "speech_seconds":
+                    progress = metric["alltime_speech_seconds"]
+                elif user_achievement.achievement.category == "video_seconds":
+                    progress = metric["alltime_video_seconds"]
+                elif user_achievement.achievement.category == "added_words":
+                    progress = metric["alltime_userwords_amount"]
 
-            else:
-                await user_achievement_service.update_one(
-                    user_achievement_id=user_achievement.id,
-                    update_data={
-                        "progress": progress,
-                        "progress_percent": round(
-                            (progress / user_achievement.achievement.target) * 100
-                        ),
-                    },
-                )
+                if user_achievement.progress >= user_achievement.achievement.target:
+                    await user_achievement_service.update_one(
+                        user_achievement_id=user_achievement.id,
+                        update_data={
+                            "is_completed": True,
+                            "progress": user_achievement.achievement.target,
+                            "progress_percent": 100,
+                        },
+                    )
+
+                else:
+                    await user_achievement_service.update_one(
+                        user_achievement_id=user_achievement.id,
+                        update_data={
+                            "progress": progress,
+                            "progress_percent": round(
+                                (progress / user_achievement.achievement.target) * 100
+                            ),
+                        },
+                    )
+        except Exception as e:
+            logger.info(f"[ACHIEVEMENT USER] Error: {e}")
