@@ -1,5 +1,6 @@
 import json
 import logging
+import aiohttp
 import requests
 from io import BytesIO
 from typing import Union
@@ -11,7 +12,8 @@ from src.config.instance import (
     MINIO_BUCKET_PICTURE_RACY,
     MINIO_BUCKET_PICTURE_VIOLENCE,
     MINIO_HOST,
-    PIX_TOKEN,
+    DOWNLOADER_URL,
+    DOWNLOADER_TOKEN,
 )
 
 from src.schemes.enums.enums import ImageAnnotations
@@ -27,22 +29,15 @@ class ImageDownloader:
     @staticmethod
     async def get_image_data(word: str) -> Union[bytes, None]:
         try:
-            response = requests.get(
-                url="https://pixabay.com/api/",
-                params={
-                    "key": PIX_TOKEN,
-                    "q": "+".join(word.split()),
-                    "lang": "en",
-                    "per_page": 3,
-                },
-            )
-
-            data = json.loads(response.text)
-            image = data.get("hits", None)[0]
-
-            image_data = requests.get(image.get("largeImageURL"))
-
-            return image_data.content
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url=f"{DOWNLOADER_URL}/api/v1/pixabay/download",
+                    params={"word": word},
+                    headers={"Authorization": f"Bearer {DOWNLOADER_TOKEN}"},
+                ) as response:
+                    if response.status != 200:
+                        return None
+                    return await response.read()
 
         except Exception as e:
             logger.info(f"[DOWNLOAD] Error: {e}")
