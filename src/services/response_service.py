@@ -1,3 +1,4 @@
+import logging
 from typing import List, Dict
 
 from src.database.models import SubTopic, UserWord
@@ -36,11 +37,11 @@ class ResponseService:
             topic_dict[topic][subtopic].append(user_word)
 
         result = []
+        in_progress_subtopics = []
 
         for topic, subtopics in topic_dict.items():
             topic_entry = TopicWords(title=topic, subtopics=[])
             unsorted_words = []
-            in_progress_subtopics = []
 
             for subtopic, words in subtopics.items():
                 pictureLink = subtopics_icons[topic][subtopic]
@@ -58,10 +59,11 @@ class ResponseService:
                         progress=progress,
                         pictureLink=pictureLink,
                     )
+
+                    topic_entry.subtopics.append(subtopic_word)
+
                     if progress > 0:
                         in_progress_subtopics.append(subtopic_word)
-                    else:
-                        topic_entry.subtopics.append(subtopic_word)
 
             if unsorted_words:
                 word_count = len(unsorted_words)
@@ -78,13 +80,16 @@ class ResponseService:
                 )
                 topic_entry.subtopics.append(subtopic_word)
 
-            if in_progress_subtopics:
-                in_progress_topic = TopicWords(
-                    title="in_progress", subtopics=in_progress_subtopics
-                )
-                result.append(in_progress_topic)
+                if progress > 0:
+                    in_progress_subtopics.append(subtopic_word)
 
             result.append(topic_entry)
+
+        if in_progress_subtopics:
+            in_progress_topic = TopicWords(
+                title="In Progress", subtopics=in_progress_subtopics
+            )
+            result.insert(0, in_progress_topic)
 
         return result
 
