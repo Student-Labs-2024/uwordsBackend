@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from src.utils.metric import get_user_data, send_user_data
 
+
 class TestMetric:
     @staticmethod
     @pytest.mark.asyncio
@@ -37,7 +38,9 @@ class TestMetric:
 
     @staticmethod
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("status_code, expected_result", [(200, {"key": "value"}), (500, None)])
+    @pytest.mark.parametrize(
+        "status_code, expected_result", [(200, {"key": "value"}), (500, None)]
+    )
     @patch("aiohttp.ClientSession.get")
     async def test_get_user_data(mock_get, status_code, expected_result):
         mock_response = AsyncMock()
@@ -50,7 +53,9 @@ class TestMetric:
 
         result = await get_user_data(user_id, server_url)
 
-        mock_get.assert_called_once_with(f"{server_url}?user_id={user_id}&is_union=True&metric_range=alltime")
+        mock_get.assert_called_once_with(
+            f"{server_url}?user_id={user_id}&is_union=True&metric_range=alltime"
+        )
         assert result == expected_result
 
     @staticmethod
@@ -64,8 +69,7 @@ class TestMetric:
 
         result = await get_user_data(user_id, server_url)
 
-        mock_get.assert_called_once_with(f"{server_url}?user_id={user_id}&is_union=True&metric_range=alltime")
+        mock_get.assert_called_once_with(
+            f"{server_url}?user_id={user_id}&is_union=True&metric_range=alltime"
+        )
         assert result is None
-
-
-
