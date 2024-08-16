@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 
 from src.celery.tasks import process_audio_task, process_youtube_task, process_text_task
 
-from src.database.models import User
+from src.database.models import SubTopic, User
 
 from src.config.instance import (
     UPLOAD_DIR,
@@ -21,10 +21,7 @@ from src.schemes.topic_schemas import TopicWords
 from src.schemes.util_schemas import CustomResponse
 from src.schemes.word_schemas import WordsIdsSchema
 from src.services.achievement_service import AchievementService
-from src.services.response_service import ResponseService
-from src.services.text_service import TextService
 from src.services.user_achievement_service import UserAchievementService
-from src.services.word_service import WordService
 
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
@@ -41,7 +38,6 @@ from src.services.user_service import UserService
 from src.services.error_service import ErrorService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
-from src.utils.dependenes.word_service_fabric import word_service_fabric
 
 user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
 
@@ -63,7 +59,9 @@ async def get_user_topics(
     user_words = await user_words_service.get_user_words(user_id=user.id)
     subtopics = await subtopic_service.get_all()
 
-    return await ResponseService.get_user_topic(
+    logger.info(subtopics)
+
+    return await user_words_service.get_user_topic(
         subtopics=subtopics, user_words=user_words
     )
 
@@ -88,7 +86,7 @@ async def get_user_words_by_subtopic(
         user_id=user.id, topic_title=topic_title
     )
 
-    return await ResponseService.get_user_words_by_subtopic(user_words=user_words)
+    return await user_words_service.get_unsorted_user_words(user_words=user_words)
 
 
 @user_router_v1.get(
@@ -107,11 +105,9 @@ async def get_user_words_for_study(
             status_code=status.HTTP_404_NOT_FOUND, detail="Energy limit ran out"
         )
 
-    words_for_study = await user_words_service.get_user_words_for_study(
+    return await user_words_service.get_user_words_for_study(
         user_id=user.id, topic_title=topic_title, subtopic_title=subtopic_title
     )
-
-    return words_for_study
 
 
 @user_router_v1.post(
