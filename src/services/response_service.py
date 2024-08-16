@@ -105,7 +105,7 @@ class ResponseService:
             subtopic_word_count[subtopic] += 1
 
         for user_word in user_words:
-            if subtopic_word_count[user_word.word.subtopic] < 8:
+            if subtopic_word_count[user_word.word.subtopic] < SUBTOPIC_COUNT_WORDS:
                 result.append(user_word)
 
         return result

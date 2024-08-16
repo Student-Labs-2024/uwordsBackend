@@ -149,7 +149,7 @@ class UserAchievement(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey(User.id))
-    achievement_id = Column(Integer, ForeignKey(Achievement.id))
+    achievement_id = Column(Integer, ForeignKey(Achievement.id, ondelete="CASCADE"))
     progress = Column(Integer, default=0)
     progress_percent = Column(Float, default=0)
     is_completed = Column(Boolean, default=False)

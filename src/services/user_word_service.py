@@ -81,9 +81,23 @@ class UserWordService:
             return None
 
     async def get_user_words_for_study(
-        self, user_id: int, topic_title: str, subtopic_title: Union[str, None] = None
+        self,
+        user_id: int,
+        topic_title: Union[str, None] = None,
+        subtopic_title: Union[str, None] = None,
     ) -> Union[List[UserWord], List]:
         try:
+            words_for_study = []
+            time_now = datetime.now()
+
+            if not topic_title:
+                user_words: List[UserWord] = await self.repo.get_all_by_filter(
+                    [
+                        UserWord.user_id == user_id,
+                    ],
+                    UserWord.progress.desc(),
+                )
+
             if not subtopic_title:
                 user_words: List[UserWord] = await self.repo.get_all_by_filter(
                     [
@@ -92,6 +106,7 @@ class UserWordService:
                     ],
                     UserWord.progress.desc(),
                 )
+
             else:
                 user_words: List[UserWord] = await self.repo.get_all_by_filter(
                     [
@@ -101,8 +116,6 @@ class UserWordService:
                     ],
                     UserWord.progress.desc(),
                 )
-            words_for_study = []
-            time_now = datetime.now()
 
             for user_word in user_words:
                 if user_word.latest_study:
@@ -119,6 +132,7 @@ class UserWordService:
                     words_for_study.append(user_word)
 
             return words_for_study
+
         except BaseException as e:
             logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
