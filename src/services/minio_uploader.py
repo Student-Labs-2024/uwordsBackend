@@ -3,7 +3,7 @@ from typing import BinaryIO
 
 from src.services.services_config import mc
 
-from src.config.instance import MINIO_POLICY_JSON, MINIO_CORS_JSON
+from src.config.instance import MINIO_POLICY_JSON
 
 
 logger = logging.getLogger("[SERVICES MINIO]")
@@ -19,14 +19,9 @@ class MinioUploader:
                 policy = json_policy.read()
                 json_policy.close()
 
-            with open(MINIO_CORS_JSON, "r") as cors_policy:
-                cors = cors_policy.read()
-                cors_policy.close()
-
             policy = policy.replace("{{bucket_name}}", bucket_name)
 
             mc.make_bucket(bucket_name)
-            mc.set_bucket_policy(bucket_name, cors)
             mc.set_bucket_policy(bucket_name, policy)
 
             logger.info(f"[BUCKET] Created {bucket_name}")
