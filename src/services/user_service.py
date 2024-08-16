@@ -304,6 +304,7 @@ class UserService:
                     await user_achievement_service.update_one(
                         user_achievement_id=user_achievement.id,
                         update_data={
+                            "is_completed": False,
                             "progress": progress,
                             "progress_percent": round(
                                 (progress / user_achievement.achievement.target) * 100

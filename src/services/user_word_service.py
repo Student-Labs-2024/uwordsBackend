@@ -1,25 +1,29 @@
 import logging
-from typing import Union, List, Dict
 from datetime import datetime, timedelta
+from typing import Union, List, Dict
 
 from src.schemes.error_schemas import ErrorCreate
-from src.services.achievement_service import AchievementService
-from src.services.user_achievement_service import UserAchievementService
-from src.services.user_service import UserService
+from src.schemes.topic_schemas import SubtopicWords, TopicWords
+
 from src.utils.metric import send_user_data
 from src.utils.repository import AbstractRepository
+
 from src.database.models import UserWord, Word, SubTopic
 
 from src.services.services_config import mc
+from src.services.user_service import UserService
 from src.services.word_service import WordService
 from src.services.error_service import ErrorService
 from src.services.topic_service import TopicService
 from src.services.minio_uploader import MinioUploader
 from src.services.censore_service import CensoreFilter
+from src.services.user_achievement_service import UserAchievementService
 
 from src.config.instance import (
+    DEFAULT_SUBTOPIC_ICON,
     METRIC_URL,
     STUDY_DELAY,
+    DEFAULT_SUBTOPIC,
     STUDY_MAX_PROGRESS,
     STUDY_WORDS_AMOUNT,
     MINIO_BUCKET_PICTURE,
@@ -28,6 +32,7 @@ from src.config.instance import (
     MINIO_BUCKET_PICTURE_ADULT,
     MINIO_BUCKET_PICTURE_MEDICAL,
     MINIO_BUCKET_PICTURE_VIOLENCE,
+    SUBTOPIC_COUNT_WORDS,
 )
 
 
@@ -80,29 +85,121 @@ class UserWordService:
             logger.info(f"[GET USER WORD] ERROR: {e}")
             return None
 
+    async def get_user_topic(
+        self, subtopics: List[SubTopic], user_words: List[UserWord]
+    ) -> List:
+        subtopics_icons = {
+            subtopic.topic_title: {
+                subtopic.title: subtopic.pictureLink for subtopic in subtopics
+            }
+            for subtopic in subtopics
+        }
+
+        topic_dict: Dict[str, Dict[str, List[UserWord]]] = {}
+        for user_word in user_words:
+            topic = user_word.word.topic
+            subtopic = user_word.word.subtopic
+            topic_dict.setdefault(topic, {}).setdefault(subtopic, []).append(user_word)
+
+        result = []
+        in_progress_subtopics = []
+
+        for topic, subtopics in topic_dict.items():
+            topic_result = TopicWords(title=topic, subtopics=[])
+            unsorted_words = []
+
+            for subtopic, words in subtopics.items():
+                pictureLink = subtopics_icons.get(topic, {}).get(
+                    subtopic, DEFAULT_SUBTOPIC_ICON
+                )
+                word_count = len(words)
+                progress = round(
+                    sum(word.progress for word in words) / (word_count * 4) * 100
+                )
+
+                if word_count < SUBTOPIC_COUNT_WORDS:
+                    unsorted_words.extend(words)
+                else:
+                    subtopic_word = SubtopicWords(
+                        title=subtopic,
+                        topic_title=topic,
+                        word_count=word_count,
+                        progress=progress,
+                        pictureLink=pictureLink,
+                    )
+                    topic_result.subtopics.append(subtopic_word)
+                    if progress > 0:
+                        in_progress_subtopics.append(subtopic_word)
+
+            if unsorted_words:
+                word_count = len(unsorted_words)
+                progress = round(
+                    sum(word.progress for word in unsorted_words)
+                    / (word_count * 4)
+                    * 100
+                )
+                subtopic_word = SubtopicWords(
+                    title=DEFAULT_SUBTOPIC,
+                    topic_title=topic,
+                    word_count=word_count,
+                    progress=progress,
+                    pictureLink=DEFAULT_SUBTOPIC_ICON,
+                )
+                topic_result.subtopics.append(subtopic_word)
+                if progress > 0:
+                    in_progress_subtopics.append(subtopic_word)
+
+            result.append(topic_result)
+
+        if in_progress_subtopics:
+            result.insert(
+                0, TopicWords(title="In Progress", subtopics=in_progress_subtopics)
+            )
+
+        return result
+
+    async def get_unsorted_user_words(
+        self, user_words: List[UserWord]
+    ) -> List[UserWord]:
+        unsorted_words = []
+        subtopic_word_count = {}
+
+        for user_word in user_words:
+            subtopic = user_word.word.subtopic
+            if subtopic not in subtopic_word_count:
+                subtopic_word_count[subtopic] = 0
+            subtopic_word_count[subtopic] += 1
+
+        for user_word in user_words:
+            if subtopic_word_count[user_word.word.subtopic] < SUBTOPIC_COUNT_WORDS:
+                unsorted_words.append(user_word)
+
+        return unsorted_words
+
     async def get_user_words_for_study(
-        self, user_id: int, topic_title: str, subtopic_title: Union[str, None] = None
+        self,
+        user_id: int,
+        topic_title: Union[str, None] = None,
+        subtopic_title: Union[str, None] = None,
     ) -> Union[List[UserWord], List]:
         try:
-            if not subtopic_title:
-                user_words: List[UserWord] = await self.repo.get_all_by_filter(
-                    [
-                        UserWord.user_id == user_id,
-                        UserWord.word.has(Word.topic == topic_title),
-                    ],
-                    UserWord.progress.desc(),
-                )
-            else:
-                user_words: List[UserWord] = await self.repo.get_all_by_filter(
-                    [
-                        UserWord.user_id == user_id,
-                        UserWord.word.has(Word.topic == topic_title),
-                        UserWord.word.has(Word.subtopic == subtopic_title),
-                    ],
-                    UserWord.progress.desc(),
-                )
             words_for_study = []
             time_now = datetime.now()
+            logger.info(time_now.strftime("%Y-%m-%d"))
+            filters = [UserWord.user_id == user_id]
+
+            if topic_title:
+                filters.append(UserWord.word.has(Word.topic == topic_title))
+
+            if subtopic_title and subtopic_title != DEFAULT_SUBTOPIC:
+                filters.append(UserWord.word.has(Word.subtopic == subtopic_title))
+
+            user_words: List[UserWord] = await self.repo.get_all_by_filter(
+                filters=filters, order=UserWord.progress.desc()
+            )
+
+            if subtopic_title == DEFAULT_SUBTOPIC:
+                user_words = await self.get_unsorted_user_words(user_words=user_words)
 
             for user_word in user_words:
                 if user_word.latest_study:
@@ -119,6 +216,7 @@ class UserWordService:
                     words_for_study.append(user_word)
 
             return words_for_study
+
         except BaseException as e:
             logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
