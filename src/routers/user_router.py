@@ -248,6 +248,9 @@ async def words_from_bot(
     word_service: Annotated[WordService, Depends(word_service_fabric)],
     subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user_achievements_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
+    ],
 ):
     user: User = await user_service.get_user_by_id(data.user_id)
     if not user.subscription_type:
@@ -266,6 +269,8 @@ async def words_from_bot(
             word_service=word_service,
             subtopic_service=subtopic_service,
             error_service=error_service,
+            user_achievement_service=user_achievements_service,
+            user_service=user_service,
         )
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
