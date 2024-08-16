@@ -33,9 +33,7 @@ MINIO_BUCKET_SUBTOPIC_ICONS: str = os.environ.get("MINIO_BUCKET_SUBTOPIC_ICONS")
 MINIO_POLICY_JSON: Path = (
     BASE_DIR / "src" / "config" / "json_configs" / "minio_policy.json"
 )
-MINIO_CORS_JSON: Path = (
-    BASE_DIR / "src" / "config" / "json_configs" / "minio_cors.json"
-)
+MINIO_CORS_JSON: Path = BASE_DIR / "src" / "config" / "json_configs" / "minio_cors.json"
 
 # SYSTEM
 MINIO_HOST: str = os.environ.get("MINIO_HOST")
