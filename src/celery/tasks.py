@@ -58,6 +58,20 @@ def process_youtube_task(self, link: str, user_id: int):
         return "Возникла ошибка загрузки видео"
 
 
+@app.task(bind=True, name="process_text", max_retries=2)
+def process_text_task(self, text: str, user_id: int):
+    try:
+        result = async_to_sync(process_text)(text=text, user_id=user_id)
+
+        if not result:
+            raise self.retry(countdown=1)
+
+        return "Загрузка текста окончена"
+
+    except MaxRetriesExceededError:
+        return "Возникла ошибка загрузки текста"
+
+
 async def process_youtube(
     link: str,
     user_id: int,
@@ -207,4 +221,35 @@ async def general_process_audio(
         return True
     except Exception as e:
         logger.info(f"[GENERAL PROCESS AUDIO] Error: {e}")
+        return False
+
+
+async def process_text(
+    text: str,
+    user_id: int,
+    user_service: UserService = user_service_fabric(),
+    user_word_service: UserWordService = user_word_service_fabric(),
+    word_service: WordService = word_service_fabric(),
+    subtopic_service: TopicService = subtopic_service_fabric(),
+    error_service: ErrorService = error_service_fabric(),
+    user_achievement_service: UserAchievementService = user_achievement_service_fabric(),
+):
+    try:
+        translated_words = await TextService.get_translated_clear_text(
+            text, error_service, user_id
+        )
+        await user_word_service.upload_user_words(
+            user_words=translated_words,
+            user_id=user_id,
+            word_service=word_service,
+            subtopic_service=subtopic_service,
+            error_service=error_service,
+            user_achievement_service=user_achievement_service,
+            user_service=user_service,
+        )
+
+        logger.info(f"[PROCESS Text] Processing ended successfully!")
+        return True
+    except Exception as e:
+        logger.info(f"[PROCESS Text] Error: {e}")
         return False

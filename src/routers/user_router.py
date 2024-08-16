@@ -5,7 +5,7 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 
-from src.celery.tasks import process_audio_task, process_youtube_task
+from src.celery.tasks import process_audio_task, process_youtube_task, process_text_task
 
 from src.database.models import User
 
@@ -237,20 +237,13 @@ async def upload_youtube_video(
 
 @user_router_v1.post(
     "/bot_word",
-    response_model=BotWords,
+    response_model=CustomResponse,
     name=doc_data.UPLOAD_YOUTUBE_TITLE,
     description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
 )
 async def words_from_bot(
     data: BotWords,
-    user_word_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
-    error_service: Annotated[ErrorService, Depends(error_service_fabric)],
-    word_service: Annotated[WordService, Depends(word_service_fabric)],
-    subtopic_service: Annotated[TopicService, Depends(subtopic_service_fabric)],
     user_service: Annotated[UserService, Depends(user_service_fabric)],
-    user_achievements_service: Annotated[
-        UserAchievementService, Depends(user_achievement_service_fabric)
-    ],
 ):
     user: User = await user_service.get_user_by_id(data.user_id)
     if not user.subscription_type:
@@ -258,21 +251,19 @@ async def words_from_bot(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "You are not subscribed"},
         )
-    if data.secret == FASTAPI_SECRET:
-        translated_words = await TextService.get_translated_clear_text(
-            data.text, error_service, data.user_id
+
+    if data.secret != FASTAPI_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "Wrong secret"},
         )
 
-        await user_word_service.upload_user_words(
-            user_words=translated_words,
-            user_id=data.user_id,
-            word_service=word_service,
-            subtopic_service=subtopic_service,
-            error_service=error_service,
-            user_achievement_service=user_achievements_service,
-            user_service=user_service,
-        )
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail={"msg": "Wrong secret"},
+    process_text_task.apply_async(
+        kwargs={
+            "text": data.text,
+            "user_id": user.id,
+        },
+        countdown=1,
     )
+
+    return CustomResponse(status_code=status.HTTP_200_OK, message="Processing started")
