@@ -10,6 +10,8 @@ from src.database.models import User
 from src.database.redis_config import redis_connection
 
 from src.schemes.user_schemas import (
+    TelegramCheckCode,
+    TelegramLink,
     UserDump,
     UserCreateEmail,
     UserCreateVk,
@@ -329,6 +331,7 @@ async def update_feedback(
 
 @auth_router_v1.post(
     "/telegram/get_link",
+    response_model=TelegramLink,
     name=doc_data.GET_TELEGRAM_LINK_TITLE,
     description=doc_data.GET_TELEGRAM_LINK_DESCRIPTION,
 )
@@ -337,19 +340,20 @@ async def get_telegram_link(
 ):
     code = generate_telegram_verification_code(TELEGRAM_CODE_LEN)
     redis_connection.set(code, user.id, ex=int(EMAIL_CODE_EXP))
-    return f"https://t.me/uwords_bot?start={code}"
+    return TelegramLink(telegramLink=f"https://t.me/uwords_bot?start={code}")
 
 
 @auth_router_v1.post(
     "/telegram/check_code",
-    response_model=int,
+    response_model=TelegramCheckCode,
     name=doc_data.CHECK_CODE_TITLE,
     description=doc_data.CHECK_CODE_DESCRIPTION,
 )
 async def check_code(code: TelegramCode) -> int | bool:
     try:
         user_id = redis_connection.get(code.code).decode("utf-8")
-        return user_id
+        return TelegramCheckCode(user_id=int(user_id))
+
     except:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
