@@ -29,6 +29,7 @@ class SubTopicIcon(BaseModel):
 
 class SubtopicWords(BaseModel):
     title: str
+    topic_title: str
     word_count: int
     progress: float
     pictureLink: str

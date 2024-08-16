@@ -204,6 +204,8 @@ async def get_user_me(
     ],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
+    await user_service.update_user_state(user.id)
+
     additional_data = await get_user_data(user.id, METRIC_URL)
 
     if additional_data:
@@ -211,7 +213,7 @@ async def get_user_me(
 
     user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
-    achievements_data = await user_service.check_user_achievemets(
+    await user_service.check_user_achievemets(
         user_id=user.id,
         user_achievements=user_achivements,
         user_achievement_service=user_achievements_service,
@@ -219,7 +221,6 @@ async def get_user_me(
 
     user.achievements = await user_achievements_service.get_user_achievements(user.id)
 
-    await user_service.update_user_state(user.id)
     return user
 
 

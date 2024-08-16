@@ -55,6 +55,7 @@ async def add_achievement(
 
 @achievement_router_v1.get(
     "/get",
+    response_model=AchievementDump,
     name=doc_data.ACHIEVEMENT_GET_TITLE,
     description=doc_data.ACHIEVEMENT_GET_DESCRIPTION,
 )
