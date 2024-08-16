@@ -2,6 +2,7 @@ import pytest
 
 from src.utils.password import hash_password, validate_password
 
+
 class TestHashPassword:
 
     @pytest.mark.parametrize(
@@ -30,4 +31,3 @@ class TestHashPassword:
     def test_validate_password(self, password, expected):
         hashed_password = hash_password("securepassword")
         assert validate_password(password, hashed_password) == expected
-
