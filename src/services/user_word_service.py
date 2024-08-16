@@ -7,6 +7,7 @@ from src.schemes.topic_schemas import SubtopicWords, TopicWords
 
 from src.utils.metric import send_user_data
 from src.utils.repository import AbstractRepository
+
 from src.database.models import UserWord, Word, SubTopic
 
 from src.services.services_config import mc
@@ -121,6 +122,7 @@ class UserWordService:
                 else:
                     subtopic_word = SubtopicWords(
                         title=subtopic,
+                        topic_title=topic,
                         word_count=word_count,
                         progress=progress,
                         pictureLink=pictureLink,
@@ -138,6 +140,7 @@ class UserWordService:
                 )
                 subtopic_word = SubtopicWords(
                     title=DEFAULT_SUBTOPIC,
+                    topic_title=topic,
                     word_count=word_count,
                     progress=progress,
                     pictureLink=DEFAULT_SUBTOPIC_ICON,
