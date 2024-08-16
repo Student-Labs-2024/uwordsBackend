@@ -342,7 +342,7 @@ async def get_telegram_link(
 
 @auth_router_v1.post(
     "/telegram/check_code",
-    response_model=bool,
+    response_model=int,
     name=doc_data.CHECK_CODE_TITLE,
     description=doc_data.CHECK_CODE_DESCRIPTION,
 )
