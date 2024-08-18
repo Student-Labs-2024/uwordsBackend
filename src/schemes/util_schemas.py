@@ -22,6 +22,14 @@ class TelegramCode(BaseModel):
     code: str = Field(examples=["Wh18QI"])
 
 
+class TelegramLink(BaseModel):
+    telegramLink: str = Field(examples=["https://t.me/uwords_bot?start=12345"])
+
+
+class TelegramCheckCode(BaseModel):
+    user_id: int = Field(examples=[1])
+
+
 class Bill(BaseModel):
     id: int = Field(examples=[1])
     label: str = Field(examples=["1568642313854321354321543561"])

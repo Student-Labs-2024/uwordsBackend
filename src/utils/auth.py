@@ -9,7 +9,12 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.database.models import User
-from src.config.instance import VK_API_VERSION, IOS_SERVICE_TOKEN, ANDROID_SERVICE_TOKEN
+from src.config.instance import (
+    SERVICE_SECRET,
+    VK_API_VERSION,
+    IOS_SERVICE_TOKEN,
+    ANDROID_SERVICE_TOKEN,
+)
 from src.schemes.enums.enums import Platform
 
 from src.services.user_service import UserService
@@ -136,3 +141,16 @@ async def validate_vk_token(
         raise HTTPException(
             detail="Invalid token", status_code=status.HTTP_401_UNAUTHORIZED
         )
+
+
+async def check_secret_token(
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+) -> dict:
+    token = credentials.credentials
+
+    if token != SERVICE_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail={"msg": "Permission denied"}
+        )
+
+    return True

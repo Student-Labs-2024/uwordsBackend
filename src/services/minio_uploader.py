@@ -3,7 +3,7 @@ from typing import BinaryIO
 
 from src.services.services_config import mc
 
-from src.config.instance import MINIO_POLICY_JSON
+from src.config.instance import MINIO_BUCKETS, MINIO_POLICY_JSON
 
 
 logger = logging.getLogger("[SERVICES MINIO]")
@@ -11,6 +11,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 class MinioUploader:
+    @staticmethod
+    async def check_buckets() -> None:
+        for bucket_name in MINIO_BUCKETS:
+            found_bucket = mc.bucket_exists(bucket_name)
+            if not found_bucket:
+                await MinioUploader.create_bucket(found_bucket)
+
     @staticmethod
     async def create_bucket(bucket_name: str) -> None:
         try:

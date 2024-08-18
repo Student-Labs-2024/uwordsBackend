@@ -30,7 +30,7 @@ from src.config.instance import MINIO_BUCKET_SUBTOPIC_ICONS, MINIO_HOST
 
 topic_router_v1 = APIRouter(prefix="/api/v1/topic", tags=["Topic"])
 
-logger = logging.getLogger("[ROUTER WORDS]")
+logger = logging.getLogger("[ROUTER TOPIC]")
 logging.basicConfig(level=logging.INFO)
 
 

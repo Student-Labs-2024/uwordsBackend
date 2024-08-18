@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import List
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,11 +34,23 @@ MINIO_BUCKET_SUBTOPIC_ICONS: str = os.environ.get("MINIO_BUCKET_SUBTOPIC_ICONS")
 MINIO_POLICY_JSON: Path = (
     BASE_DIR / "src" / "config" / "json_configs" / "minio_policy.json"
 )
+MINIO_BUCKETS: List[str] = [
+    MINIO_BUCKET_VOICEOVER,
+    MINIO_BUCKET_PICTURE,
+    MINIO_BUCKET_PICTURE_ADULT,
+    MINIO_BUCKET_PICTURE_MEDICAL,
+    MINIO_BUCKET_PICTURE_VIOLENCE,
+    MINIO_BUCKET_PICTURE_RACY,
+    MINIO_BUCKET_SUBTOPIC_ICONS,
+]
 
 # SYSTEM
 MINIO_HOST: str = os.environ.get("MINIO_HOST")
 UPLOAD_DIR: Path = BASE_DIR / "audio_transfer"
-FASTAPI_SECRET: str = os.environ.get("FASTAPI_SECRET")
+SERVICE_SECRET: str = os.environ.get("SERVICE_SECRET")
+ADMIN_SECRET: str = os.environ.get("ADMIN_SECRET")
+ALLOWED_ORIGINS: str = os.environ.get("ALLOWED_ORIGINS")
+ALLOWED_ORIGINS_LIST = ALLOWED_ORIGINS.split(",")
 
 ALLOWED_AUDIO_MIME_TYPES: set = {
     "audio/ogg",
@@ -56,11 +69,11 @@ ALLOWED_YOUTUBE_LINK_PATTERNS: set = {
 }
 
 STUDY_DELAY: int = 86400  # seconds
-STUDY_MAX_PROGRESS: int = 3
+STUDY_MAX_PROGRESS: int = 4
 STUDY_WORDS_AMOUNT: int = 4
 
 IMAGE_SAFETY_INDEX: int = 3
-IMAGE_SAFETY_SCALE: list = [
+IMAGE_SAFETY_SCALE: List[str] = [
     "UNKNOWN",
     "VERY_UNLIKELY",
     "UNLIKELY",
@@ -80,7 +93,7 @@ DEFAULT_ENERGY: int = 100
 
 # TOKEN SETTINGS
 JWT_ALGORITHM: str = "HS256"
-
+JWT_SECRET: str = os.environ.get("JWT_SECRET")
 ACCESS_TOKEN_LIFETIME: int = 60  # minutes
 REFRESH_TOKEN_LIFETIME: int = 30  # days
 
@@ -110,6 +123,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS.__
 
 # METRIC
 METRIC_URL: str = os.environ.get("METRIC_URL")
+METRIC_TOKEN: str = os.environ.get("METRIC_TOKEN")
 
 # DOWNLOADER
 DOWNLOADER_URL: str = os.environ.get("DOWNLOADER_URL")
