@@ -111,11 +111,11 @@ async def ban_user(
     )
 
 
-@admin_router_v1.delete(
+@admin_router_v1.get(
     "/{user_id}/reset-limits",
     response_model=CustomResponse,
-    name=doc_data.USER_DELETE_TITLE,
-    description=doc_data.USER_DELETE_DESCRIPTION,
+    name=doc_data.USER_RESET_TITLE,
+    description=doc_data.USER_RESET_DESCRIPTION,
 )
 async def reset_user_limits(
     user_id: int,
