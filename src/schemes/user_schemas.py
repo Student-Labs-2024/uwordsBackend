@@ -152,11 +152,3 @@ class UserUpdate(BaseModel):
 class UserEmailLogin(BaseModel):
     email: EmailStr = Field(examples=["mail@uwords.ru"])
     password: Optional[str] = Field(examples=["strongpass"], default=None)
-
-
-class TelegramLink(BaseModel):
-    telegramLink: str = Field(examples=["https://t.me/uwords_bot?start=12345"])
-
-
-class TelegramCheckCode(BaseModel):
-    user_id: int = Field(examples=[1])

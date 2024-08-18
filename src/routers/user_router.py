@@ -12,7 +12,7 @@ from src.database.models import SubTopic, User
 from src.config.instance import (
     UPLOAD_DIR,
     DEFAULT_SUBTOPIC,
-    FASTAPI_SECRET,
+    SERVICE_SECRET,
 )
 from src.config import fastapi_docs_config as doc_data
 from src.schemes.admin_schemas import BotWords
@@ -58,8 +58,6 @@ async def get_user_topics(
 ):
     user_words = await user_words_service.get_user_words(user_id=user.id)
     subtopics = await subtopic_service.get_all()
-
-    logger.info(subtopics)
 
     return await user_words_service.get_user_topic(
         subtopics=subtopics, user_words=user_words
@@ -137,14 +135,14 @@ async def complete_user_words_learning(
         user_id=user.id, words_ids=schema.words_ids
     )
 
-    user_achievements = await achievements_service.get_user_achievements(
-        user_id=user.id
+    await user_service.update_user(
+        user_id=user.id, user_data={"energy": user.energy - 10}
     )
 
     await user_service.update_learning_days(uid=user.id)
 
-    await user_service.update_user(
-        user_id=user.id, user_data={"energy": user.energy - 10}
+    user_achievements = await user_achievements_service.get_user_achievements(
+        user_id=user.id
     )
 
     await user_service.check_user_achievemets(
@@ -248,7 +246,7 @@ async def words_from_bot(
             detail={"msg": "You are not subscribed"},
         )
 
-    if data.secret != FASTAPI_SECRET:
+    if data.secret != SERVICE_SECRET:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "Wrong secret"},

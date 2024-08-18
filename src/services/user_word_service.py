@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Union, List, Dict
+from typing import Optional, Union, List, Dict
 
 from src.schemes.error_schemas import ErrorCreate
 from src.schemes.topic_schemas import SubtopicWords, TopicWords
@@ -26,12 +26,6 @@ from src.config.instance import (
     DEFAULT_SUBTOPIC,
     STUDY_MAX_PROGRESS,
     STUDY_WORDS_AMOUNT,
-    MINIO_BUCKET_PICTURE,
-    MINIO_BUCKET_VOICEOVER,
-    MINIO_BUCKET_PICTURE_RACY,
-    MINIO_BUCKET_PICTURE_ADULT,
-    MINIO_BUCKET_PICTURE_MEDICAL,
-    MINIO_BUCKET_PICTURE_VIOLENCE,
     SUBTOPIC_COUNT_WORDS,
 )
 
@@ -85,69 +79,99 @@ class UserWordService:
             logger.info(f"[GET USER WORD] ERROR: {e}")
             return None
 
-    async def get_user_topic(
-        self, subtopics: List[SubTopic], user_words: List[UserWord]
-    ) -> List:
-        subtopics_icons = {
-            subtopic.topic_title: {
-                subtopic.title: subtopic.pictureLink for subtopic in subtopics
-            }
-            for subtopic in subtopics
-        }
+    async def create_subtopic_icons(
+        self, subtopics: List[SubTopic]
+    ) -> Dict[str, Dict[str, str]]:
+        subtopics_icons: Dict[str, Dict[str, str]] = {}
 
+        for subtopic in subtopics:
+            if subtopic.topic_title not in subtopics_icons:
+                subtopics_icons[subtopic.topic_title] = {}
+            subtopics_icons[subtopic.topic_title][subtopic.title] = subtopic.pictureLink
+
+        return subtopics_icons
+
+    async def create_topic_dict(
+        self, user_words: List[UserWord]
+    ) -> Dict[str, Dict[str, List[UserWord]]]:
         topic_dict: Dict[str, Dict[str, List[UserWord]]] = {}
+
         for user_word in user_words:
             topic = user_word.word.topic
             subtopic = user_word.word.subtopic
             topic_dict.setdefault(topic, {}).setdefault(subtopic, []).append(user_word)
+
+        return topic_dict
+
+    async def count_progress(self, words: List[UserWord], word_count: int) -> float:
+        return round(
+            sum(word.progress for word in words)
+            / (word_count * STUDY_MAX_PROGRESS)
+            * 100
+        )
+
+    async def create_subtopic(
+        self,
+        topic: str,
+        word_count: int,
+        words: List[UserWord],
+        subtopics_icons: Dict[str, str],
+        subtopic: Optional[str] = None,
+    ) -> SubtopicWords:
+        progress = await self.count_progress(words=words, word_count=word_count)
+        pictureLink = subtopics_icons.get(subtopic, DEFAULT_SUBTOPIC_ICON)
+
+        return SubtopicWords(
+            title=subtopic or DEFAULT_SUBTOPIC,
+            topic_title=topic,
+            word_count=word_count,
+            progress=progress,
+            pictureLink=pictureLink,
+        )
+
+    async def get_user_topic(
+        self, subtopics: List[SubTopic], user_words: List[UserWord]
+    ) -> List:
+
+        subtopics_icons = await self.create_subtopic_icons(subtopics=subtopics)
+        topic_dict = await self.create_topic_dict(user_words=user_words)
 
         result = []
         in_progress_subtopics = []
 
         for topic, subtopics in topic_dict.items():
             topic_result = TopicWords(title=topic, subtopics=[])
-            unsorted_words = []
+            unsorted_words: List[UserWord] = []
 
             for subtopic, words in subtopics.items():
-                pictureLink = subtopics_icons.get(topic, {}).get(
-                    subtopic, DEFAULT_SUBTOPIC_ICON
-                )
                 word_count = len(words)
-                progress = round(
-                    sum(word.progress for word in words) / (word_count * 4) * 100
-                )
-
                 if word_count < SUBTOPIC_COUNT_WORDS:
                     unsorted_words.extend(words)
                 else:
-                    subtopic_word = SubtopicWords(
-                        title=subtopic,
-                        topic_title=topic,
+                    subtopic_result = await self.create_subtopic(
+                        topic=topic,
                         word_count=word_count,
-                        progress=progress,
-                        pictureLink=pictureLink,
+                        words=words,
+                        subtopics_icons=subtopics_icons,
+                        subtopic=subtopic,
                     )
-                    topic_result.subtopics.append(subtopic_word)
-                    if progress > 0:
-                        in_progress_subtopics.append(subtopic_word)
+
+                    topic_result.subtopics.append(subtopic_result)
+
+                    if subtopic_result.progress > 0:
+                        in_progress_subtopics.append(subtopic_result)
 
             if unsorted_words:
                 word_count = len(unsorted_words)
-                progress = round(
-                    sum(word.progress for word in unsorted_words)
-                    / (word_count * 4)
-                    * 100
-                )
-                subtopic_word = SubtopicWords(
-                    title=DEFAULT_SUBTOPIC,
-                    topic_title=topic,
+                subtopic_result = await self.create_subtopic(
+                    topic=topic,
                     word_count=word_count,
-                    progress=progress,
-                    pictureLink=DEFAULT_SUBTOPIC_ICON,
+                    words=unsorted_words,
+                    subtopics_icons=subtopics_icons,
                 )
-                topic_result.subtopics.append(subtopic_word)
-                if progress > 0:
-                    in_progress_subtopics.append(subtopic_word)
+                topic_result.subtopics.append(subtopic_result)
+                if subtopic_result.progress > 0:
+                    in_progress_subtopics.append(subtopic_result)
 
             result.append(topic_result)
 
@@ -183,9 +207,6 @@ class UserWordService:
         subtopic_title: Union[str, None] = None,
     ) -> Union[List[UserWord], List]:
         try:
-            words_for_study = []
-            time_now = datetime.now()
-            logger.info(time_now.strftime("%Y-%m-%d"))
             filters = [UserWord.user_id == user_id]
 
             if topic_title:
@@ -201,25 +222,37 @@ class UserWordService:
             if subtopic_title == DEFAULT_SUBTOPIC:
                 user_words = await self.get_unsorted_user_words(user_words=user_words)
 
-            for user_word in user_words:
-                if user_word.latest_study:
-                    time_delta: timedelta = time_now - user_word.latest_study
-                    seconds = time_delta.seconds
-                else:
-                    seconds = STUDY_DELAY
+            logger.info(user_words)
 
-                if (
-                    user_word.progress < STUDY_MAX_PROGRESS
-                    and seconds >= STUDY_DELAY
-                    and len(words_for_study) < STUDY_WORDS_AMOUNT
-                ):
-                    words_for_study.append(user_word)
-
-            return words_for_study
+            return await self.filter_words_for_study(user_words=user_words)
 
         except BaseException as e:
             logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
+
+    async def filter_words_for_study(
+        self, user_words: List[UserWord]
+    ) -> List[UserWord]:
+        time_now = datetime.now()
+        words_for_study = []
+
+        for user_word in user_words:
+            if len(words_for_study) >= STUDY_WORDS_AMOUNT:
+                break
+
+            if user_word.progress >= STUDY_MAX_PROGRESS:
+                continue
+
+            if not user_word.latest_study:
+                words_for_study.append(user_word)
+                continue
+
+            delta: timedelta = time_now - user_word.latest_study
+
+            if delta.total_seconds() >= STUDY_DELAY:
+                words_for_study.append(user_word)
+
+        return words_for_study
 
     async def update_progress_word(self, user_id: int, words_ids: List[int]) -> None:
         try:
@@ -227,16 +260,18 @@ class UserWordService:
             learned = 0
 
             for word_id in words_ids:
-                user_word = await self.repo.get_one(
+                user_word: UserWord = await self.repo.get_one(
                     [UserWord.user_id == user_id, UserWord.id == word_id]
                 )
-                if user_word.progress < STUDY_MAX_PROGRESS:
-                    upd_user_word = await self.repo.update_one(
-                        [UserWord.user_id == user_id, UserWord.id == word_id],
-                        {"latest_study": time_now, "progress": user_word.progress + 1},
-                    )
-                    if upd_user_word.progress == STUDY_MAX_PROGRESS:
-                        learned += 1
+                if user_word.progress >= STUDY_MAX_PROGRESS:
+                    continue
+
+                upd_user_word: UserWord = await self.repo.update_one(
+                    [UserWord.user_id == user_id, UserWord.id == word_id],
+                    {"latest_study": time_now, "progress": user_word.progress + 1},
+                )
+                if upd_user_word.progress == STUDY_MAX_PROGRESS:
+                    learned += 1
 
             data = {"user_id": user_id, "learned_amount": learned}
 
@@ -320,33 +355,7 @@ class UserWordService:
         user_service: UserService,
     ) -> bool:
         try:
-            found_voiceover_bucket = mc.bucket_exists(MINIO_BUCKET_VOICEOVER)
-            if not found_voiceover_bucket:
-                await MinioUploader.create_bucket(MINIO_BUCKET_VOICEOVER)
-
-            found_picture_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE)
-            if not found_picture_bucket:
-                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE)
-
-            found_picture_adult_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE_ADULT)
-            if not found_picture_adult_bucket:
-                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_ADULT)
-
-            found_picture_medical_bucket = mc.bucket_exists(
-                MINIO_BUCKET_PICTURE_MEDICAL
-            )
-            if not found_picture_medical_bucket:
-                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_MEDICAL)
-
-            found_picture_violence_bucket = mc.bucket_exists(
-                MINIO_BUCKET_PICTURE_VIOLENCE
-            )
-            if not found_picture_violence_bucket:
-                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_VIOLENCE)
-
-            found_picture_racy_bucket = mc.bucket_exists(MINIO_BUCKET_PICTURE_RACY)
-            if not found_picture_racy_bucket:
-                await MinioUploader.create_bucket(MINIO_BUCKET_PICTURE_RACY)
+            await MinioUploader.check_buckets()
 
             add_words_amount = 0
             add_userwords_amount = len(user_words)
