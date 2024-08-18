@@ -16,7 +16,12 @@ from src.services.user_service import UserService
 from src.utils import auth as auth_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
-from src.config.instance import ADMIN_SECRET
+from src.config.instance import (
+    ADMIN_SECRET,
+    ALLOWED_AUDIO_SECONDS,
+    ALLOWED_VIDEO_SECONDS,
+    DEFAULT_ENERGY,
+)
 from src.config import fastapi_docs_config as doc_data
 
 
@@ -103,4 +108,29 @@ async def ban_user(
 
     return CustomResponse(
         status_code=200, message=f"User {user_id} deleted succesfully"
+    )
+
+
+@admin_router_v1.delete(
+    "/{user_id}/reset-limits",
+    response_model=CustomResponse,
+    name=doc_data.USER_DELETE_TITLE,
+    description=doc_data.USER_DELETE_DESCRIPTION,
+)
+async def reset_user_limits(
+    user_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user),
+):
+    await user_service.update_user(
+        user_id=user_id,
+        user_data={
+            "allowed_audio_seconds": ALLOWED_AUDIO_SECONDS,
+            "allowed_video_seconds": ALLOWED_VIDEO_SECONDS,
+            "energy": DEFAULT_ENERGY,
+        },
+    )
+
+    return CustomResponse(
+        status_code=200, message=f"Limits for user {user_id} reseted succesfully"
     )
