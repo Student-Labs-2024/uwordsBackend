@@ -17,7 +17,7 @@ app.conf.timezone = "UTC"
 app.conf.beat_schedule = {
     "reset-limits": {
         "task": "reset_limits",
-        "schedule": crontab(minute=24, hour="*"),
+        "schedule": crontab(minute=0, hour="*"),
     },
     "check-sub": {
         "task": "check_sub",
