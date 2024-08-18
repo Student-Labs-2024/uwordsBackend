@@ -16,7 +16,7 @@ from src.services.user_service import UserService
 from src.utils import auth as auth_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
-from src.config.instance import FASTAPI_SECRET
+from src.config.instance import ADMIN_SECRET
 from src.config import fastapi_docs_config as doc_data
 
 
@@ -45,7 +45,7 @@ async def create_admin(
             detail={"msg": f"Admin with email {admin_data.email} already exists"},
         )
 
-    if not admin_data.admin_secret == FASTAPI_SECRET:
+    if not admin_data.admin_secret == ADMIN_SECRET:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"msg": f"Incorrect admin-create key"},

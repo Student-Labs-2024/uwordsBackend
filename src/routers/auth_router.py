@@ -10,8 +10,6 @@ from src.database.models import User
 from src.database.redis_config import redis_connection
 
 from src.schemes.user_schemas import (
-    TelegramCheckCode,
-    TelegramLink,
     UserDump,
     UserCreateEmail,
     UserCreateVk,
@@ -20,6 +18,7 @@ from src.schemes.user_schemas import (
     UserGoogleLogin,
     UserUpdate,
 )
+from src.schemes.util_schemas import TelegramCheckCode, TelegramLink
 
 from src.schemes.enums.enums import Providers
 from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode

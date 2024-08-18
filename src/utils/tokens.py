@@ -6,7 +6,7 @@ from src.database.models import User
 
 from src.config.instance import (
     JWT_ALGORITHM,
-    FASTAPI_SECRET,
+    JWT_SECRET,
     ACCESS_TOKEN_LIFETIME,
     REFRESH_TOKEN_LIFETIME,
 )
@@ -14,7 +14,7 @@ from src.config.instance import (
 
 def encode_jwt(
     payload: Dict,
-    key: str = FASTAPI_SECRET,
+    key: str = JWT_SECRET,
     algorithm: str = JWT_ALGORITHM,
 ) -> str:
     datetime_now = datetime.now()
@@ -36,7 +36,7 @@ def encode_jwt(
 
 
 def decode_jwt(
-    token: str, key: str = FASTAPI_SECRET, algorithm: str = JWT_ALGORITHM
+    token: str, key: str = JWT_SECRET, algorithm: str = JWT_ALGORITHM
 ) -> Dict:
 
     decode = jwt.decode(jwt=token, key=key, algorithms=[algorithm])
