@@ -39,6 +39,8 @@ class UserDump(BaseModel):
         examples=["2023-05-05 10:30:45.999999"], default=None
     )
     subscription_type: Optional[int] = Field(examples=[1])
+    subscription_acquisition: Optional[datetime] = Field(examples=["2023-05-05 10:30:45.999999"])
+    subscription_expired: Optional[datetime] = Field(examples=["2023-05-05 10:30:45.999999"])
     allowed_audio_seconds: Optional[int] = Field(examples=[1800])
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
