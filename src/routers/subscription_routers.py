@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -33,6 +33,19 @@ async def add_new_type_of_sub(
         raise HTTPException(
             detail="Subscription already exist", status_code=status.HTTP_400_BAD_REQUEST
         )
+
+
+@subscription_router_v1.get(
+    "/all",
+    response_model=List[SubscriptionDump],
+    name=doc_data.SUB_GET_ALL_TITLE,
+    description=doc_data.SUB_GET_ALL_DESCRIPTION,
+)
+async def get_tariffs(
+    sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    return await sub_service.get_all()
 
 
 @subscription_router_v1.get(
