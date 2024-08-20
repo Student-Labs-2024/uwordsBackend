@@ -82,6 +82,7 @@ class User(Base):
     latest_study = Column(DateTime, nullable=True)
     latest_update = Column(DateTime, nullable=True)
     subscription_acquisition = Column(DateTime, nullable=True)
+    subscription_expired = Column(DateTime, nullable=True)
     subscription_type = Column(ForeignKey(Subscription.id), nullable=True)
     days = Column(Integer, default=0)
     allowed_audio_seconds = Column(Integer, default=ALLOWED_AUDIO_SECONDS)

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+from dateutil.relativedelta import relativedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -50,15 +51,22 @@ async def check_payment_form(
     pay_id: str,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     payment_service: Annotated[PaymentService, Depends(payment_service_fabric)],
+    sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     sub_id = await payment_service.check_payment(PAYMENT_TOKEN, str(pay_id))
     if sub_id:
+        now = datetime.now()
+        subscription = await sub_service.get_sub_by_id(id=sub_id)
+
+        expired_at = now + relativedelta(months=subscription.months)
+
         await user_service.update_user(
-            user.id,
-            {
-                User.subscription_acquisition: datetime.now(),
-                User.subscription_type: sub_id,
+            user_id=user.id,
+            user_data={
+                "subscription_acquisition": now,
+                "subscription_expired": expired_at,
+                "subscription_type": sub_id,
             },
         )
         return True

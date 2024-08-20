@@ -1,3 +1,4 @@
+from typing import List
 from src.database import models
 from src.schemes.subscription_schemas import Subscription
 from src.utils.repository import AbstractRepository
@@ -9,6 +10,9 @@ class SubscriptionService:
 
     async def add_sub(self, sub: Subscription):
         return await self.repo.add_one(data=sub.model_dump())
+
+    async def get_all(self) -> List[models.Subscription]:
+        return await self.repo.get_all_by_filter()
 
     async def get_sub(self, name: str):
         return await self.repo.get_one([models.Subscription.name == name])

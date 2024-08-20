@@ -367,6 +367,15 @@ SUB_ADD_TITLE = """\
 SUB_ADD_DESCRIPTION = """\
 Метод для добавления тарифа\
 """
+
+SUB_GET_ALL_TITLE = """\
+Получить список тарифов\
+"""
+
+SUB_GET_ALL_DESCRIPTION = """\
+Метод для получения списка тарифов\
+"""
+
 SUB_GET_TITLE = """\
 Получить тариф\
 """
