@@ -115,11 +115,11 @@ class UserWordService:
         topic: str,
         word_count: int,
         words: List[UserWord],
-        subtopics_icons: Dict[str, str],
+        subtopics_icons: Dict[str, Dict[str, str]],
         subtopic: Optional[str] = None,
     ) -> SubtopicWords:
         progress = await self.count_progress(words=words, word_count=word_count)
-        pictureLink = subtopics_icons.get(subtopic, DEFAULT_SUBTOPIC_ICON)
+        pictureLink = subtopics_icons.get(topic).get(subtopic, DEFAULT_SUBTOPIC_ICON)
 
         return SubtopicWords(
             title=subtopic or DEFAULT_SUBTOPIC,
@@ -134,6 +134,7 @@ class UserWordService:
     ) -> List:
 
         subtopics_icons = await self.create_subtopic_icons(subtopics=subtopics)
+        logger.info(subtopics_icons)
         topic_dict = await self.create_topic_dict(user_words=user_words)
 
         result = []
