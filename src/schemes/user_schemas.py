@@ -19,6 +19,7 @@ class UserWordDumpSchema(BaseModel):
 
 
 class UserMetric(BaseModel):
+    user_id: int
     days: Optional[int] = Field(examples=[5], default=0)
     alltime_userwords_amount: Optional[int] = Field(examples=[100], default=0)
     alltime_learned_amount: Optional[int] = Field(examples=[52], default=0)
