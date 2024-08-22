@@ -16,6 +16,7 @@ from src.schemes.user_schemas import (
     UserCreateGoogle,
     UserEmailLogin,
     UserGoogleLogin,
+    UserMetric,
     UserUpdate,
 )
 from src.schemes.util_schemas import TelegramCheckCode, TelegramLink
@@ -208,7 +209,14 @@ async def get_user_me(
     additional_data = await get_user_data(user.id, METRIC_URL)
 
     if additional_data:
-        user.metrics = additional_data
+        user.metrics = UserMetric(
+            days=user.days,
+            alltime_userwords_amount=additional_data.get("alltime_userwords_amount"),
+            alltime_learned_amount=additional_data.get("alltime_learned_amount"),
+            alltime_learned_percents=additional_data.get("alltime_learned_percents"),
+            alltime_speech_seconds=additional_data.get("alltime_speech_seconds"),
+            alltime_video_seconds=additional_data.get("alltime_video_seconds"),
+        )
 
     user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
@@ -218,7 +226,9 @@ async def get_user_me(
         user_achievement_service=user_achievements_service,
     )
 
-    user.achievements = await user_achievements_service.get_user_achievements(user.id)
+    user.achievements = await user_achievements_service.get_user_achievements_dump(
+        user_id=user.id
+    )
 
     return user
 

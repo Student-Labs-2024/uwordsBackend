@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -52,6 +52,14 @@ class UserAchievementDump(BaseModel):
     progress_percent: float = Field(examples=[50.0])
     is_completed: bool = Field(examples=[False])
     achievement: AchievementDump
+
+    class Config:
+        from_attributes = True
+
+
+class UserAchievementsCategory(BaseModel):
+    title: str
+    achievements: List[UserAchievementDump]
 
     class Config:
         from_attributes = True

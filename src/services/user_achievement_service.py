@@ -4,6 +4,7 @@ from src.schemes.achievement_schemas import (
     AchievementCreate,
     UserAchievementCreate,
     UserAchievementDump,
+    UserAchievementsCategory,
 )
 from src.utils.repository import AbstractRepository
 
@@ -33,8 +34,31 @@ class UserAchievementService:
 
     async def get_user_achievements(self, user_id: int) -> list[UserAchievement]:
         return await self.repo.get_all_by_filter(
-            [UserAchievement.user_id == user_id], UserAchievement.id.desc()
+            [UserAchievement.user_id == user_id], UserAchievement.id.asc()
         )
+
+    async def get_user_achievements_dump(
+        self, user_id: int
+    ) -> List[UserAchievementsCategory]:
+        user_achievements = await self.get_user_achievements(user_id=user_id)
+
+        words = UserAchievementsCategory(title="Слова", achievements=[])
+
+        audio = UserAchievementsCategory(title="Запись", achievements=[])
+
+        video = UserAchievementsCategory(title="Видео", achievements=[])
+
+        for user_achievement in user_achievements:
+            if user_achievement.achievement.category == "learned_words":
+                words.achievements.append(user_achievement)
+            elif user_achievement.achievement.category == "speech_seconds":
+                audio.achievements.append(user_achievement)
+            elif user_achievement.achievement.category == "video_seconds":
+                video.achievements.append(user_achievement)
+            elif user_achievement.achievement.category == "added_words":
+                words.achievements.append(user_achievement)
+
+        return [words, audio, video]
 
     async def update_user_achievements(
         self, users: List[User], achievements: List[Achievement]
