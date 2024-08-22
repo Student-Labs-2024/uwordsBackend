@@ -54,10 +54,10 @@ class UserAchievementService:
             elif user_achievement.achievement.category == "video_seconds":
                 video.append(user_achievement)
 
-        words = sorted(words, key=lambda x: x.get("progress_percent"), reverse=True)
-        learned = sorted(learned, key=lambda x: x.get("progress_percent"), reverse=True)
-        audio = sorted(audio, key=lambda x: x.get("progress_percent"), reverse=True)
-        video = sorted(video, key=lambda x: x.get("progress_percent"), reverse=True)
+        words = sorted(words, key=lambda x: x.progress_percent, reverse=True)
+        learned = sorted(learned, key=lambda x: x.progress_percent, reverse=True)
+        audio = sorted(audio, key=lambda x: x.progress_percent, reverse=True)
+        video = sorted(video, key=lambda x: x.progress_percent, reverse=True)
 
         return [
             UserAchievementsCategory(title="Словарь", achievements=words),
