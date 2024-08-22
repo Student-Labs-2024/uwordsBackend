@@ -210,6 +210,7 @@ async def get_user_me(
 
     if additional_data:
         user.metrics = UserMetric(
+            user_id=user.id,
             days=user.days,
             alltime_userwords_amount=additional_data.get("alltime_userwords_amount"),
             alltime_learned_amount=additional_data.get("alltime_learned_amount"),
