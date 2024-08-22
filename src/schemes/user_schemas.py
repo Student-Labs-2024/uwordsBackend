@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
-from src.schemes.achievement_schemas import UserAchievementDump
+from src.schemes.achievement_schemas import UserAchievementsCategory
 from src.schemes.word_schemas import WordDumpSchema
 
 
@@ -13,6 +13,18 @@ class UserWordDumpSchema(BaseModel):
     user_id: int = Field(examples=["ijembbp53kbtSJ7FW3k68XQwJYp1"])
     frequency: int = Field(examples=[7])
     progress: int = Field(examples=[2])
+
+    class ConfigDict:
+        from_attributes = True
+
+
+class UserMetric(BaseModel):
+    days: Optional[int] = Field(examples=[5], default=0)
+    alltime_userwords_amount: Optional[int] = Field(examples=[100], default=0)
+    alltime_learned_amount: Optional[int] = Field(examples=[52], default=0)
+    alltime_learned_percents: Optional[float] = Field(examples=[52], default=0)
+    alltime_speech_seconds: Optional[int] = Field(examples=[340], default=0)
+    alltime_video_seconds: Optional[int] = Field(examples=[680], default=0)
 
     class ConfigDict:
         from_attributes = True
@@ -33,7 +45,6 @@ class UserDump(BaseModel):
     latest_study: Optional[datetime] = Field(
         examples=["2023-05-05 10:30:45.999999"], default=None
     )
-    days: Optional[int] = Field(examples=[0])
     phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
     birth_date: Optional[datetime] = Field(
         examples=["2023-05-05 10:30:45.999999"], default=None
@@ -49,11 +60,8 @@ class UserDump(BaseModel):
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
-    metrics: Optional[dict] = Field(
-        examples=[{"hours": 10, "learned": 50, "days": 5}],
-        default={"hours": 0, "learned": 0, "days": 0},
-    )
-    achievements: List[UserAchievementDump] = Field(examples=[], default=[])
+    metrics: UserMetric
+    achievements: List[UserAchievementsCategory] = Field(examples=[], default=[])
 
     class ConfigDict:
         from_attributes = True
