@@ -42,23 +42,29 @@ class UserAchievementService:
     ) -> List[UserAchievementsCategory]:
         user_achievements = await self.get_user_achievements(user_id=user_id)
 
-        words = UserAchievementsCategory(title="Слова", achievements=[])
-
-        audio = UserAchievementsCategory(title="Запись", achievements=[])
-
-        video = UserAchievementsCategory(title="Видео", achievements=[])
+        words, learned, audio, video = [], [], [], []
 
         for user_achievement in user_achievements:
-            if user_achievement.achievement.category == "learned_words":
-                words.achievements.append(user_achievement)
+            if user_achievement.achievement.category == "added_words":
+                words.append(user_achievement)
+            elif user_achievement.achievement.category == "learned_words":
+                learned.append(user_achievement)
             elif user_achievement.achievement.category == "speech_seconds":
-                audio.achievements.append(user_achievement)
+                audio.append(user_achievement)
             elif user_achievement.achievement.category == "video_seconds":
-                video.achievements.append(user_achievement)
-            elif user_achievement.achievement.category == "added_words":
-                words.achievements.append(user_achievement)
+                video.append(user_achievement)
 
-        return [words, audio, video]
+        words = sorted(words, key=lambda x: x.get("progress_percent"), reverse=True)
+        learned = sorted(learned, key=lambda x: x.get("progress_percent"), reverse=True)
+        audio = sorted(audio, key=lambda x: x.get("progress_percent"), reverse=True)
+        video = sorted(video, key=lambda x: x.get("progress_percent"), reverse=True)
+
+        return [
+            UserAchievementsCategory(title="Словарь", achievements=words),
+            UserAchievementsCategory(title="Обучение", achievements=learned),
+            UserAchievementsCategory(title="Запись", achievements=audio),
+            UserAchievementsCategory(title="Видео", achievements=video),
+        ]
 
     async def update_user_achievements(
         self, users: List[User], achievements: List[Achievement]
