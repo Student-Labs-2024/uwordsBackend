@@ -21,7 +21,7 @@ async def send_user_data(data: dict, server_url: str):
             logger.error(f"Request exception occurred: {e}")
 
 
-async def get_user_data(user_id: int, server_url: str):
+async def get_user_data(user_id: int, server_url: str) -> dict:
     async with aiohttp.ClientSession() as session:
         try:
             query = urlencode(
