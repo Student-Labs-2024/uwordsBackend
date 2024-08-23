@@ -61,7 +61,7 @@ class UserDump(BaseModel):
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
-    metrics: Optional[UserMetric] = Field(
+    metrics: UserMetric = Field(
         examples=[
             {
                 "user_id": 1,

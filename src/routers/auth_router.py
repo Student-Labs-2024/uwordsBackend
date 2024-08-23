@@ -219,6 +219,17 @@ async def get_user_me(
             alltime_video_seconds=additional_data.get("alltime_video_seconds"),
         )
 
+    else:
+        user.metrics = UserMetric(
+            user_id=user.id,
+            days=0,
+            alltime_learned_amount=0,
+            alltime_learned_percents=0,
+            alltime_speech_seconds=0,
+            alltime_userwords_amount=0,
+            alltime_video_seconds=0,
+        )
+
     user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
     await user_service.check_user_achievemets(
