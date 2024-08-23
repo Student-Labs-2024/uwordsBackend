@@ -61,7 +61,19 @@ class UserDump(BaseModel):
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
-    metrics: UserMetric
+    metrics: Optional[UserMetric] = Field(
+        examples=[
+            {
+                "user_id": 1,
+                "days": 0,
+                "alltime_userwords_amount": 0,
+                "alltime_learned_amount": 0,
+                "alltime_learned_percents": 0,
+                "alltime_speech_seconds": 0,
+                "alltime_video_seconds": 0,
+            }
+        ]
+    )
     achievements: List[UserAchievementsCategory] = Field(examples=[], default=[])
 
     class ConfigDict:
