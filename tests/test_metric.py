@@ -1,6 +1,7 @@
 import aiohttp
 import pytest
 from unittest.mock import AsyncMock, patch
+from src.config.instance import METRIC_TOKEN
 from src.utils.metric import get_user_data, send_user_data
 
 
@@ -16,10 +17,11 @@ class TestMetric:
 
         data = {"key": "value"}
         server_url = "http://example.com"
+        headers = {"Authorization": f"Bearer {METRIC_TOKEN}"}
 
         result = await send_user_data(data, server_url)
 
-        mock_post.assert_called_once_with(server_url, json=data)
+        mock_post.assert_called_once_with(url=server_url, headers=headers, json=data)
         assert result == expected_result
 
     @staticmethod
@@ -30,10 +32,11 @@ class TestMetric:
 
         data = {"key": "value"}
         server_url = "http://example.com"
+        headers = {"Authorization": f"Bearer {METRIC_TOKEN}"}
 
         result = await send_user_data(data, server_url)
 
-        mock_post.assert_called_once_with(server_url, json=data)
+        mock_post.assert_called_once_with(url=server_url, headers=headers, json=data)
         assert result is None
 
     @staticmethod
@@ -50,11 +53,13 @@ class TestMetric:
 
         uwords_uid = "123"
         server_url = "http://example.com"
+        headers = {"Authorization": f"Bearer {METRIC_TOKEN}"}
 
         result = await get_user_data(uwords_uid=uwords_uid, server_url=server_url)
 
         mock_get.assert_called_once_with(
-            f"{server_url}?uwords_uid={uwords_uid}&is_union=True&metric_range=alltime"
+            url=f"{server_url}?uwords_uid={uwords_uid}&is_union=True&metric_range=alltime",
+            headers=headers
         )
         assert result == expected_result
 
@@ -66,10 +71,12 @@ class TestMetric:
 
         uwords_uid = "123"
         server_url = "http://example.com"
+        headers = {"Authorization": f"Bearer {METRIC_TOKEN}"}
 
         result = await get_user_data(uwords_uid=uwords_uid, server_url=server_url)
 
         mock_get.assert_called_once_with(
-            f"{server_url}?uwords_uid={uwords_uid}&is_union=True&metric_range=alltime"
+            url=f"{server_url}?uwords_uid={uwords_uid}&is_union=True&metric_range=alltime",
+            headers=headers
         )
         assert result is None
