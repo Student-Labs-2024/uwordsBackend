@@ -10,6 +10,7 @@ from src.database.models import User
 from src.database.redis_config import redis_connection
 
 from src.schemes.user_schemas import (
+    UserData,
     UserDump,
     UserCreateEmail,
     UserCreateVk,
@@ -23,7 +24,7 @@ from src.schemes.util_schemas import TelegramCheckCode, TelegramLink
 
 from src.schemes.enums.enums import Providers
 from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
-from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate
 
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
@@ -219,17 +220,6 @@ async def get_user_me(
             alltime_video_seconds=additional_data.get("alltime_video_seconds"),
         )
 
-    else:
-        user.metrics = UserMetric(
-            user_id=user.id,
-            days=0,
-            alltime_learned_amount=0,
-            alltime_learned_percents=0,
-            alltime_speech_seconds=0,
-            alltime_userwords_amount=0,
-            alltime_video_seconds=0,
-        )
-
     user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
     await user_service.check_user_achievemets(
@@ -280,7 +270,7 @@ async def delete_user(
 
 @auth_router_v1.get(
     "/{user_id}",
-    response_model=UserDump | None,
+    response_model=UserDump,
     name=doc_data.USER_PROFILE_TITLE,
     description=doc_data.USER_PROFILE_DESCRIPTION,
 )
@@ -290,7 +280,15 @@ async def get_user_profile(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     await user_service.update_user_state(user.id)
-    return await user_service.get_user_by_id(user_id=user_id)
+
+    user_ = await user_service.get_user_by_id(user_id=user_id)
+
+    if not user_:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail={"msg": "User not found"}
+        )
+
+    return user_
 
 
 @auth_router_v1.post(
@@ -302,7 +300,6 @@ async def get_user_profile(
 async def create_feedback(
     feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
-    user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     if await feedback_service.user_has_feedback(user.id):
@@ -327,7 +324,7 @@ async def create_feedback(
     description=doc_data.FEEDBACK_UPDATE_DESCRIPTION,
 )
 async def update_feedback(
-    feedback_data: FeedbackUpdate,
+    feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
@@ -381,3 +378,21 @@ async def check_code(code: TelegramCode) -> int | bool:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "No code"},
         )
+
+
+@auth_router_v1.post(
+    "/update_onboarding_complete",
+    response_model=UserData,
+    name=doc_data.ONBOARDING_UPDATE_TITLE,
+    description=doc_data.ONBOARDING_UPDATE_DESCRIPTION,
+)
+async def update_onboarding_complete(
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    return await user_service.update_onboarding_complete(user_id=user.id)

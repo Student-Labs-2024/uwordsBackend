@@ -18,7 +18,6 @@ from src.schemes.user_schemas import (
 )
 from src.schemes.util_schemas import TokenInfo
 
-from src.services.achievement_service import AchievementService
 from src.services.user_achievement_service import UserAchievementService
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils
@@ -313,3 +312,15 @@ class UserService:
                     )
         except Exception as e:
             logger.info(f"[ACHIEVEMENT USER] Error: {e}")
+
+    async def update_onboarding_complete(self, user_id: int) -> User:
+        user = await self.repo.get_one([User.id == user_id])
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+
+        user.is_onboarding_complete = True
+        return await self.repo.update_one(
+            filters=[User.id == user_id], values={"is_onboarding_complete": True}
+        )

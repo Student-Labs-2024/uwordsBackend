@@ -492,6 +492,14 @@ ACHIEVEMENT_UPDATE_DESCRIPTION = """\
 Обновить достижение по его id\
 """
 
+ONBOARDING_UPDATE_TITLE = """\
+Обновить данные пользователя по онбордингу\
+"""
+
+ONBOARDING_UPDATE_DESCRIPTION = """\
+Обновить данные о том, что пользователь прошёл онбординг\
+"""
+
 TAGS_METADATA = [
     {
         "name": "Users",

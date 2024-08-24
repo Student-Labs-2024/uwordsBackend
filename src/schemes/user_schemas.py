@@ -61,7 +61,7 @@ class UserDump(BaseModel):
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
-    metrics: UserMetric = Field(
+    metrics: Optional[UserMetric] = Field(
         examples=[
             {
                 "user_id": 1,
@@ -72,7 +72,16 @@ class UserDump(BaseModel):
                 "alltime_speech_seconds": 0,
                 "alltime_video_seconds": 0,
             }
-        ]
+        ],
+        default={
+            "user_id": 0,
+            "days": 0,
+            "alltime_userwords_amount": 0,
+            "alltime_learned_amount": 0,
+            "alltime_learned_percents": 0,
+            "alltime_speech_seconds": 0,
+            "alltime_video_seconds": 0,
+        },
     )
     achievements: List[UserAchievementsCategory] = Field(examples=[], default=[])
 
@@ -179,3 +188,12 @@ class UserUpdate(BaseModel):
 class UserEmailLogin(BaseModel):
     email: EmailStr = Field(examples=["mail@uwords.ru"])
     password: Optional[str] = Field(examples=["strongpass"], default=None)
+
+
+class UserData(BaseModel):
+    id: int = Field(examples=[1])
+    email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
+    username: Optional[str] = Field(examples=["uwords"], default=None)
+    firstname: Optional[str] = Field(examples=["Uwords"], default=None)
+    lastname: Optional[str] = Field(examples=["English App"], default=None)
+    is_onboarding_complete: Optional[bool] = Field(examples=[False], default=False)
