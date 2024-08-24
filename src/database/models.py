@@ -38,7 +38,10 @@ class Word(Base):
     pictureLink = Column(String, nullable=True)
     topic = Column(String, ForeignKey(Topic.title))
     subtopic = Column(String, ForeignKey(SubTopic.title))
-    userWords = relationship("UserWord", back_populates="word")
+    userWords = relationship("UserWord", back_populates="word", lazy="selectin")
+    user_words_stop_list = relationship(
+        "UserWordStopList", back_populates="word", lazy="selectin"
+    )
 
 
 class UserWord(Base):
@@ -96,6 +99,10 @@ class User(Base):
 
     user_achievements = relationship(
         "UserAchievement", back_populates="user", lazy="selectin"
+    )
+
+    user_words_stop_list = relationship(
+        "UserWordStopList", back_populates="user", lazy="selectin"
     )
 
 
@@ -158,3 +165,15 @@ class UserAchievement(Base):
         "Achievement", back_populates="user_achievements", lazy="selectin"
     )
     user = relationship("User", back_populates="user_achievements", lazy="selectin")
+
+
+class UserWordStopList(Base):
+    __tablename__ = "user_word_stop_list"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey(User.id))
+    word_id = Column(Integer, ForeignKey(Word.id))
+    delete_at = Column(DateTime, default=datetime.now)
+
+    user = relationship("User", back_populates="user_words_stop_list", lazy="selectin")
+    word = relationship("Word", back_populates="user_words_stop_list", lazy="selectin")
