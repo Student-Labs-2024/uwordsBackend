@@ -72,7 +72,16 @@ class UserDump(BaseModel):
                 "alltime_speech_seconds": 0,
                 "alltime_video_seconds": 0,
             }
-        ]
+        ],
+        default={
+            "user_id": 0,
+            "days": 0,
+            "alltime_userwords_amount": 0,
+            "alltime_learned_amount": 0,
+            "alltime_learned_percents": 0,
+            "alltime_speech_seconds": 0,
+            "alltime_video_seconds": 0,
+        },
     )
     achievements: List[UserAchievementsCategory] = Field(examples=[], default=[])
 

@@ -220,17 +220,6 @@ async def get_user_me(
             alltime_video_seconds=additional_data.get("alltime_video_seconds"),
         )
 
-    else:
-        user.metrics = UserMetric(
-            user_id=user.id,
-            days=0,
-            alltime_learned_amount=0,
-            alltime_learned_percents=0,
-            alltime_speech_seconds=0,
-            alltime_userwords_amount=0,
-            alltime_video_seconds=0,
-        )
-
     user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
     await user_service.check_user_achievemets(
@@ -281,7 +270,7 @@ async def delete_user(
 
 @auth_router_v1.get(
     "/{user_id}",
-    response_model=UserDump | None,
+    response_model=UserDump,
     name=doc_data.USER_PROFILE_TITLE,
     description=doc_data.USER_PROFILE_DESCRIPTION,
 )
@@ -291,7 +280,15 @@ async def get_user_profile(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     await user_service.update_user_state(user.id)
-    return await user_service.get_user_by_id(user_id=user_id)
+
+    user_ = await user_service.get_user_by_id(user_id=user_id)
+
+    if not user_:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail={"msg": "User not found"}
+        )
+
+    return user_
 
 
 @auth_router_v1.post(
