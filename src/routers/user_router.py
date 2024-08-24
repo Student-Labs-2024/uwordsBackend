@@ -18,10 +18,12 @@ from src.config import fastapi_docs_config as doc_data
 from src.schemes.admin_schemas import BotWords
 from src.schemes.audio_schemas import YoutubeLink
 from src.schemes.topic_schemas import TopicWords
+from src.schemes.user_word_stop_list_schemas import UserWordStopListCreate
 from src.schemes.util_schemas import CustomResponse
 from src.schemes.word_schemas import WordsIdsSchema
 from src.services.achievement_service import AchievementService
 from src.services.user_achievement_service import UserAchievementService
+from src.services.user_word_stop_list_service import UserWordStopListService
 
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
@@ -32,12 +34,16 @@ from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
+from src.utils.dependenes.user_word_stop_list_service_fabric import (
+    user_word_stop_list_service_fabric,
+)
 
 from src.services.file_service import FileService
 from src.services.user_service import UserService
 from src.services.error_service import ErrorService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
+
 
 user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
 
@@ -232,8 +238,8 @@ async def upload_youtube_video(
 @user_router_v1.post(
     "/bot_word",
     response_model=CustomResponse,
-    name=doc_data.UPLOAD_YOUTUBE_TITLE,
-    description=doc_data.UPLOAD_YOUTUBE_DESCRIPTION,
+    name=doc_data.UPLOAD_BOT_WORDS_TITLE,
+    description=doc_data.UPLOAD_BOT_WORDS_DESCRIPTION,
 )
 async def words_from_bot(
     data: BotWords,
@@ -261,3 +267,40 @@ async def words_from_bot(
     )
 
     return CustomResponse(status_code=status.HTTP_200_OK, message="Processing started")
+
+
+@user_router_v1.delete(
+    "/word",
+    response_model=CustomResponse,
+    name=doc_data.DELETE_USER_WORD_TITLE,
+    description=doc_data.DELETE_USER_WORD_DESCRIPTION,
+)
+async def delete_word(
+    user_word_id: int,
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user_word_stop_list_service: Annotated[
+        UserWordStopListService, Depends(user_word_stop_list_service_fabric)
+    ],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+
+    user_word = await user_words_service.get_user_word(
+        user_id=user.id, user_word_id=user_word_id
+    )
+
+    if not user_word:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail={"msg": "User word not found"}
+        )
+
+    user_word_stop_data = UserWordStopListCreate(
+        user_id=user_word.user_id, word_id=user_word.word_id
+    )
+
+    await user_word_stop_list_service.add_one(
+        user_word_stop_data=user_word_stop_data.model_dump()
+    )
+
+    await user_words_service.delete_one(userword_id=user_word.id)
+
+    return CustomResponse(status_code=status.HTTP_200_OK, message="User word deleted!")
