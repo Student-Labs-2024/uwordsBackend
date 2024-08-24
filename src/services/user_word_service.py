@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+import random
 from typing import Optional, Union, List, Dict
 
 from src.schemes.error_schemas import ErrorCreate
@@ -27,8 +28,8 @@ from src.config.instance import (
     STUDY_MAX_PROGRESS,
     STUDY_WORDS_AMOUNT,
     SUBTOPIC_COUNT_WORDS,
+    STUDY_RANDOM_PIC,
 )
-
 
 logger = logging.getLogger("[SERVICES WORDS]")
 
@@ -219,14 +220,29 @@ class UserWordService:
             user_words: List[UserWord] = await self.repo.get_all_by_filter(
                 filters=filters, order=UserWord.progress.desc()
             )
-
+            words_pictures = [word.word.pictureLink for word in user_words]
+            if len(user_words) < STUDY_RANDOM_PIC:
+                additional_words: List[UserWord] = await self.repo.get_all_by_filter(
+                    filters=[UserWord.user_id == user_id]
+                )
+                additional_words_pictures = [
+                    word.word.pictureLink for word in additional_words
+                ]
+                while len(words_pictures) < STUDY_RANDOM_PIC and len(
+                    words_pictures
+                ) < len(additional_words):
+                    for additional_words_picture in additional_words_pictures:
+                        if additional_words_picture not in words_pictures:
+                            words_pictures.append(additional_words_picture)
             if subtopic_title == DEFAULT_SUBTOPIC:
                 user_words = await self.get_unsorted_user_words(user_words=user_words)
 
             logger.info(user_words)
-
-            return await self.filter_words_for_study(user_words=user_words)
-
+            words_for_study = await self.filter_words_for_study(user_words=user_words)
+            words_for_study = [word.__dict__ for word in words_for_study]
+            for word in words_for_study:
+                word["additional_pictures"] = random.sample(words_pictures, 3)
+            return words_for_study
         except BaseException as e:
             logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
