@@ -21,8 +21,10 @@ from src.config.instance import (
     ALLOWED_AUDIO_SECONDS,
     ALLOWED_VIDEO_SECONDS,
     DEFAULT_ENERGY,
+    METRIC_URL,
 )
 from src.config import fastapi_docs_config as doc_data
+from src.utils.metric import get_user_metric
 
 
 logger = logging.getLogger("[ROUTER ADMIN]")
@@ -59,6 +61,14 @@ async def create_admin(
     user = await user_service.create_user(
         data=admin_data, provider=Providers.admin.value
     )
+
+    user.metrics = await get_user_metric(
+        user_id=user.id,
+        user_days=user.days,
+        uwords_uid=user.uwords_uid,
+        server_url=METRIC_URL,
+    )
+
     return user
 
 
