@@ -20,6 +20,5 @@ class AdminCreate(BaseModel):
 
 
 class BotWords(BaseModel):
-    secret: str = Field(examples=["ff4d8sdaE5ga8"])
-    user_id: int = Field(examples=[1])
+    uwords_uid: int = Field(examples=["1"])
     text: str = Field(examples=["word"])

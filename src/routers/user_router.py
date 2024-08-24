@@ -246,7 +246,7 @@ async def words_from_bot(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     token=Depends(auth_utils.check_secret_token),
 ):
-    user: User = await user_service.get_user_by_id(data.user_id)
+    user: User = await user_service.get_user_by_uwords_uid(uwords_uid=data.uwords_uid)
     if not user.subscription_type:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
