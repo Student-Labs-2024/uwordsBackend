@@ -48,13 +48,13 @@ class TestMetric:
         mock_response.json = AsyncMock(return_value=expected_result)
         mock_get.return_value.__aenter__.return_value = mock_response
 
-        user_id = 123
+        uwords_uid = "123"
         server_url = "http://example.com"
 
-        result = await get_user_data(user_id, server_url)
+        result = await get_user_data(uwords_uid=uwords_uid, server_url=server_url)
 
         mock_get.assert_called_once_with(
-            f"{server_url}?user_id={user_id}&is_union=True&metric_range=alltime"
+            f"{server_url}?uwords_uid={uwords_uid}&is_union=True&metric_range=alltime"
         )
         assert result == expected_result
 
@@ -64,12 +64,12 @@ class TestMetric:
     async def test_get_user_data_exception(mock_get):
         mock_get.side_effect = aiohttp.ClientError("Test exception")
 
-        user_id = 123
+        uwords_uid = "123"
         server_url = "http://example.com"
 
-        result = await get_user_data(user_id, server_url)
+        result = await get_user_data(uwords_uid=uwords_uid, server_url=server_url)
 
         mock_get.assert_called_once_with(
-            f"{server_url}?user_id={user_id}&is_union=True&metric_range=alltime"
+            f"{server_url}?uwords_uid={uwords_uid}&is_union=True&metric_range=alltime"
         )
         assert result is None

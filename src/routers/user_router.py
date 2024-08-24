@@ -244,18 +244,13 @@ async def upload_youtube_video(
 async def words_from_bot(
     data: BotWords,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    token=Depends(auth_utils.check_secret_token),
 ):
     user: User = await user_service.get_user_by_id(data.user_id)
     if not user.subscription_type:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "You are not subscribed"},
-        )
-
-    if data.secret != SERVICE_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": "Wrong secret"},
         )
 
     process_text_task.apply_async(

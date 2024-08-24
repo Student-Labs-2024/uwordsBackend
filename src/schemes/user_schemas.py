@@ -61,28 +61,7 @@ class UserDump(BaseModel):
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
-    metrics: Optional[UserMetric] = Field(
-        examples=[
-            {
-                "user_id": 1,
-                "days": 0,
-                "alltime_userwords_amount": 0,
-                "alltime_learned_amount": 0,
-                "alltime_learned_percents": 0,
-                "alltime_speech_seconds": 0,
-                "alltime_video_seconds": 0,
-            }
-        ],
-        default={
-            "user_id": 0,
-            "days": 0,
-            "alltime_userwords_amount": 0,
-            "alltime_learned_amount": 0,
-            "alltime_learned_percents": 0,
-            "alltime_speech_seconds": 0,
-            "alltime_video_seconds": 0,
-        },
-    )
+    metrics: UserMetric
     achievements: List[UserAchievementsCategory] = Field(examples=[], default=[])
 
     class ConfigDict:
@@ -135,29 +114,24 @@ class UserGoogleLogin(BaseModel):
 
 
 class UserCreateDB(BaseModel):
-    provider: str = Field(examples=["email"])
-    email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
-    hashed_password: Optional[str] = Field(
-        examples=["43f8a2ad188263...."], default=None
-    )
-    google_id: Optional[str] = Field(examples=["uid34840..."], default=None)
-    vk_id: Optional[str] = Field(examples=["id6473..."], default=None)
-    username: Optional[str] = Field(examples=["uwords"], default=None)
-    firstname: Optional[str] = Field(examples=["Uwords"], default=None)
-    lastname: Optional[str] = Field(examples=["English App"], default=None)
-    avatar_url: Optional[str] = Field(
-        examples=["https://uwords.ru/image/logo.png"], default=None
-    )
-    phone_number: Optional[str] = Field(examples=["88005553535"], default=None)
-    birth_date: Optional[datetime] = Field(
-        examples=["2023-05-05 10:30:45.999999"], default=None
-    )
-    latest_study: Optional[datetime] = Field(
-        examples=["2023-05-05 10:30:45.999999"], default=None
-    )
-    is_active: Optional[bool] = Field(examples=[True], default=True)
-    is_superuser: Optional[bool] = Field(examples=[False], default=False)
-    is_verified: Optional[bool] = Field(examples=[True], default=False)
+    uwords_uid: str
+    provider: str
+    email: Optional[EmailStr] = None
+    google_id: Optional[str] = None
+    vk_id: Optional[str] = None
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    avatar_url: Optional[str] = None
+    phone_number: Optional[str] = None
+    hashed_password: Optional[str] = None
+
+    birth_date: Optional[datetime] = None
+    latest_study: Optional[datetime] = None
+
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
+    is_verified: Optional[bool] = False
 
     @field_validator("*", mode="before")
     def remove_empty(cls, value):

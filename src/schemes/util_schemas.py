@@ -27,7 +27,7 @@ class TelegramLink(BaseModel):
 
 
 class TelegramCheckCode(BaseModel):
-    user_id: int = Field(examples=[1])
+    uwords_uid: str = Field(examples=["1"])
 
 
 class Bill(BaseModel):
