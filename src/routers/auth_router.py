@@ -10,6 +10,7 @@ from src.database.models import User
 from src.database.redis_config import redis_connection
 
 from src.schemes.user_schemas import (
+    UserData,
     UserDump,
     UserCreateEmail,
     UserCreateVk,
@@ -23,7 +24,7 @@ from src.schemes.util_schemas import TelegramCheckCode, TelegramLink
 
 from src.schemes.enums.enums import Providers
 from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
-from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate
 
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
@@ -302,7 +303,6 @@ async def get_user_profile(
 async def create_feedback(
     feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
-    user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     if await feedback_service.user_has_feedback(user.id):
@@ -327,7 +327,7 @@ async def create_feedback(
     description=doc_data.FEEDBACK_UPDATE_DESCRIPTION,
 )
 async def update_feedback(
-    feedback_data: FeedbackUpdate,
+    feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
@@ -381,3 +381,21 @@ async def check_code(code: TelegramCode) -> int | bool:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "No code"},
         )
+
+
+@auth_router_v1.post(
+    "/update_onboarding_complete",
+    response_model=UserData,
+    name=doc_data.ONBOARDING_UPDATE_TITLE,
+    description=doc_data.ONBOARDING_UPDATE_DESCRIPTION,
+)
+async def update_onboarding_complete(
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    return await user_service.update_onboarding_complete(user_id=user.id)

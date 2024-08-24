@@ -16,8 +16,3 @@ class FeedbackDump(BaseModel):
 
     class ConfigDict:
         from_attributes = True
-
-
-class FeedbackUpdate(BaseModel):
-    stars: int = Field(examples=[5])
-    message: str = Field(examples=["Отличный приложение!"])

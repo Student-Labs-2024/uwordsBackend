@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, UploadFile, Depends, status, HTTPException
 
 from src.celery.tasks import process_audio_task, process_youtube_task, process_text_task
 
-from src.database.models import SubTopic, User
+from src.database.models import User
 
 from src.config.instance import (
     UPLOAD_DIR,
