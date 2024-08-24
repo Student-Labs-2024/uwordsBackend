@@ -11,6 +11,7 @@ from src.database.models import (
     Subscription,
     Bill,
     UserAchievement,
+    UserWordStopList,
 )
 
 from src.utils.repository import SQLAlchemyRepository, ChromaRepository
@@ -59,3 +60,7 @@ class AchievementRepository(SQLAlchemyRepository):
 
 class UserAchievementRepository(SQLAlchemyRepository):
     model = UserAchievement
+
+
+class UserWordStopListRepository(SQLAlchemyRepository):
+    model = UserWordStopList

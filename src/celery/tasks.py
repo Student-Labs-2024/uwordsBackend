@@ -18,6 +18,7 @@ from src.services.email_service import EmailService
 from src.services.error_service import ErrorService
 
 from src.services.user_service import UserService
+from src.services.user_word_stop_list_service import UserWordStopListService
 from src.services.word_service import WordService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
@@ -31,6 +32,9 @@ from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
+from src.utils.dependenes.user_word_stop_list_service_fabric import (
+    user_word_stop_list_service_fabric,
+)
 
 
 logger = logging.getLogger("[CELERY TASKS WORDS]")
@@ -115,6 +119,7 @@ async def general_process_audio(
     subtopic_service: TopicService = subtopic_service_fabric(),
     error_service: ErrorService = error_service_fabric(),
     user_achievement_service: UserAchievementService = user_achievement_service_fabric(),
+    user_word_stop_list_service: UserWordStopListService = user_word_stop_list_service_fabric(),
 ):
     try:
         files_paths = [file_path]
@@ -215,6 +220,7 @@ async def general_process_audio(
             error_service=error_service,
             user_achievement_service=user_achievement_service,
             user_service=user_service,
+            user_word_stop_list_service=user_word_stop_list_service,
         )
 
         logger.info(f"[GENERAL PROCESS AUDIO] Processing ended successfully!")
@@ -233,6 +239,7 @@ async def process_text(
     subtopic_service: TopicService = subtopic_service_fabric(),
     error_service: ErrorService = error_service_fabric(),
     user_achievement_service: UserAchievementService = user_achievement_service_fabric(),
+    user_word_stop_list_service: UserWordStopListService = user_word_stop_list_service_fabric(),
 ):
     try:
         translated_words = await TextService.get_translated_clear_text(
@@ -246,6 +253,7 @@ async def process_text(
             error_service=error_service,
             user_achievement_service=user_achievement_service,
             user_service=user_service,
+            user_word_stop_list_service=user_word_stop_list_service,
         )
 
         logger.info(f"[PROCESS Text] Processing ended successfully!")
