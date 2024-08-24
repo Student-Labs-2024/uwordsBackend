@@ -20,5 +20,5 @@ class AdminCreate(BaseModel):
 
 
 class BotWords(BaseModel):
-    uwords_uid: int = Field(examples=["1"])
+    uwords_uid: str = Field(examples=["1"])
     text: str = Field(examples=["word"])
