@@ -10,20 +10,20 @@ from src.database.models import User
 from src.database.redis_config import redis_connection
 
 from src.schemes.user_schemas import (
+    UserData,
     UserDump,
     UserCreateEmail,
     UserCreateVk,
     UserCreateGoogle,
     UserEmailLogin,
     UserGoogleLogin,
-    UserMetric,
     UserUpdate,
 )
 from src.schemes.util_schemas import TelegramCheckCode, TelegramLink
 
 from src.schemes.enums.enums import Providers
 from src.schemes.util_schemas import TokenInfo, CustomResponse, TelegramCode
-from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate, FeedbackUpdate
+from src.schemes.feedback_schemas import FeedbackDump, FeedbackCreate
 
 from src.services.user_service import UserService
 from src.services.email_service import EmailService
@@ -31,7 +31,7 @@ from src.services.feedback_service import FeedbackService
 from src.services.user_achievement_service import UserAchievementService
 
 from src.utils import auth as auth_utils
-from src.utils.metric import get_user_data
+from src.utils.metric import get_user_data, get_user_metric
 from src.utils import tokens as token_utils
 from src.utils.email import generate_telegram_verification_code
 
@@ -71,6 +71,14 @@ async def register_user(
     user = await user_service.create_user(
         data=user_data, provider=Providers.email.value
     )
+
+    user.metrics = await get_user_metric(
+        user_id=user.id,
+        user_days=user.days,
+        uwords_uid=user.uwords_uid,
+        server_url=METRIC_URL,
+    )
+
     return user
 
 
@@ -102,6 +110,14 @@ async def register_vk_user(
             uid=str(stat["response"]["user_id"]),
             provider=Providers.vk.value,
         )
+
+        user.metrics = await get_user_metric(
+            user_id=user.id,
+            user_days=user.days,
+            uwords_uid=user.uwords_uid,
+            server_url=METRIC_URL,
+        )
+
         return user
 
 
@@ -129,6 +145,14 @@ async def register_google_user(
         uid=user_data.google_id,
         provider=Providers.google.value,
     )
+
+    user.metrics = await get_user_metric(
+        user_id=user.id,
+        user_days=user.days,
+        uwords_uid=user.uwords_uid,
+        server_url=METRIC_URL,
+    )
+
     return user
 
 
@@ -206,29 +230,12 @@ async def get_user_me(
 ):
     await user_service.update_user_state(user.id)
 
-    additional_data = await get_user_data(user.id, METRIC_URL)
-
-    if additional_data:
-        user.metrics = UserMetric(
-            user_id=user.id,
-            days=user.days,
-            alltime_userwords_amount=additional_data.get("alltime_userwords_amount"),
-            alltime_learned_amount=additional_data.get("alltime_learned_amount"),
-            alltime_learned_percents=additional_data.get("alltime_learned_percents"),
-            alltime_speech_seconds=additional_data.get("alltime_speech_seconds"),
-            alltime_video_seconds=additional_data.get("alltime_video_seconds"),
-        )
-
-    else:
-        user.metrics = UserMetric(
-            user_id=user.id,
-            days=0,
-            alltime_learned_amount=0,
-            alltime_learned_percents=0,
-            alltime_speech_seconds=0,
-            alltime_userwords_amount=0,
-            alltime_video_seconds=0,
-        )
+    user.metrics = await get_user_metric(
+        user_id=user.id,
+        user_days=user.days,
+        uwords_uid=user.uwords_uid,
+        server_url=METRIC_URL,
+    )
 
     user_achivements = await user_achievements_service.get_user_achievements(user.id)
 
@@ -256,9 +263,18 @@ async def update_user_me(
     user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    return await user_service.update_user(
+    user = await user_service.update_user(
         user_id=user.id, user_data=user_data.model_dump(exclude_none=True)
     )
+
+    user.metrics = await get_user_metric(
+        user_id=user.id,
+        user_days=user.days,
+        uwords_uid=user.uwords_uid,
+        server_url=METRIC_URL,
+    )
+
+    return user
 
 
 @auth_router_v1.delete(
@@ -280,7 +296,7 @@ async def delete_user(
 
 @auth_router_v1.get(
     "/{user_id}",
-    response_model=UserDump | None,
+    response_model=UserDump,
     name=doc_data.USER_PROFILE_TITLE,
     description=doc_data.USER_PROFILE_DESCRIPTION,
 )
@@ -290,7 +306,22 @@ async def get_user_profile(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     await user_service.update_user_state(user.id)
-    return await user_service.get_user_by_id(user_id=user_id)
+
+    user_ = await user_service.get_user_by_id(user_id=user_id)
+
+    if not user_:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail={"msg": "User not found"}
+        )
+
+    user_.metrics = await get_user_metric(
+        user_id=user_.id,
+        user_days=user_.days,
+        uwords_uid=user_.uwords_uid,
+        server_url=METRIC_URL,
+    )
+
+    return user_
 
 
 @auth_router_v1.post(
@@ -302,7 +333,6 @@ async def get_user_profile(
 async def create_feedback(
     feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
-    user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     if await feedback_service.user_has_feedback(user.id):
@@ -327,7 +357,7 @@ async def create_feedback(
     description=doc_data.FEEDBACK_UPDATE_DESCRIPTION,
 )
 async def update_feedback(
-    feedback_data: FeedbackUpdate,
+    feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
@@ -371,13 +401,38 @@ async def get_telegram_link(
     name=doc_data.CHECK_CODE_TITLE,
     description=doc_data.CHECK_CODE_DESCRIPTION,
 )
-async def check_code(code: TelegramCode) -> int | bool:
+async def check_code(
+    code: TelegramCode,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    token=Depends(auth_utils.check_secret_token),
+) -> int | bool:
     try:
         user_id = redis_connection.get(code.code).decode("utf-8")
-        return TelegramCheckCode(user_id=int(user_id))
+
+        user = await user_service.get_user_by_id(user_id=int(user_id))
+
+        return TelegramCheckCode(uwords_uid=user.uwords_uid)
 
     except:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"msg": "No code"},
         )
+
+
+@auth_router_v1.post(
+    "/update_onboarding_complete",
+    response_model=UserData,
+    name=doc_data.ONBOARDING_UPDATE_TITLE,
+    description=doc_data.ONBOARDING_UPDATE_DESCRIPTION,
+)
+async def update_onboarding_complete(
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    return await user_service.update_onboarding_complete(user_id=user.id)

@@ -1,6 +1,7 @@
 import logging
 from typing import List, Union
 from datetime import datetime
+import uuid
 from dateutil.parser import parse
 from fastapi import HTTPException, status
 
@@ -18,7 +19,6 @@ from src.schemes.user_schemas import (
 )
 from src.schemes.util_schemas import TokenInfo
 
-from src.services.achievement_service import AchievementService
 from src.services.user_achievement_service import UserAchievementService
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils
@@ -39,6 +39,14 @@ class UserService:
 
         except Exception as e:
             logger.info(f"[GET USER by ID] Error: {e}")
+            return None
+
+    async def get_user_by_uwords_uid(self, uwords_uid: str) -> Union[User, None]:
+        try:
+            return await self.repo.get_one(filters=[User.uwords_uid == uwords_uid])
+
+        except Exception as e:
+            logger.info(f"[GET USER by UWORDS UID] Error: {e}")
             return None
 
     async def get_users_with_sub(self) -> List[User]:
@@ -85,6 +93,7 @@ class UserService:
     ) -> Union[User, None]:
         try:
             user_data_db = data.model_dump()
+            uwords_uid = str(uuid.uuid4())
             try:
                 birth_date = user_data_db.pop("birth_date")
                 birth_date = parse(birth_date, fuzzy=False)
@@ -96,6 +105,7 @@ class UserService:
                         password=data.password
                     )
                     user_data_db = UserCreateDB(
+                        uwords_uid=uwords_uid,
                         provider=provider,
                         birth_date=birth_date,
                         hashed_password=hashed_password.decode(),
@@ -106,6 +116,7 @@ class UserService:
                         password=data.password
                     )
                     user_data_db = UserCreateDB(
+                        uwords_uid=uwords_uid,
                         provider=provider,
                         birth_date=birth_date,
                         hashed_password=hashed_password.decode(),
@@ -114,6 +125,7 @@ class UserService:
                     )
                 case Providers.vk.value:
                     user_data_db = UserCreateDB(
+                        uwords_uid=uwords_uid,
                         birth_date=birth_date,
                         vk_id=uid,
                         provider=provider,
@@ -121,7 +133,10 @@ class UserService:
                     )
                 case Providers.google.value:
                     user_data_db = UserCreateDB(
-                        birth_date=birth_date, google_id=uid, provider=provider
+                        uwords_uid=uwords_uid,
+                        birth_date=birth_date,
+                        google_id=uid,
+                        provider=provider,
                     )
             return await self.repo.add_one(data=user_data_db.model_dump())
         except Exception as e:
@@ -274,10 +289,13 @@ class UserService:
         user_achievements: List[UserAchievement],
         user_achievement_service: UserAchievementService,
     ):
-
         try:
 
-            metric = await get_user_data(user_id, METRIC_URL)
+            user = await self.get_user_by_id(user_id=user_id)
+
+            metric = await get_user_data(
+                uwords_uid=user.uwords_uid, server_url=METRIC_URL
+            )
 
             for user_achievement in user_achievements:
                 progress = user_achievement.progress
@@ -313,3 +331,15 @@ class UserService:
                     )
         except Exception as e:
             logger.info(f"[ACHIEVEMENT USER] Error: {e}")
+
+    async def update_onboarding_complete(self, user_id: int) -> User:
+        user = await self.repo.get_one([User.id == user_id])
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+
+        user.is_onboarding_complete = True
+        return await self.repo.update_one(
+            filters=[User.id == user_id], values={"is_onboarding_complete": True}
+        )

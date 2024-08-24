@@ -71,6 +71,7 @@ class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
+    uwords_uid = Column(String, nullable=True)
     provider = Column(String, nullable=False)
     username = Column(String, nullable=True)
     firstname = Column(String, nullable=True)
@@ -96,6 +97,7 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+    is_onboarding_complete = Column(Boolean, default=False, nullable=True)
 
     user_achievements = relationship(
         "UserAchievement", back_populates="user", lazy="selectin"
