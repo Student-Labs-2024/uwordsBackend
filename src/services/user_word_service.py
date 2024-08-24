@@ -2,10 +2,12 @@ import logging
 from datetime import datetime, timedelta
 import random
 from typing import Optional, Union, List, Dict
+from dateutil.relativedelta import relativedelta
 
 from src.schemes.error_schemas import ErrorCreate
 from src.schemes.topic_schemas import SubtopicWords, TopicWords
 
+from src.services.user_word_stop_list_service import UserWordStopListService
 from src.utils.metric import send_user_data
 from src.utils.repository import AbstractRepository
 
@@ -69,7 +71,22 @@ class UserWordService:
             logger.info(f"[GET USER WORDS By FILTER] ERROR: {e}")
             return []
 
-    async def get_user_word(self, user_id: int, word_id: int) -> Union[UserWord, None]:
+    async def get_user_word(
+        self, user_id: int, user_word_id: int
+    ) -> Union[UserWord, None]:
+        try:
+            user_word: UserWord = await self.repo.get_one(
+                [UserWord.user_id == user_id, UserWord.id == user_word_id]
+            )
+            return user_word
+
+        except BaseException as e:
+            logger.info(f"[GET USER WORD] ERROR: {e}")
+            return None
+
+    async def get_user_word_by_word_id(
+        self, user_id: int, word_id: int
+    ) -> Union[UserWord, None]:
         try:
             user_word: UserWord = await self.repo.get_one(
                 [UserWord.user_id == user_id, UserWord.word_id == word_id]
@@ -77,7 +94,7 @@ class UserWordService:
             return user_word
 
         except BaseException as e:
-            logger.info(f"[GET USER WORD] ERROR: {e}")
+            logger.info(f"[GET USER WORD by WORD ID] ERROR: {e}")
             return None
 
     async def create_subtopic_icons(
@@ -135,7 +152,6 @@ class UserWordService:
     ) -> List:
 
         subtopics_icons = await self.create_subtopic_icons(subtopics=subtopics)
-        logger.info(subtopics_icons)
         topic_dict = await self.create_topic_dict(user_words=user_words)
 
         result = []
@@ -237,12 +253,12 @@ class UserWordService:
             if subtopic_title == DEFAULT_SUBTOPIC:
                 user_words = await self.get_unsorted_user_words(user_words=user_words)
 
-            logger.info(user_words)
             words_for_study = await self.filter_words_for_study(user_words=user_words)
             words_for_study = [word.__dict__ for word in words_for_study]
             for word in words_for_study:
                 word["additional_pictures"] = random.sample(words_pictures, 3)
             return words_for_study
+
         except BaseException as e:
             logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
@@ -304,12 +320,14 @@ class UserWordService:
         word_service: WordService,
         subtopic_service: TopicService,
         error_service: ErrorService,
+        user_word_stop_list_service: UserWordStopListService,
     ) -> bool:
         try:
+            time_now = datetime.now()
+
             en_value = new_word.get("enValue", None)
             ru_value = new_word.get("ruValue", None)
             frequency = new_word.get("frequency", 0)
-            is_new = False
 
             if CensoreFilter.is_censore(text=ru_value):
                 logger.info(f"[UPLOAD WORD] CENSORE: {ru_value}")
@@ -320,6 +338,21 @@ class UserWordService:
                 return None
 
             word = await word_service.get_word(en_value=en_value)
+
+            if word:
+                stop_word_list = await user_word_stop_list_service.get_user_word_stop(
+                    user_id=user_id, word_id=word.id
+                )
+
+                if stop_word_list:
+                    if time_now < stop_word_list.delete_at + relativedelta(months=1):
+                        return False
+
+                    else:
+                        await user_word_stop_list_service.delete_one(
+                            user_word_stop_id=stop_word_list.id
+                        )
+
             if not word:
                 subtopic_title = await subtopic_service.check_word(en_value)
                 subtopic = await subtopic_service.get(
@@ -335,8 +368,9 @@ class UserWordService:
                 if not word:
                     return False
 
-                is_new = True
-            user_word = await self.get_user_word(user_id=user_id, word_id=word.id)
+            user_word = await self.get_user_word_by_word_id(
+                user_id=user_id, word_id=word.id
+            )
             if not user_word:
                 await self.repo.add_one(
                     {"word_id": word.id, "user_id": user_id, "frequency": frequency}
@@ -350,7 +384,8 @@ class UserWordService:
                     },
                 )
 
-            return is_new
+            return True
+
         except BaseException as e:
             logger.info(f"[UPLOAD USER WORD] ERROR: {e}")
 
@@ -370,6 +405,7 @@ class UserWordService:
         error_service: ErrorService,
         user_achievement_service: UserAchievementService,
         user_service: UserService,
+        user_word_stop_list_service: UserWordStopListService,
     ) -> bool:
         try:
             await MinioUploader.check_buckets()
@@ -379,7 +415,12 @@ class UserWordService:
 
             for user_word in user_words:
                 is_new = await self.upload_user_word(
-                    user_word, user_id, word_service, subtopic_service, error_service
+                    new_word=user_word,
+                    user_id=user_id,
+                    word_service=word_service,
+                    subtopic_service=subtopic_service,
+                    error_service=error_service,
+                    user_word_stop_list_service=user_word_stop_list_service,
                 )
                 if is_new:
                     add_words_amount += 1
@@ -413,3 +454,6 @@ class UserWordService:
 
             await error_service.add_one(error=error)
             return None
+
+    async def delete_one(self, userword_id: int) -> None:
+        await self.repo.delete_one(filters=[UserWord.id == userword_id])
