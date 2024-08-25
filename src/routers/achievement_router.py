@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Annotated
+from typing import Annotated, List
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from src.config.instance import MINIO_BUCKET_ACHIEVEMENT_ICONS, MINIO_HOST
@@ -64,6 +64,7 @@ async def add_achievement(
 
 @achievement_router_v1.post(
     "/icon",
+    response_model=AchievementDump,
     name=doc_data.ACHIEVEMENT_ICON_TITLE,
     description=doc_data.ACHIEVEMENT_ICON_DESCRIPTION,
 )
@@ -139,7 +140,7 @@ async def get_achievement(
 
 @achievement_router_v1.get(
     "/get_all",
-    response_model=list[AchievementDump],
+    response_model=List[AchievementDump],
     name=doc_data.ACHIEVEMENT_GET_ALL_TITLE,
     description=doc_data.ACHIEVEMENT_GET_ALL_DESCRIPTION,
 )

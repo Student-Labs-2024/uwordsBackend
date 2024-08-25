@@ -45,7 +45,7 @@ async def get_tariffs(
     sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    return await sub_service.get_all()
+    return await sub_service.get_tariffs(promo=user.promo)
 
 
 @subscription_router_v1.get(

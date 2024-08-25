@@ -22,3 +22,8 @@ class AdminCreate(BaseModel):
 class BotWords(BaseModel):
     uwords_uid: str = Field(examples=["1"])
     text: str = Field(examples=["word"])
+
+
+class BotPromo(BaseModel):
+    uwords_uid: str = Field(examples=["1"])
+    promo: str = Field(examples=["promo123"])
