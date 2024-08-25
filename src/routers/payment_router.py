@@ -29,16 +29,25 @@ async def get_payment_form(
     sub_type,
     sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
     payment_service: Annotated[PaymentService, Depends(payment_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
 ):
     sub: Subscription = await sub_service.get_sub(sub_type)
-    if sub:
-        url, pay_id = await payment_service.create_payment_form(
-            sub.price, WALLET_ID, sub.id
+    if not sub:
+        raise HTTPException(
+            detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
         )
-        return url, pay_id
-    raise HTTPException(
-        detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
+
+    price = sub.price
+
+    if sub.promocode and user.promo:
+        if sub.promocode == user.promo:
+            price = sub.promo_price
+
+    url, pay_id = await payment_service.create_payment_form(
+        amount=price, receiver_id=WALLET_ID, sub_type=sub_type
     )
+
+    return url, pay_id
 
 
 @payment_router_v1.get(
