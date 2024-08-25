@@ -1,20 +1,29 @@
+from io import BytesIO
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
+from src.config.instance import MINIO_BUCKET_ACHIEVEMENT_ICONS, MINIO_HOST
 from src.database.models import Achievement, User
 from src.schemes.achievement_schemas import (
     AchievementCreate,
     AchievementDump,
     AchievementUpdate,
 )
+
+from src.services.minio_uploader import MinioUploader
+from src.services.services_config import mc
+from src.services.user_service import UserService
 from src.services.achievement_service import AchievementService
 from src.services.user_achievement_service import UserAchievementService
-from src.services.user_service import UserService
-from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
+
 from src.utils import auth as auth_utils
-from src.config import fastapi_docs_config as doc_data
-from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
+from src.utils import helpers as helper_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
+from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
+from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
+
+from src.config import fastapi_docs_config as doc_data
+
 
 achievement_router_v1 = APIRouter(prefix="/api/achievement", tags=["Achievement"])
 
@@ -51,6 +60,60 @@ async def add_achievement(
     )
 
     return achievement
+
+
+@achievement_router_v1.post(
+    "/icon",
+    name=doc_data.ACHIEVEMENT_ICON_TITLE,
+    description=doc_data.ACHIEVEMENT_ICON_DESCRIPTION,
+)
+async def upload_subtopic_icon(
+    achievement_id: int,
+    achievement_icon: Annotated[
+        UploadFile, File(description="A file read as UploadFile")
+    ],
+    achievement_service: Annotated[
+        AchievementService, Depends(achievement_service_fabric)
+    ],
+    user: User = Depends(auth_utils.get_admin_user),
+):
+
+    achievement = await achievement_service.get([Achievement.id == achievement_id])
+
+    if not achievement:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "Achievement not found"},
+        )
+
+    mimetype = await helper_utils.check_mime_type_icon(
+        filename=achievement_icon.filename
+    )
+
+    object_name = f"{achievement.title}.svg"
+
+    filedata = await achievement_icon.read()
+
+    bytes_file = BytesIO(filedata)
+    bytes_file.seek(0)
+
+    found_subtopic_icon_bucket = mc.bucket_exists(MINIO_BUCKET_ACHIEVEMENT_ICONS)
+    if not found_subtopic_icon_bucket:
+        await MinioUploader.create_bucket(MINIO_BUCKET_ACHIEVEMENT_ICONS)
+
+    await MinioUploader.upload_object(
+        bucket_name=MINIO_BUCKET_ACHIEVEMENT_ICONS,
+        object_name=object_name,
+        data=bytes_file,
+        lenght=bytes_file.getbuffer().nbytes,
+        type=mimetype,
+    )
+
+    picture_link = f"{MINIO_HOST}/{MINIO_BUCKET_ACHIEVEMENT_ICONS}/{object_name}"
+
+    return await achievement_service.update_one(
+        achievement_id=achievement_id, update_data={"pictureLink": picture_link}
+    )
 
 
 @achievement_router_v1.get(

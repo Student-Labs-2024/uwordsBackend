@@ -460,6 +460,14 @@ ACHIEVEMENT_ADD_DESCRIPTION = """\
 Создайте достижения для пользователей\
 """
 
+ACHIEVEMENT_ICON_TITLE = """\
+Добавить иконку к достижению\
+"""
+
+ACHIEVEMENT_ICON_DESCRIPTION = """\
+Метод добавления иконки к достижению\
+"""
+
 ACHIEVEMENT_GET_TITLE = """\
 Получить достижение\
 """
