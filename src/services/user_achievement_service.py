@@ -3,7 +3,6 @@ from src.database.models import User, UserAchievement, Achievement
 from src.schemes.achievement_schemas import (
     AchievementCreate,
     UserAchievementCreate,
-    UserAchievementDump,
     UserAchievementsCategory,
 )
 from src.utils.repository import AbstractRepository

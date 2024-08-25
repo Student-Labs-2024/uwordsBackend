@@ -64,7 +64,13 @@ class Subscription(Base):
     name = Column(String, unique=True)
     price = Column(Integer)
     old_price = Column(Integer, nullable=True)
+    price_str = Column(String, nullable=True)
+    old_price_str = Column(String, nullable=True)
     months = Column(Integer)
+    free_period_days = Column(Integer, nullable=True)
+    free_period_str = Column(String, nullable=True)
+    comment = Column(String, nullable=True)
+    discount = Column(Integer, nullable=True)
 
 
 class User(Base):

@@ -61,6 +61,9 @@ async def check_payment_form(
 
         expired_at = now + relativedelta(months=subscription.months)
 
+        if subscription.free_period_days:
+            expired_at += relativedelta(days=subscription.free_period_days)
+
         await user_service.update_user(
             user_id=user.id,
             user_data={

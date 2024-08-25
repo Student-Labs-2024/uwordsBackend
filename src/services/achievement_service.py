@@ -1,6 +1,5 @@
 from typing import Dict, Union
 from src.database.models import Achievement, UserAchievement
-from src.schemes.achievement_schemas import AchievementCreate, UserAchievementDump
 from src.utils.repository import AbstractRepository
 
 
