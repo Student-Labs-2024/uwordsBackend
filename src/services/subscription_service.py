@@ -46,6 +46,7 @@ class SubscriptionService:
                     price=price,
                     price_str=price_str,
                     old_price=old_price,
+                    months=tariff.months,
                     old_price_str=old_price_str,
                     free_period_days=tariff.free_period_days,
                     free_period_str=tariff.free_period_str,
