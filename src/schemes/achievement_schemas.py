@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 
 
 class AchievementCreate(BaseModel):
-    id: int = Field(examples=[1])
     title: str = Field(examples=["Полиглот!"])
     description: str = Field(examples=["Стандартное описание достижения."])
     category: str = Field(examples=["Слова"])
