@@ -264,6 +264,64 @@ async def words_from_bot(
     return CustomResponse(status_code=status.HTTP_200_OK, message="Processing started")
 
 
+@user_router_v1.post(
+    "/bot_audio",
+    response_model=CustomResponse,
+    name=doc_data.UPLOAD_BOT_AUDIO_TITLE,
+    description=doc_data.UPLOAD_BOT_AUDIO_DESCRIPTION,
+)
+async def audio_from_bot(
+    uwords_uid: str,
+    audio_file: Annotated[UploadFile, File(description="A file read as UploadFile")],
+    file_service: Annotated[FileService, Depends(file_service_fabric)],
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    token=Depends(auth_utils.check_secret_token),
+):
+    user: User = await user_service.get_user_by_uwords_uid(uwords_uid=uwords_uid)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"msg": "User not found"},
+        )
+
+    if not user.subscription_type:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"msg": "You are not subscribed"},
+        )
+
+    filename = audio_file.filename
+
+    await helper_utils.check_mime_type(filename)
+
+    _, extension = os.path.splitext(filename)
+
+    filedata = await audio_file.read()
+
+    title = f"audio_{uuid.uuid4()}"
+
+    audio_name = f"{title}{extension}"
+    destination = UPLOAD_DIR / audio_name
+
+    try:
+        await file_service.add_file(destination, filedata)
+
+    except Exception as e:
+        logger.info(e)
+
+    process_audio_task.apply_async(
+        kwargs={"path": destination.__str__(), "title": title, "user_id": user.id},
+        countdown=1,
+    )
+
+    response = CustomResponse(
+        status_code=status.HTTP_200_OK, message="Processing started"
+    )
+
+    return response
+
+
 @user_router_v1.delete(
     "/word",
     response_model=CustomResponse,
