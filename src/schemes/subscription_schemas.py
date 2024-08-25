@@ -14,6 +14,11 @@ class Subscription(BaseModel):
     free_period_str: Optional[str] = Field(
         examples=["1 неделя бесплатно"], default=None
     )
+    promocode: Optional[str] = Field(examples=["promo123"], default=None)
+    promo_price: Optional[int] = Field(examples=[499], default=None)
+    promo_price_str: Optional[str] = Field(
+        examples=["После 499,00 ₽ каждый год"], default=None
+    )
     comment: Optional[str] = Field(examples=["После 1990,00 ₽ каждый год"])
     discount: Optional[int] = Field(examples=[80], default=None)
 
@@ -27,6 +32,11 @@ class SubscriptionUpdate(BaseModel):
     free_period_days: Optional[int] = Field(examples=[7], default=None)
     free_period_str: Optional[str] = Field(
         examples=["1 неделя бесплатно"], default=None
+    )
+    promocode: Optional[str] = Field(examples=["promo123"], default=None)
+    promo_price: Optional[int] = Field(examples=[499], default=None)
+    promo_price_str: Optional[str] = Field(
+        examples=["После 499,00 ₽ каждый год"], default=None
     )
     comment: Optional[str] = Field(examples=["После 1990,00 ₽ каждый год"])
     discount: Optional[int] = Field(examples=[80], default=None)
