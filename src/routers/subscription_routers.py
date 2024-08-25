@@ -7,6 +7,7 @@ from src.schemes.subscription_schemas import (
     SubscriptionDump,
     Subscription,
     SubscriptionUpdate,
+    SubscriptionDumpAllData,
 )
 from src.services.subscription_service import SubscriptionService
 from src.utils.dependenes.sub_service_fabric import sub_service_fabric
@@ -18,7 +19,7 @@ subscription_router_v1 = APIRouter(prefix="/api/subscription", tags=["Subscripti
 
 @subscription_router_v1.post(
     "/add",
-    response_model=SubscriptionDump,
+    response_model=SubscriptionDumpAllData,
     name=doc_data.SUB_ADD_TITLE,
     description=doc_data.SUB_ADD_DESCRIPTION,
 )
@@ -50,7 +51,7 @@ async def get_tariffs(
 
 @subscription_router_v1.get(
     "/get",
-    response_model=SubscriptionDump,
+    response_model=SubscriptionDumpAllData,
     name=doc_data.SUB_GET_TITLE,
     description=doc_data.SUB_GET_DESCRIPTION,
 )
@@ -88,7 +89,7 @@ async def delete_sub(
 
 @subscription_router_v1.post(
     "/update",
-    response_model=SubscriptionDump,
+    response_model=SubscriptionDumpAllData,
     name=doc_data.SUB_UPDATE_TITLE,
     description=doc_data.SUB_UPDATE_DESCRIPTION,
 )
