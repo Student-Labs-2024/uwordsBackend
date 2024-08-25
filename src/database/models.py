@@ -71,6 +71,10 @@ class Subscription(Base):
     free_period_str = Column(String, nullable=True)
     comment = Column(String, nullable=True)
     discount = Column(Integer, nullable=True)
+    promocode = Column(String, nullable=True)
+    promo_price = Column(Integer, nullable=True)
+    promo_price_str = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
 
 
 class User(Base):
@@ -106,6 +110,7 @@ class User(Base):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     is_onboarding_complete = Column(Boolean, default=False, nullable=True)
+    promo = Column(String, nullable=True)
 
     user_achievements = relationship(
         "UserAchievement", back_populates="user", lazy="selectin"

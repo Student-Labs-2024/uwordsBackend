@@ -15,13 +15,14 @@ from src.config.instance import (
     SERVICE_SECRET,
 )
 from src.config import fastapi_docs_config as doc_data
-from src.schemes.admin_schemas import BotWords
+from src.schemes.admin_schemas import BotPromo, BotWords
 from src.schemes.audio_schemas import YoutubeLink
 from src.schemes.topic_schemas import TopicWords
 from src.schemes.user_word_stop_list_schemas import UserWordStopListCreate
 from src.schemes.util_schemas import CustomResponse
 from src.schemes.word_schemas import WordsIdsSchema
 from src.services.achievement_service import AchievementService
+from src.services.subscription_service import SubscriptionService
 from src.services.user_achievement_service import UserAchievementService
 from src.services.user_word_stop_list_service import UserWordStopListService
 
@@ -29,6 +30,7 @@ from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
 from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils.dependenes.file_service_fabric import file_service_fabric
+from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
@@ -320,6 +322,46 @@ async def audio_from_bot(
     )
 
     return response
+
+
+@user_router_v1.post(
+    "/promo",
+    response_model=CustomResponse,
+    name=doc_data.BOT_PROMO_TITLE,
+    description=doc_data.BOT_PROMO_DESCRIPTION,
+)
+async def audio_from_bot(
+    promo_data: BotPromo,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
+    token=Depends(auth_utils.check_secret_token),
+):
+    user: User = await user_service.get_user_by_uwords_uid(
+        uwords_uid=promo_data.uwords_uid
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"msg": "User not found"},
+        )
+
+    sub = await sub_service.get_sub_by_promo(promo=promo_data.promo)
+
+    if not sub:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"msg": "Promocode not found"},
+        )
+
+    await user_service.update_user(
+        user_id=user.id, user_data={"promo": promo_data.promo}
+    )
+
+    return CustomResponse(
+        status_code=200,
+        message=f"Promo code successfully applied! New price {sub.promo_price_str}. Check your personal account",
+    )
 
 
 @user_router_v1.delete(
