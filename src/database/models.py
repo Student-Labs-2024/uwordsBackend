@@ -140,7 +140,7 @@ class Bill(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     label = Column(String)
-    sub_type = Column(ForeignKey(Subscription.id))
+    sub_type = Column(ForeignKey(Subscription.id, ondelete="SET NULL"), nullable=True)
     amount = Column(Integer)
     success = Column(Boolean, default=False)
 
