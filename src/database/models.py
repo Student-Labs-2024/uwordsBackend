@@ -110,6 +110,7 @@ class User(Base):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     is_onboarding_complete = Column(Boolean, default=False, nullable=True)
+    is_connected_to_telegram = Column(Boolean, default=False)
     promo = Column(String, nullable=True)
 
     user_achievements = relationship(

@@ -390,6 +390,9 @@ async def update_feedback(
 async def get_telegram_link(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
+    if user.is_connected_to_telegram:
+        return TelegramLink(telegramLink="https://t.me/uwords_bot")
+
     code = generate_telegram_verification_code(TELEGRAM_CODE_LEN)
     redis_connection.set(code, user.id, ex=int(EMAIL_CODE_EXP))
     return TelegramLink(telegramLink=f"https://t.me/uwords_bot?start={code}")
@@ -410,6 +413,15 @@ async def check_code(
         user_id = redis_connection.get(code.code).decode("utf-8")
 
         user = await user_service.get_user_by_id(user_id=int(user_id))
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+
+        await user_service.update_user(
+            user_id=user.id, user_data={"is_connected_to_telegram": True}
+        )
 
         return TelegramCheckCode(uwords_uid=user.uwords_uid)
 
