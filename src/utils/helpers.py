@@ -90,7 +90,7 @@ async def get_allowed_iterations_and_metric_data(
 
             user_data = {"allowed_audio_seconds": allowed_audio_seconds}
 
-            metric_data = {"user_id": user.id, "speech_seconds": duration}
+            metric_data = {"uwords_uid": user.uwords_uid, "speech_seconds": duration}
 
         else:
             remained_seconds: int = user.allowed_video_seconds
@@ -107,13 +107,22 @@ async def get_allowed_iterations_and_metric_data(
 
             user_data = {"allowed_video_seconds": allowed_video_seconds}
 
-            metric_data = {"user_id": user.id, "video_seconds": metric_duration}
+            metric_data = {
+                "uwords_uid": user.uwords_uid,
+                "video_seconds": metric_duration,
+            }
 
     else:
         if type == "audio":
-            metric_data = {"user_id": user.id, "speech_seconds": metric_duration}
+            metric_data = {
+                "uwords_uid": user.uwords_uid,
+                "speech_seconds": metric_duration,
+            }
         else:
-            metric_data = {"user_id": user.id, "video_seconds": metric_duration}
+            metric_data = {
+                "uwords_uid": user.uwords_uid,
+                "video_seconds": metric_duration,
+            }
 
         allowed_iterations = None
 
