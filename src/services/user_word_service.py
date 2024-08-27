@@ -287,7 +287,9 @@ class UserWordService:
 
         return words_for_study
 
-    async def update_progress_word(self, user_id: int, words_ids: List[int]) -> None:
+    async def update_progress_word(
+        self, user_id: int, uwords_uid: str, words_ids: List[int]
+    ) -> None:
         try:
             time_now = datetime.now()
             learned = 0
@@ -306,7 +308,7 @@ class UserWordService:
                 if upd_user_word.progress == STUDY_MAX_PROGRESS:
                     learned += 1
 
-            data = {"user_id": user_id, "learned_amount": learned}
+            data = {"uwords_uid": uwords_uid, "learned_amount": learned}
 
             await send_user_data(data=data, server_url=METRIC_URL)
 
@@ -400,6 +402,7 @@ class UserWordService:
         self,
         user_words: List[Dict],
         user_id: int,
+        uwords_uid: str,
         word_service: WordService,
         subtopic_service: TopicService,
         error_service: ErrorService,
@@ -426,7 +429,7 @@ class UserWordService:
                     add_words_amount += 1
 
             data = {
-                "user_id": user_id,
+                "uwords_uid": uwords_uid,
                 "add_words_amount": add_words_amount,
                 "add_userwords_amount": add_userwords_amount,
             }

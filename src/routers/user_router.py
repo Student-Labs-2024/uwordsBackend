@@ -140,7 +140,7 @@ async def complete_user_words_learning(
         )
 
     await user_words_service.update_progress_word(
-        user_id=user.id, words_ids=schema.words_ids
+        user_id=user.id, uwords_uid=user.uwords_uid, words_ids=schema.words_ids
     )
 
     await user_service.update_user(

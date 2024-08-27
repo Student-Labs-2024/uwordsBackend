@@ -215,6 +215,7 @@ async def general_process_audio(
         await user_word_service.upload_user_words(
             user_words=translated_words,
             user_id=user_id,
+            uwords_uid=user.uwords_uid,
             word_service=word_service,
             subtopic_service=subtopic_service,
             error_service=error_service,
@@ -242,12 +243,14 @@ async def process_text(
     user_word_stop_list_service: UserWordStopListService = user_word_stop_list_service_fabric(),
 ):
     try:
+        user = await user_service.get_user_by_id(user_id=user_id)
         translated_words = await TextService.get_translated_clear_text(
-            text, error_service, user_id
+            text=text, error_service=error_service, user_id=user_id
         )
         await user_word_service.upload_user_words(
             user_words=translated_words,
             user_id=user_id,
+            uwords_uid=user.uwords_uid,
             word_service=word_service,
             subtopic_service=subtopic_service,
             error_service=error_service,
