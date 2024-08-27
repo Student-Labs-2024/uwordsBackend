@@ -14,9 +14,9 @@ class MinioUploader:
     @staticmethod
     async def check_buckets() -> None:
         for bucket_name in MINIO_BUCKETS:
-            found_bucket = mc.bucket_exists(bucket_name)
+            found_bucket = mc.bucket_exists(bucket_name=bucket_name)
             if not found_bucket:
-                await MinioUploader.create_bucket(found_bucket)
+                await MinioUploader.create_bucket(bucket_name=bucket_name)
 
     @staticmethod
     async def create_bucket(bucket_name: str) -> None:
