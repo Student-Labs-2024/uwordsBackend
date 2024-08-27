@@ -44,7 +44,7 @@ async def get_payment_form(
             price = sub.promo_price
 
     url, pay_id = await payment_service.create_payment_form(
-        amount=price, receiver_id=WALLET_ID, sub_type=sub_type
+        amount=price, receiver_id=WALLET_ID, sub_type=sub.id
     )
 
     return url, pay_id
