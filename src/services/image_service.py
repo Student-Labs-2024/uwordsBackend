@@ -1,7 +1,5 @@
-import json
 import logging
 import aiohttp
-import requests
 from io import BytesIO
 from typing import Union
 
@@ -19,10 +17,8 @@ from src.config.instance import (
 from src.schemes.enums.enums import ImageAnnotations
 from src.services.censore_service import ImageSafetyVision
 from src.services.minio_uploader import MinioUploader
-
-
-logger = logging.getLogger("[SERVICES IMAGE]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import image_service_logger
+from src.utils.helpers import generate_object_name
 
 
 class ImageDownloader:
@@ -40,7 +36,7 @@ class ImageDownloader:
                     return await response.read()
 
         except Exception as e:
-            logger.info(f"[DOWNLOAD] Error: {e}")
+            image_service_logger.error(f"[DOWNLOAD] Error: {e}")
             return None
 
     @staticmethod
@@ -57,7 +53,7 @@ class ImageDownloader:
                 image_content=image_data
             )
 
-            object_name = f'{"_".join(word.lower().split())}.jpg'
+            object_name = await generate_object_name(word)
 
             if is_safe:
 
@@ -84,7 +80,7 @@ class ImageDownloader:
 
                 annotation_value = annotation["value"]
 
-                object_name = f'{annotation_value}-{"_".join(word.lower().split())}.jpg'
+                object_name = await generate_object_name(word, annotation_value)
 
                 await MinioUploader.upload_object(
                     bucket_name=bucket_name,
@@ -96,9 +92,9 @@ class ImageDownloader:
 
                 link = f"{MINIO_HOST}/{bucket_name}/{object_name}"
 
-                logger.info(f"[IMAGE SAFETY] Image not safety: {link}")
+                image_service_logger.info(f"[IMAGE SAFETY] Image not safety: {link}")
                 return None
 
         except BaseException as e:
-            logger.info(f"[DOWNLOAD PICTURE] Error: {e}")
+            image_service_logger.error(f"[DOWNLOAD PICTURE] Error: {e}")
             return None

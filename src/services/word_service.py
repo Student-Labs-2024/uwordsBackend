@@ -7,10 +7,7 @@ from src.utils.repository import AbstractRepository
 
 from src.services.audio_service import AudioService
 from src.services.image_service import ImageDownloader
-
-
-logger = logging.getLogger("[SERVICES WORDS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import word_service_logger
 
 
 class WordService:
@@ -27,7 +24,7 @@ class WordService:
             return res
 
         except BaseException as e:
-            logger.info(f"[GET WORD] ERROR: {e}")
+            word_service_logger.error(f"[GET WORD] ERROR: {e}")
             return None
 
     async def upload_new_word(
@@ -54,5 +51,5 @@ class WordService:
             return word
 
         except BaseException as e:
-            logger.info(f"[UPLOAD WORD] ERROR: {e}")
+            word_service_logger.error(f"[UPLOAD WORD] ERROR: {e}")
             return None

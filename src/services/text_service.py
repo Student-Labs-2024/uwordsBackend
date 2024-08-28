@@ -7,9 +7,7 @@ from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.services.services_config import ma, STOPWORDS
 from langdetect import detect
-
-logger = logging.getLogger("[SERVICES TEXT]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import text_service_logger
 
 
 class TextService:
@@ -25,7 +23,7 @@ class TextService:
             return " ".join(text_without_spec_chars.split())
 
         except Exception as e:
-            logger.info(f"[SPEC CHARS] Error: {e}")
+            text_service_logger.error(f"[SPEC CHARS] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[REMOVE SPEC CHAR]", description=str(e)
@@ -41,7 +39,7 @@ class TextService:
             return [word for word in text.split() if word not in STOPWORDS]
 
         except Exception as e:
-            logger.info(f"[REMOVE STOPS] Error: {e}")
+            text_service_logger.error(f"[REMOVE STOPS] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[REMOVE STOP WORDS]", description=str(e)
@@ -63,7 +61,7 @@ class TextService:
             return norm_words
 
         except Exception as e:
-            logger.info(f"[NORM WORDS] Error: {e}")
+            text_service_logger.error(f"[NORM WORDS] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[NORM WORDS]", description=str(e)
@@ -88,7 +86,7 @@ class TextService:
             return dict(sorted(freq_dict.items(), key=lambda x: x[1], reverse=True))
 
         except Exception as e:
-            logger.info(f"[CREATE FREQ] Error: {e}")
+            text_service_logger.error(f"[CREATE FREQ] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[CREATE FREQ]", description=str(e)
@@ -178,7 +176,7 @@ class TextService:
                     )
 
             except Exception as e:
-                logger.info(f"[TRANSLATE] Error: {e}")
+                text_service_logger.error(f"[TRANSLATE] Error: {e}")
 
                 error = ErrorCreate(
                     user_id=user_id, message="[TRANSLATE]", description=str(e)

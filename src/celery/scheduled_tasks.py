@@ -16,22 +16,19 @@ from src.services.user_service import UserService
 from src.services.email_service import EmailService
 from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
-
-
-logger = logging.getLogger("[CELERY SCHEDULED WORDS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import scheduled_tasks_logger
 
 
 @app.task(name="TestTask")
 def test_task():
-    logger.info("Ежеминутная задача")
+    scheduled_tasks_logger.info("Ежеминутная задача")
 
 
 @app.task(name="check_sub")
 def check_sub_receiver():
-    logger.info("[CHECK SUB] Received")
+    scheduled_tasks_logger.info("[CHECK SUB] Received")
     async_to_sync(check_sub)()
-    logger.info("[CHECK SUB] Completed")
+    scheduled_tasks_logger.info("[CHECK SUB] Completed")
 
 
 async def check_sub(
@@ -53,9 +50,9 @@ async def check_sub(
 
 @app.task(name="reset_limits")
 def reset_limits_receiver():
-    logger.info("[RESET LIMITS] Received")
+    scheduled_tasks_logger.info("[RESET LIMITS] Received")
     async_to_sync(reset_limits)()
-    logger.info("[RESET LIMITS] Completed")
+    scheduled_tasks_logger.info("[RESET LIMITS] Completed")
 
 
 async def reset_limits(user_service: UserService = user_service_fabric()):
@@ -74,9 +71,9 @@ async def reset_limits(user_service: UserService = user_service_fabric()):
 
 @app.task(name="send_notifications")
 def send_notifications_receiver():
-    logger.info("[SEND NOTIFICATIONS] Received")
+    scheduled_tasks_logger.info("[SEND NOTIFICATIONS] Received")
     async_to_sync(send_notifications)()
-    logger.info("[SEND NOTIFICATIONS] Completed")
+    scheduled_tasks_logger.info("[SEND NOTIFICATIONS] Completed")
 
 
 async def send_notifications(user_service: UserService = user_service_fabric()):

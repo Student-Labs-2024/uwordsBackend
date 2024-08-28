@@ -6,10 +6,7 @@ from src.services.services_config import google_vision, profanity, swear_check
 from src.config.instance import IMAGE_SAFETY_INDEX, IMAGE_SAFETY_SCALE
 
 from src.schemes.enums.enums import ImageAnnotations
-
-
-logger = logging.getLogger("[SERVICES CENSORE]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import censore_service_logger
 
 
 class CensoreFilter:
@@ -50,7 +47,9 @@ class ImageSafetyVision:
         annotations = []
 
         if safe.adult >= IMAGE_SAFETY_INDEX:
-            logger.info(f"[IMAGE SAFETY] Adult: {IMAGE_SAFETY_SCALE[safe.adult]}")
+            censore_service_logger.info(
+                f"[IMAGE SAFETY] Adult: {IMAGE_SAFETY_SCALE[safe.adult]}"
+            )
             annotations.append(
                 {
                     "type": ImageAnnotations.adult.value,
@@ -60,7 +59,9 @@ class ImageSafetyVision:
             is_safe = False
 
         if safe.medical >= IMAGE_SAFETY_INDEX:
-            logger.info(f"[IMAGE SAFETY] Medical: {IMAGE_SAFETY_SCALE[safe.medical]}")
+            censore_service_logger.info(
+                f"[IMAGE SAFETY] Medical: {IMAGE_SAFETY_SCALE[safe.medical]}"
+            )
             annotations.append(
                 {
                     "type": ImageAnnotations.medical.value,
@@ -70,7 +71,9 @@ class ImageSafetyVision:
             is_safe = False
 
         if safe.violence >= IMAGE_SAFETY_INDEX:
-            logger.info(f"[IMAGE SAFETY] Violence: {IMAGE_SAFETY_SCALE[safe.violence]}")
+            censore_service_logger.info(
+                f"[IMAGE SAFETY] Violence: {IMAGE_SAFETY_SCALE[safe.violence]}"
+            )
             annotations.append(
                 {
                     "type": ImageAnnotations.violence.value,
@@ -80,7 +83,9 @@ class ImageSafetyVision:
             is_safe = False
 
         if safe.racy >= IMAGE_SAFETY_INDEX:
-            logger.info(f"[IMAGE SAFETY] Racy: {IMAGE_SAFETY_SCALE[safe.racy]}")
+            censore_service_logger.info(
+                f"[IMAGE SAFETY] Racy: {IMAGE_SAFETY_SCALE[safe.racy]}"
+            )
             annotations.append(
                 {
                     "type": ImageAnnotations.racy.value,

@@ -13,6 +13,7 @@ from src.services.subscription_service import SubscriptionService
 from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils import auth as auth_utils
 from src.config import fastapi_docs_config as doc_data
+from src.utils.exceptions import SubscriptionNotFoundException
 
 subscription_router_v1 = APIRouter(prefix="/api/subscription", tags=["Subscription"])
 
@@ -63,9 +64,7 @@ async def get_sub(
     res = await sub_service.get_sub(name)
     if res:
         return res
-    raise HTTPException(
-        detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
-    )
+    raise SubscriptionNotFoundException()
 
 
 @subscription_router_v1.delete(
@@ -82,9 +81,7 @@ async def delete_sub(
     if await sub_service.get_sub(name):
         await sub_service.delete_sub(name)
         return name
-    raise HTTPException(
-        detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
-    )
+    raise SubscriptionNotFoundException()
 
 
 @subscription_router_v1.post(

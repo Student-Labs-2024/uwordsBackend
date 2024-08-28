@@ -4,12 +4,12 @@ services:
   app:
     build: .
     command: >
-      /bin/sh -c "alembic -c src/alembic.ini upgrade head && uvicorn src.main:app --reload --proxy-headers --host 0.0.0.0 --port 8000 --workers 4"
+      /bin/sh -c "alembic -c src/alembic.ini upgrade head && uvicorn src.main:app --reload --proxy-headers --host 0.0.0.0 --port ${APP_CONTAINER_PORT} --workers 4"
     restart: always
     volumes:
       - ./:/backend
     ports:
-      - "8001:8000"
+      - "${APP_HOST_PORT}:${APP_CONTAINER_PORT}"
     env_file:
       - ./.env.dev
     depends_on:
@@ -20,7 +20,7 @@ services:
     image: postgres:latest
     container_name: db
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_PORT}"
     env_file:
       - ./.env.dev.db
     restart: always
@@ -29,16 +29,16 @@ services:
 
   redis:
     image: redis:latest
-    command: redis-server --requirepass "{{ REDIS_PASSWORD }}"
+    command: redis-server --requirepass "${REDIS_PASS}"
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:${REDIS_PORT}"
 
   flower:
     build: .
-    command: celery -A src.config.celery_app flower --port=5555
+    command: celery -A src.config.celery_app flower --port=${FLOWER_PORT}
     ports:
-      - 5556:5555
+      - "${FLOWER_HOST_PORT}:${FLOWER_CONTAINER_PORT}"
     env_file:
       - ./.env.dev
     depends_on:
@@ -72,10 +72,10 @@ services:
 
   minio:
     image: minio/minio:latest
-    command: server --console-address ":9001" /data/
+    command: server --console-address ":${MINIO_CONSOLE_PORT}" /data/
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT}:${MINIO_PORT}"
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
     env_file:
       - ./.env.dev
     volumes:

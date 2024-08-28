@@ -1,9 +1,6 @@
 import logging
 from src.utils.repository import AbstractRepository
-
-
-logger = logging.getLogger("[SERVICES FILE]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import file_service_logger
 
 
 class FileService:

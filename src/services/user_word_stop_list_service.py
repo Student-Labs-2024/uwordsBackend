@@ -3,11 +3,7 @@ from typing import Dict, Union
 
 from src.database.models import UserWordStopList
 from src.utils.repository import AbstractRepository
-
-
-logger = logging.getLogger("[SERVICES USER WORD STOP LIST]")
-
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import user_word_stop_list_service_logger
 
 
 class UserWordStopListService:
@@ -30,7 +26,7 @@ class UserWordStopListService:
             return user_word_stop
 
         except BaseException as e:
-            logger.info(f"[GET USER WORD] ERROR: {e}")
+            user_word_stop_list_service_logger.error(f"[GET USER WORD] ERROR: {e}")
             return None
 
     async def delete_one(self, user_word_stop_id: int) -> None:

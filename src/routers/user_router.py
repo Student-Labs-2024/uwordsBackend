@@ -46,12 +46,10 @@ from src.services.user_service import UserService
 from src.services.error_service import ErrorService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
-
+from src.utils.exceptions import UserNotFoundException, UserNotSubscribedException
+from src.utils.logger import words_router_logger
 
 user_router_v1 = APIRouter(prefix="/api/v1/user", tags=["User Words"])
-
-logger = logging.getLogger("[ROUTER WORDS]")
-logging.basicConfig(level=logging.INFO)
 
 
 @user_router_v1.get(
@@ -210,7 +208,7 @@ async def upload_audio(
         await file_service.add_file(destination, filedata)
 
     except Exception as e:
-        logger.info(e)
+        words_router_logger.error(e)
 
     process_audio_task.apply_async(
         kwargs={"path": destination.__str__(), "title": title, "user_id": user.id},
@@ -264,10 +262,7 @@ async def words_from_bot(
 ):
     user: User = await user_service.get_user_by_uwords_uid(uwords_uid=data.uwords_uid)
     if not user.subscription_type:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": "You are not subscribed"},
-        )
+        raise UserNotSubscribedException()
 
     process_text_task.apply_async(
         kwargs={
@@ -296,16 +291,10 @@ async def audio_from_bot(
     user: User = await user_service.get_user_by_uwords_uid(uwords_uid=uwords_uid)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"msg": "User not found"},
-        )
+        raise UserNotFoundException()
 
     if not user.subscription_type:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": "You are not subscribed"},
-        )
+        raise UserNotSubscribedException()
 
     filename = audio_file.filename
 
@@ -324,7 +313,7 @@ async def audio_from_bot(
         await file_service.add_file(destination, filedata)
 
     except Exception as e:
-        logger.info(e)
+        words_router_logger.error(e)
 
     process_audio_task.apply_async(
         kwargs={"path": destination.__str__(), "title": title, "user_id": user.id},
@@ -355,10 +344,7 @@ async def audio_from_bot(
     )
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"msg": "User not found"},
-        )
+        raise UserNotFoundException()
 
     sub = await sub_service.get_sub_by_promo(promo=promo_data.promo)
 
