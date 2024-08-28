@@ -18,6 +18,7 @@ from src.config import fastapi_docs_config as doc_data
 from src.schemes.admin_schemas import BotPromo, BotWords
 from src.schemes.audio_schemas import YoutubeLink
 from src.schemes.topic_schemas import TopicWords
+from src.schemes.user_schemas import UserWordDumpSchema
 from src.schemes.user_word_stop_list_schemas import UserWordStopListCreate
 from src.schemes.util_schemas import CustomResponse
 from src.schemes.word_schemas import WordsIdsSchema
@@ -93,6 +94,19 @@ async def get_user_words_by_subtopic(
     )
 
     return await user_words_service.get_unsorted_user_words(user_words=user_words)
+
+
+@user_router_v1.get(
+    "/debug/all_words",
+    response_model=List[UserWordDumpSchema],
+    name=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_TITLE,
+    description=doc_data.USER_TOPICS_GET_SUBTOPIC_WORDS_DESCRIPTION,
+)
+async def debug_get_all_userwords(
+    user_words_service: Annotated[UserWordService, Depends(user_word_service_fabric)],
+    user: User = Depends(auth_utils.get_active_current_user),
+):
+    return await user_words_service.get_user_words(user_id=user.id)
 
 
 @user_router_v1.get(
