@@ -1,4 +1,3 @@
-import logging
 from typing import List, Union
 from datetime import datetime
 import uuid
@@ -22,11 +21,17 @@ from src.schemes.util_schemas import TokenInfo
 from src.services.user_achievement_service import UserAchievementService
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils
+from src.utils.exceptions import (
+    AdminNotFoundException,
+    IncorrectPasswordException,
+    UserEmailNotFoundException,
+    UserNotFoundException,
+    UserWithGoogleNotFoundException,
+    UserWithVkNotFoundException,
+)
 from src.utils.metric import get_user_data
 from src.utils.repository import AbstractRepository
-
-logger = logging.getLogger("[SERVICES USER]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import user_service_logger
 
 
 class UserService:
@@ -38,7 +43,7 @@ class UserService:
             return await self.repo.get_one(filters=[User.id == user_id])
 
         except Exception as e:
-            logger.info(f"[GET USER by ID] Error: {e}")
+            user_service_logger.error(f"[GET USER by ID] Error: {e}")
             return None
 
     async def get_user_by_uwords_uid(self, uwords_uid: str) -> Union[User, None]:
@@ -46,7 +51,7 @@ class UserService:
             return await self.repo.get_one(filters=[User.uwords_uid == uwords_uid])
 
         except Exception as e:
-            logger.info(f"[GET USER by UWORDS UID] Error: {e}")
+            user_service_logger.error(f"[GET USER by UWORDS UID] Error: {e}")
             return None
 
     async def get_users_with_sub(self) -> List[User]:
@@ -55,7 +60,7 @@ class UserService:
                 filters=[User.subscription_type != None]
             )
         except Exception as e:
-            logger.info(f"[GET USER with SUB] Error: {e}")
+            user_service_logger.error(f"[GET USER with SUB] Error: {e}")
             return None
 
     async def get_users_without_sub(self) -> List[User]:
@@ -64,14 +69,14 @@ class UserService:
                 filters=[User.subscription_type == None]
             )
         except Exception as e:
-            logger.info(f"[GET USER without SUB] Error: {e}")
+            user_service_logger.error(f"[GET USER without SUB] Error: {e}")
             return None
 
     async def get_users(self) -> List[User]:
         try:
             return await self.repo.get_all_by_filter(filters=None)
         except Exception as e:
-            logger.info(f"[GET USERS] Error: {e}")
+            user_service_logger.error(f"[GET USERS] Error: {e}")
             return None
 
     async def get_user_by_provider(
@@ -82,7 +87,7 @@ class UserService:
                 [user_field == unique, User.provider == provider]
             )
         except Exception as e:
-            logger.info(f"[GET USER by EMAIL] Error: {e}")
+            user_service_logger.error(f"[GET USER by EMAIL] Error: {e}")
             return None
 
     async def create_user(
@@ -140,7 +145,7 @@ class UserService:
                     )
             return await self.repo.add_one(data=user_data_db.model_dump())
         except Exception as e:
-            logger.info(f"[CREATE USER] Error: {e}")
+            user_service_logger.error(f"[CREATE USER] Error: {e}")
             return None
 
     async def auth_user(
@@ -157,21 +162,13 @@ class UserService:
                     user_field=User.email,
                 )
                 if not user:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail={
-                            "msg": f"User with email {login_data.email} does not exists"
-                        },
-                    )
+                    raise UserEmailNotFoundException(email=login_data.email)
                 hashed_password: str = user.hashed_password
                 if not password_utils.validate_password(
                     password=login_data.password,
                     hashed_password=hashed_password.encode(),
                 ):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail={"msg": f"Incorrect password"},
-                    )
+                    raise IncorrectPasswordException()
             case Providers.admin.value:
                 user = await self.get_user_by_provider(
                     unique=login_data.email,
@@ -179,30 +176,19 @@ class UserService:
                     user_field=User.email,
                 )
                 if not user:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail={
-                            "msg": f"Admin with email {login_data.email} does not exists"
-                        },
-                    )
+                    raise AdminNotFoundException(email=login_data.email)
                 hashed_password: str = user.hashed_password
                 if not password_utils.validate_password(
                     password=login_data.password,
                     hashed_password=hashed_password.encode(),
                 ):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail={"msg": f"Incorrect password"},
-                    )
+                    raise IncorrectPasswordException()
             case Providers.vk.value:
                 user = await self.get_user_by_provider(
                     unique=uid, provider=Providers.vk.value, user_field=User.vk_id
                 )
                 if not user:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail={"msg": f"User with vk {uid} does not exists"},
-                    )
+                    raise UserWithVkNotFoundException(uid=uid)
             case Providers.google.value:
                 user = await self.get_user_by_provider(
                     unique=uid,
@@ -210,10 +196,7 @@ class UserService:
                     user_field=User.google_id,
                 )
                 if not user:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail={"msg": f"User with google {uid} does not exists"},
-                    )
+                    raise UserWithGoogleNotFoundException(uid=uid)
         access_token = token_utils.create_access_token(user=user)
         refresh_token = token_utils.create_refresh_token(user=user)
 
@@ -225,7 +208,7 @@ class UserService:
                 filters=[User.id == user_id], values=user_data
             )
         except Exception as e:
-            logger.info(f"[UPDATE USER] Error: {e}")
+            user_service_logger.error(f"[UPDATE USER] Error: {e}")
             return None
 
     async def ban_user(self, user_id: int) -> Union[User, None]:
@@ -234,14 +217,14 @@ class UserService:
                 filters=[User.id == user_id], values={"is_active": False}
             )
         except Exception as e:
-            logger.info(f"[BAN USER] Error: {e}")
+            user_service_logger.error(f"[BAN USER] Error: {e}")
             return None
 
     async def delete_user(self, user_id: int) -> None:
         try:
             return await self.repo.delete_one(filters=[User.id == user_id])
         except Exception as e:
-            logger.info(f"[DELETE USER] Error: {e}")
+            user_service_logger.error(f"[DELETE USER] Error: {e}")
             return None
 
     async def update_learning_days(self, uid):
@@ -330,7 +313,7 @@ class UserService:
                         },
                     )
         except Exception as e:
-            logger.info(f"[ACHIEVEMENT USER] Error: {e}")
+            user_service_logger.error(f"[ACHIEVEMENT USER] Error: {e}")
 
     async def update_onboarding_complete(self, user_id: int) -> User:
         user = await self.repo.get_one([User.id == user_id])

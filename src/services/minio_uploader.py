@@ -4,10 +4,7 @@ from typing import BinaryIO
 from src.services.services_config import mc
 
 from src.config.instance import MINIO_BUCKETS, MINIO_POLICY_JSON
-
-
-logger = logging.getLogger("[SERVICES MINIO]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import minio_service_logger
 
 
 class MinioUploader:
@@ -31,10 +28,10 @@ class MinioUploader:
             mc.make_bucket(bucket_name)
             mc.set_bucket_policy(bucket_name, policy)
 
-            logger.info(f"[BUCKET] Created {bucket_name}")
+            minio_service_logger.info(f"[BUCKET] Created {bucket_name}")
 
         except Exception as e:
-            logger.info(f"[BUCKET] Error: {e}")
+            minio_service_logger.error(f"[BUCKET] Error: {e}")
 
     @staticmethod
     async def upload_object(
@@ -50,7 +47,7 @@ class MinioUploader:
                 content_type=type,
             )
 
-            logger.info(f"[UPLOAD] File: {object_name}")
+            minio_service_logger.info(f"[UPLOAD] File: {object_name}")
 
         except Exception as e:
-            logger.info(f"[UPLOAD] Error: {e}")
+            minio_service_logger.error(f"[UPLOAD] Error: {e}")

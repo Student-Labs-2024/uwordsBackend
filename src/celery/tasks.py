@@ -35,10 +35,7 @@ from src.utils.dependenes.user_achievement_fabric import user_achievement_servic
 from src.utils.dependenes.user_word_stop_list_service_fabric import (
     user_word_stop_list_service_fabric,
 )
-
-
-logger = logging.getLogger("[CELERY TASKS WORDS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import celery_tasks_logger
 
 
 @app.task(bind=True, name="Email_send", max_retries=2)
@@ -81,7 +78,7 @@ async def process_youtube(
     user_id: int,
     error_service: ErrorService = error_service_fabric(),
 ):
-    logger.info(f"[YOUTUBE UPLOAD] Upload started...")
+    celery_tasks_logger.info(f"[YOUTUBE UPLOAD] Upload started...")
 
     file_path, title = await AudioService.upload_youtube_audio(
         link=link, error_service=error_service, user_id=user_id
@@ -155,7 +152,7 @@ async def general_process_audio(
         )
 
         if allowed_iterations == 0:
-            logger.info("[GENERAL PROCESS AUDIO] Seconds limits ran out")
+            celery_tasks_logger.info("[GENERAL PROCESS AUDIO] Seconds limits ran out")
             return True
 
         cutted_files = await AudioService.cut_audio(
@@ -173,7 +170,7 @@ async def general_process_audio(
                     executor.map(AudioService.speech_to_text_ru, cutted_files)
                 )
             except Exception as e:
-                logger.info(f"[STT RU] Error {e}")
+                celery_tasks_logger.error(f"[STT RU] Error {e}")
 
                 error = ErrorCreate(
                     user_id=user_id, message="[STT RU] ERROR", description=str(e)
@@ -188,7 +185,7 @@ async def general_process_audio(
                 )
 
             except Exception as e:
-                logger.info(f"[STT EN] Error {e}")
+                celery_tasks_logger.error(f"[STT EN] Error {e}")
 
                 error = ErrorCreate(
                     user_id=user_id, message="[STT EN] ERROR", description=str(e)
@@ -201,7 +198,7 @@ async def general_process_audio(
         else:
             text = " ".join(results_en)
 
-        logger.info(f"[GENERAL PROCESS AUDIO] Recognized text: {text}")
+        celery_tasks_logger.info(f"[GENERAL PROCESS AUDIO] Recognized text: {text}")
 
         for file_path in files_paths:
             try:
@@ -224,10 +221,12 @@ async def general_process_audio(
             user_word_stop_list_service=user_word_stop_list_service,
         )
 
-        logger.info(f"[GENERAL PROCESS AUDIO] Processing ended successfully!")
+        celery_tasks_logger.info(
+            f"[GENERAL PROCESS AUDIO] Processing ended successfully!"
+        )
         return True
     except Exception as e:
-        logger.info(f"[GENERAL PROCESS AUDIO] Error: {e}")
+        celery_tasks_logger.error(f"[GENERAL PROCESS AUDIO] Error: {e}")
         return False
 
 
@@ -259,8 +258,8 @@ async def process_text(
             user_word_stop_list_service=user_word_stop_list_service,
         )
 
-        logger.info(f"[PROCESS Text] Processing ended successfully!")
+        celery_tasks_logger.info(f"[PROCESS Text] Processing ended successfully!")
         return True
     except Exception as e:
-        logger.info(f"[PROCESS Text] Error: {e}")
+        celery_tasks_logger.error(f"[PROCESS Text] Error: {e}")
         return False

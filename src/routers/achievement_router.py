@@ -1,6 +1,6 @@
 from io import BytesIO
 from typing import Annotated, List
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile
 
 from src.config.instance import MINIO_BUCKET_ACHIEVEMENT_ICONS, MINIO_HOST
 from src.database.models import Achievement, User
@@ -18,6 +18,11 @@ from src.services.user_achievement_service import UserAchievementService
 
 from src.utils import auth as auth_utils
 from src.utils import helpers as helper_utils
+from src.utils.exceptions import (
+    AchievementAlreadyExistsException,
+    AchievementNotFoundException,
+    AchievementDoesNotExistException,
+)
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
@@ -46,9 +51,7 @@ async def add_achievement(
     user: User = Depends(auth_utils.get_admin_user),
 ):
     if await achivement_service.get([Achievement.title == achievement_data.title]):
-        raise HTTPException(
-            detail="Achievement already exist", status_code=status.HTTP_400_BAD_REQUEST
-        )
+        raise AchievementAlreadyExistsException()
 
     achievement = await achivement_service.add_one(achievement_data.model_dump())
     users = await user_service.get_users()
@@ -82,10 +85,7 @@ async def upload_subtopic_icon(
     achievement = await achievement_service.get([Achievement.id == achievement_id])
 
     if not achievement:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": "Achievement not found"},
-        )
+        raise AchievementNotFoundException()
 
     mimetype = await helper_utils.check_mime_type_icon(
         filename=achievement_icon.filename
@@ -133,9 +133,7 @@ async def get_achievement(
     res = await achievement_service.get([Achievement.id == achievement_id])
     if res:
         return res
-    raise HTTPException(
-        detail="Achievement do not exist", status_code=status.HTTP_400_BAD_REQUEST
-    )
+    raise AchievementDoesNotExistException()
 
 
 @achievement_router_v1.get(
@@ -167,10 +165,7 @@ async def delete_topic(
 ):
     achievement = await achievement_service.get([Achievement.id == achievement_id])
     if not achievement:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"msg": "Achievement not found"},
-        )
+        raise AchievementNotFoundException()
     await achievement_service.delete_one(achievement_id)
     return {"msg": "Achievement deleted successfully"}
 
@@ -191,10 +186,7 @@ async def update_achievement(
 ):
     achievement = await achievement_service.get([Achievement.id == achievement_id])
     if not achievement:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"msg": "Achievement not found"},
-        )
+        raise AchievementNotFoundException()
     return await achievement_service.update_one(
         achievement_id, achievement_data.model_dump()
     )
