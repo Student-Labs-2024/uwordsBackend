@@ -116,14 +116,15 @@ async def get_allowed_iterations_and_metric_data(
         if type == "audio":
             metric_data = {
                 "uwords_uid": user.uwords_uid,
-                "speech_seconds": metric_duration,
+                "speech_seconds": duration,
             }
         else:
             metric_data = {
                 "uwords_uid": user.uwords_uid,
-                "video_seconds": metric_duration,
+                "video_seconds": duration,
             }
 
         allowed_iterations = None
+        user_data = None
 
     return allowed_iterations, user_data, metric_data
