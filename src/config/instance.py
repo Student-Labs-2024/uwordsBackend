@@ -141,3 +141,8 @@ HUGGING_FACE_URL: str = (
 )
 HUGGING_FACE_TOKEN: str = os.environ.get("HUGGING_FACE_TOKEN")
 SUBTOPIC_COUNT_WORDS = 8
+
+ACHIEVEMENT_WORDS: str = "added_words"
+ACHIEVEMENT_LEARNED: str = "learned_words"
+ACHIEVEMENT_AUDIO: str = "speech_seconds"
+ACHIEVEMENT_VIDEO: str = "video_seconds"

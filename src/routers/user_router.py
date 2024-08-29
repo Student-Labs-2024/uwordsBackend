@@ -161,13 +161,8 @@ async def complete_user_words_learning(
 
     await user_service.update_learning_days(uid=user.id)
 
-    user_achievements = await user_achievements_service.get_user_achievements(
-        user_id=user.id
-    )
-
     await user_service.check_user_achievemets(
         user_id=user.id,
-        user_achievements=user_achievements,
         user_achievement_service=user_achievements_service,
     )
 

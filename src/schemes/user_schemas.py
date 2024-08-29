@@ -33,6 +33,7 @@ class UserMetric(BaseModel):
 
 class UserDump(BaseModel):
     id: int = Field(examples=[1])
+    uwords_uid: Optional[str] = Field(examples=["3f61564..."], default=None)
     email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
     provider: str = Field(examples=["email"])
     google_id: Optional[str] = Field(examples=["uid34840..."], default=None)
@@ -60,6 +61,7 @@ class UserDump(BaseModel):
     allowed_audio_seconds: Optional[int] = Field(examples=[1800])
     allowed_video_seconds: Optional[int] = Field(examples=[900])
     energy: Optional[int] = Field(examples=[100])
+    is_feedback_complete: bool = Field(examples=[False])
     is_onboarding_complete: bool = Field(examples=[True])
     created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
     metrics: UserMetric

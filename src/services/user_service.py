@@ -4,8 +4,15 @@ import uuid
 from dateutil.parser import parse
 from fastapi import HTTPException, status
 
-from src.config.instance import METRIC_URL
-from src.database.models import User, UserAchievement
+from src.config.instance import (
+    ACHIEVEMENT_AUDIO,
+    ACHIEVEMENT_LEARNED,
+    ACHIEVEMENT_VIDEO,
+    ACHIEVEMENT_WORDS,
+    METRIC_URL,
+)
+from src.database.models import Achievement, User, UserAchievement
+from src.schemes.achievement_schemas import UserAchievementCreate
 from src.schemes.admin_schemas import AdminEmailLogin
 
 from src.schemes.enums.enums import Providers
@@ -17,10 +24,11 @@ from src.schemes.user_schemas import (
     UserEmailLogin,
 )
 from src.schemes.util_schemas import TokenInfo
-
+from src.services.achievement_service import AchievementService
 from src.services.user_achievement_service import UserAchievementService
 from src.utils import password as password_utils
 from src.utils import tokens as token_utils
+from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils.exceptions import (
     AdminNotFoundException,
     IncorrectPasswordException,
@@ -74,7 +82,7 @@ class UserService:
 
     async def get_users(self) -> List[User]:
         try:
-            return await self.repo.get_all_by_filter(filters=None)
+            return await self.repo.get_all_by_filter(filters=[User.is_active == True])
         except Exception as e:
             user_service_logger.error(f"[GET USERS] Error: {e}")
             return None
@@ -269,27 +277,47 @@ class UserService:
     async def check_user_achievemets(
         self,
         user_id: int,
-        user_achievements: List[UserAchievement],
         user_achievement_service: UserAchievementService,
     ):
+        user = await self.get_user_by_id(user_id=user_id)
+
+        achievement_service = achievement_service_fabric()
+        achievements = await achievement_service.get_all()
+
+        for achievement in achievements:
+            if await user_achievement_service.get_one_by_achievement_id(
+                user_id=user_id, achievement_id=achievement.id
+            ):
+                continue
+
+            user_achievemets_data = UserAchievementCreate(
+                user_id=user_id, achievement_id=achievement.id
+            )
+
+            await user_achievement_service.add_one(
+                user_achievement=user_achievemets_data.model_dump()
+            )
+
+        user_achievements = await user_achievement_service.get_user_achievements(
+            user_id=user_id
+        )
+
         try:
-
-            user = await self.get_user_by_id(user_id=user_id)
-
             metric = await get_user_data(
                 uwords_uid=user.uwords_uid, server_url=METRIC_URL
             )
 
             for user_achievement in user_achievements:
                 progress = user_achievement.progress
-                if user_achievement.achievement.category == "learned_words":
-                    progress = metric["alltime_learned_amount"]
-                elif user_achievement.achievement.category == "speech_seconds":
-                    progress = metric["alltime_speech_seconds"]
-                elif user_achievement.achievement.category == "video_seconds":
-                    progress = metric["alltime_video_seconds"]
-                elif user_achievement.achievement.category == "added_words":
+
+                if user_achievement.achievement.category == ACHIEVEMENT_WORDS:
                     progress = metric["alltime_userwords_amount"]
+                elif user_achievement.achievement.category == ACHIEVEMENT_LEARNED:
+                    progress = metric["alltime_learned_amount"]
+                elif user_achievement.achievement.category == ACHIEVEMENT_AUDIO:
+                    progress = metric["alltime_speech_seconds"]
+                elif user_achievement.achievement.category == ACHIEVEMENT_VIDEO:
+                    progress = metric["alltime_video_seconds"]
 
                 if user_achievement.progress >= user_achievement.achievement.target:
                     await user_achievement_service.update_one(
@@ -312,6 +340,7 @@ class UserService:
                             ),
                         },
                     )
+
         except Exception as e:
             user_service_logger.error(f"[ACHIEVEMENT USER] Error: {e}")
 

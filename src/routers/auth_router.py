@@ -235,11 +235,8 @@ async def get_user_me(
         server_url=METRIC_URL,
     )
 
-    user_achivements = await user_achievements_service.get_user_achievements(user.id)
-
     await user_service.check_user_achievemets(
         user_id=user.id,
-        user_achievements=user_achivements,
         user_achievement_service=user_achievements_service,
     )
 
@@ -329,6 +326,7 @@ async def get_user_profile(
 async def create_feedback(
     feedback_data: FeedbackCreate,
     feedback_service: Annotated[FeedbackService, Depends(feedback_service_fabric)],
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     if await feedback_service.user_has_feedback(user.id):
@@ -340,6 +338,9 @@ async def create_feedback(
         raise UserFeedbackStarsException()
 
     feedback = await feedback_service.add_one(user_id=user.id, feedback=feedback_data)
+    await user_service.update_user(
+        user_id=user.id, user_data={"is_feedback_complete": True}
+    )
     return feedback
 
 

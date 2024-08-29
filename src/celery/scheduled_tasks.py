@@ -38,7 +38,7 @@ async def check_sub(
     users = await user_service.get_users_with_sub()
 
     for user in users:
-        sub: Subscription = await sub_service.get_sub_by_id(name=user.subscription_type)
+        sub: Subscription = await sub_service.get_sub_by_id(id=user.subscription_type)
 
         date: datetime = user.subscription_acquisition
 

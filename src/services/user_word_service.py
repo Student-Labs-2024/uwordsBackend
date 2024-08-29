@@ -433,13 +433,8 @@ class UserWordService:
 
             await send_user_data(data=data, server_url=METRIC_URL)
 
-            user_achievements = await user_achievement_service.get_user_achievements(
-                user_id=user_id
-            )
-
             await user_service.check_user_achievemets(
                 user_id=user_id,
-                user_achievements=user_achievements,
                 user_achievement_service=user_achievement_service,
             )
 

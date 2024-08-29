@@ -36,7 +36,7 @@ services:
 
   flower:
     build: .
-    command: celery -A src.config.celery_app flower --port=${FLOWER_PORT}
+    command: celery -A src.config.celery_app flower --port=${FLOWER_HOST_PORT}
     ports:
       - "${FLOWER_HOST_PORT}:${FLOWER_CONTAINER_PORT}"
     env_file:
