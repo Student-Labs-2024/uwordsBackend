@@ -26,12 +26,10 @@ from src.utils.dependenes.chroma_service_fabric import (
 
 from src.config import fastapi_docs_config as doc_data
 from src.config.instance import MINIO_BUCKET_SUBTOPIC_ICONS, MINIO_HOST
-
+from src.utils.exceptions import SubTopicNotFoundException, TopicNotFoundException
+from src.utils.logger import topic_router_logger
 
 topic_router_v1 = APIRouter(prefix="/api/v1/topic", tags=["Topic"])
-
-logger = logging.getLogger("[ROUTER TOPIC]")
-logging.basicConfig(level=logging.INFO)
 
 
 @topic_router_v1.post(
@@ -65,9 +63,7 @@ async def add_subtopic(
     topic = await topic_service.get([Topic.title == topic_title])
 
     if not topic:
-        raise HTTPException(
-            detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST
-        )
+        raise TopicNotFoundException()
 
     if await subtopic_service.get(
         [SubTopic.title == subtopic_data.title, SubTopic.topic_title == topic_title]
@@ -142,9 +138,7 @@ async def get_topic(
     res = await topic_service.get([Topic.title == topic_title])
     if res:
         return res
-    raise HTTPException(
-        detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST
-    )
+    raise TopicNotFoundException()
 
 
 @topic_router_v1.get(
@@ -160,9 +154,7 @@ async def get_subtopic(
     res = await subtopic_service.get([SubTopic.title == subtopic_title])
     if res:
         return res
-    raise HTTPException(
-        detail="Subtopic do not exist", status_code=status.HTTP_400_BAD_REQUEST
-    )
+    raise SubTopicNotFoundException()
 
 
 @topic_router_v1.get(
@@ -237,9 +229,7 @@ async def delete_topic(
         await topic_service.delete([Topic.title == topic_title])
         return topic_title
     except:
-        raise HTTPException(
-            detail="Topic do not exist", status_code=status.HTTP_400_BAD_REQUEST
-        )
+        raise TopicNotFoundException()
 
 
 @topic_router_v1.delete(
@@ -258,7 +248,5 @@ async def delete_subtopic(
             [SubTopic.title == subtopic.title, str(subtopic.id)]
         )
     except:
-        raise HTTPException(
-            detail="Subtopic do not exist", status_code=status.HTTP_400_BAD_REQUEST
-        )
+        raise SubTopicNotFoundException()
     return subtopic_title

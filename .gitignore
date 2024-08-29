@@ -28,4 +28,3 @@ celerybeat-schedule
 **.conf
 docker-compose.yml
 google_credentials.json
-src/migrations/versions/**.py

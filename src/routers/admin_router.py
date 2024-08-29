@@ -2,7 +2,7 @@ import logging
 from typing import Annotated
 
 from fastapi.security import HTTPBearer
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 
 from src.database.models import User
 from src.schemes.admin_schemas import AdminCreate, AdminEmailLogin
@@ -24,11 +24,10 @@ from src.config.instance import (
     METRIC_URL,
 )
 from src.config import fastapi_docs_config as doc_data
+from src.utils.exceptions import AdminAlreadyExistsException, IncorrectAdminKeyException
 from src.utils.metric import get_user_metric
+from src.utils.logger import admin_router_logger
 
-
-logger = logging.getLogger("[ROUTER ADMIN]")
-logging.basicConfig(level=logging.INFO)
 
 http_bearer = HTTPBearer()
 admin_router_v1 = APIRouter(prefix="/api/users", tags=["Admins"])
@@ -47,16 +46,10 @@ async def create_admin(
     if await user_service.get_user_by_provider(
         unique=admin_data.email, provider=Providers.admin.value, user_field=User.email
     ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": f"Admin with email {admin_data.email} already exists"},
-        )
+        raise AdminAlreadyExistsException(email=admin_data.email)
 
     if not admin_data.admin_secret == ADMIN_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"msg": f"Incorrect admin-create key"},
-        )
+        raise IncorrectAdminKeyException()
 
     user = await user_service.create_user(
         data=admin_data, provider=Providers.admin.value

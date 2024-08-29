@@ -15,6 +15,7 @@ from src.schemes.error_schemas import ErrorCreate
 from src.services.services_config import sr
 from src.services.error_service import ErrorService
 from src.services.minio_uploader import MinioUploader
+from src.utils.logger import audio_service_logger
 
 from src.config.instance import (
     HUGGING_FACE_TOKEN,
@@ -27,10 +28,6 @@ from src.config.instance import (
 )
 
 
-logger = logging.getLogger("[SERVICES AUDIO]")
-logging.basicConfig(level=logging.INFO)
-
-
 class AudioService:
     @staticmethod
     async def convert_audio(
@@ -38,12 +35,12 @@ class AudioService:
     ) -> Union[str, None]:
         try:
             out_path = UPLOAD_DIR / f"{title}_converted.wav"
-            logger.info(f"OUT_PATH: {out_path}")
+            audio_service_logger.info(f"OUT_PATH: {out_path}")
             ffmpeg.input(path).output(str(out_path), ac=1).run()
             return str(out_path)
 
         except Exception as e:
-            logger.info(f"[CONVERT] Error: {e}")
+            audio_service_logger.error(f"[CONVERT] Error: {e}")
             error = ErrorCreate(
                 user_id=user_id,
                 message="[CONVERT AUDIO] Ошибка конвертации аудио!",
@@ -74,7 +71,7 @@ class AudioService:
 
                 outpath = f"{filename}_{index + 1}.wav"
 
-                logger.info(f"[AUDIO] path: {path} new_path: {outpath}")
+                audio_service_logger.info(f"[AUDIO] path: {path} new_path: {outpath}")
 
                 if (index + 1) * 30 < duration:
                     ffmpeg.input(str(path), ss=index * 30).output(
@@ -91,7 +88,7 @@ class AudioService:
             return files
 
         except Exception as e:
-            logger.info(f"[CUT] Error: {e}")
+            audio_service_logger.error(f"[CUT] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id,
@@ -118,14 +115,14 @@ class AudioService:
             )
 
             if response.status_code != 200:
-                logger.info(f"[STT HF] Error: {response.text}")
+                audio_service_logger.error(f"[STT HF] Error: {response.text}")
 
             data: dict = json.loads(response.text)
 
             return data.get("text")
 
         except Exception as e:
-            logger.info(f"[STT HF] Error: {e}")
+            audio_service_logger.error(f"[STT HF] Error: {e}")
             return " "
 
     @staticmethod
@@ -179,7 +176,7 @@ class AudioService:
                     return upload_path, file_name
 
         except Exception as e:
-            logger.info(f"[UPLOAD YOUTUBE] Error: {e}")
+            audio_service_logger.error(f"[UPLOAD YOUTUBE] Error: {e}")
 
             error = ErrorCreate(
                 user_id=user_id,
@@ -212,5 +209,5 @@ class AudioService:
             return f"{MINIO_HOST}/{MINIO_BUCKET_VOICEOVER}/{object_name}"
 
         except BaseException as e:
-            logger.info(f"[TTS] Error: {e}")
+            audio_service_logger.error(f"[TTS] Error: {e}")
             return None

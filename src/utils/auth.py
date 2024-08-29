@@ -21,9 +21,7 @@ from src.services.user_service import UserService
 
 from src.utils import tokens as token_utils
 from src.utils.dependenes.user_service_fabric import user_service_fabric
-
-logger = logging.getLogger("[AUTH UTILS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import auth_utils_logger
 
 http_bearer = HTTPBearer()
 
@@ -39,7 +37,7 @@ async def get_current_token_payload(
         return payload
 
     except InvalidTokenError as e:
-        logger.info(f"[USER TOKEN] ERROR: {e}")
+        auth_utils_logger.error(f"[USER TOKEN] ERROR: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail={"msg": "Invalid token"}
         )

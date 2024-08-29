@@ -31,6 +31,12 @@ from src.services.feedback_service import FeedbackService
 from src.services.user_achievement_service import UserAchievementService
 
 from src.utils import auth as auth_utils
+from src.utils.exceptions import (
+    UserAlreadyExistsException,
+    UserFeedbackStarsException,
+    UserNotFoundException,
+    UserWrongCodeException,
+)
 from src.utils.metric import get_user_data, get_user_metric
 from src.utils import tokens as token_utils
 from src.utils.email import generate_telegram_verification_code
@@ -38,9 +44,7 @@ from src.utils.email import generate_telegram_verification_code
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.feedback_service_fabric import feedback_service_fabric
 from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
-
-logger = logging.getLogger("[ROUTER AUTH]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import auth_router_logger
 
 http_bearer = HTTPBearer()
 auth_router_v1 = APIRouter(prefix="/api/users", tags=["Users"])
@@ -59,15 +63,9 @@ async def register_user(
     if await user_service.get_user_by_provider(
         unique=user_data.email, provider=Providers.email.value, user_field=User.email
     ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": f"User with email {user_data.email} already exists"},
-        )
+        raise UserAlreadyExistsException(email=user_data.email)
     if not EmailService.check_code(user_data.email, user_data.code):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": f"Wrong code for {user_data.email}"},
-        )
+        raise UserWrongCodeException(email=user_data.email)
     user = await user_service.create_user(
         data=user_data, provider=Providers.email.value
     )
@@ -310,9 +308,7 @@ async def get_user_profile(
     user_ = await user_service.get_user_by_id(user_id=user_id)
 
     if not user_:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail={"msg": "User not found"}
-        )
+        raise UserNotFoundException()
 
     user_.metrics = await get_user_metric(
         user_id=user_.id,
@@ -341,10 +337,7 @@ async def create_feedback(
             detail={"msg": "User has already submitted a feedback"},
         )
     if feedback_data.stars < 1 or feedback_data.stars > 5:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": "Stars must be between 1 and 5"},
-        )
+        raise UserFeedbackStarsException()
 
     feedback = await feedback_service.add_one(user_id=user.id, feedback=feedback_data)
     return feedback
@@ -367,10 +360,7 @@ async def update_feedback(
             detail={"msg": "User has not submitted a feedback yet"},
         )
     if feedback_data.stars < 1 or feedback_data.stars > 5:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"msg": "Stars must be between 1 and 5"},
-        )
+        raise UserFeedbackStarsException()
 
     existing_feedback = await feedback_service.get_user_feedback(user.id)
     feedback_id = existing_feedback[0].id
@@ -415,9 +405,7 @@ async def check_code(
         user = await user_service.get_user_by_id(user_id=int(user_id))
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise UserNotFoundException()
 
         await user_service.update_user(
             user_id=user.id, user_data={"is_connected_to_telegram": True}
@@ -443,8 +431,6 @@ async def update_onboarding_complete(
     user: User = Depends(auth_utils.get_active_current_user),
 ):
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise UserNotFoundException()
 
     return await user_service.update_onboarding_complete(user_id=user.id)

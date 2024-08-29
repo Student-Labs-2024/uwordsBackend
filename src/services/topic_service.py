@@ -3,10 +3,7 @@ from typing import Union, Dict, List
 
 from src.database.models import Topic, SubTopic
 from src.utils.repository import AbstractRepository
-
-
-logger = logging.getLogger("[SERVICES TOPICS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import topic_service_logger
 
 
 class TopicService:
@@ -17,7 +14,7 @@ class TopicService:
         try:
             return await self.repo.add_one(data=topic)
         except Exception as e:
-            logger.info(f"[ADD] Error: {e}")
+            topic_service_logger.error(f"[ADD] Error: {e}")
             return True
 
     async def get(self, title) -> Union[Topic, SubTopic, None]:
@@ -32,7 +29,7 @@ class TopicService:
                 filters=[SubTopic.id == subtopic_id], values=subtopic_data
             )
         except Exception as e:
-            logger.info(f"[ADD] Error: {e}")
+            topic_service_logger.error(f"[ADD] Error: {e}")
             return None
 
     async def delete(self, title):

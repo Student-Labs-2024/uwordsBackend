@@ -32,10 +32,7 @@ from src.config.instance import (
     SUBTOPIC_COUNT_WORDS,
     STUDY_RANDOM_PIC,
 )
-
-logger = logging.getLogger("[SERVICES WORDS]")
-
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import user_service_logger
 
 
 class UserWordService:
@@ -68,7 +65,7 @@ class UserWordService:
             )
 
         except Exception as e:
-            logger.info(f"[GET USER WORDS By FILTER] ERROR: {e}")
+            user_service_logger.error(f"[GET USER WORDS By FILTER] ERROR: {e}")
             return []
 
     async def get_user_word(
@@ -81,7 +78,7 @@ class UserWordService:
             return user_word
 
         except BaseException as e:
-            logger.info(f"[GET USER WORD] ERROR: {e}")
+            user_service_logger.error(f"[GET USER WORD] ERROR: {e}")
             return None
 
     async def get_user_word_by_word_id(
@@ -94,7 +91,7 @@ class UserWordService:
             return user_word
 
         except BaseException as e:
-            logger.info(f"[GET USER WORD by WORD ID] ERROR: {e}")
+            user_service_logger.error(f"[GET USER WORD by WORD ID] ERROR: {e}")
             return None
 
     async def create_subtopic_icons(
@@ -260,7 +257,7 @@ class UserWordService:
             return words_for_study
 
         except BaseException as e:
-            logger.info(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
+            user_service_logger.error(f"[GET USER WORDS FOR STUDY] ERROR: {e}")
             return []
 
     async def filter_words_for_study(
@@ -313,7 +310,7 @@ class UserWordService:
             await send_user_data(data=data, server_url=METRIC_URL)
 
         except BaseException as e:
-            logger.info(f"[UPLOAD USER WORD] ERROR: {e}")
+            user_service_logger.error(f"[UPLOAD USER WORD] ERROR: {e}")
 
     async def upload_user_word(
         self,
@@ -332,11 +329,11 @@ class UserWordService:
             frequency = new_word.get("frequency", 0)
 
             if CensoreFilter.is_censore(text=ru_value):
-                logger.info(f"[UPLOAD WORD] CENSORE: {ru_value}")
+                user_service_logger.info(f"[UPLOAD WORD] CENSORE: {ru_value}")
                 return None
 
             if CensoreFilter.is_censore(text=en_value):
-                logger.info(f"[UPLOAD WORD] CENSORE: {en_value}")
+                user_service_logger.info(f"[UPLOAD WORD] CENSORE: {en_value}")
                 return None
 
             word = await word_service.get_word(en_value=en_value)
@@ -389,7 +386,7 @@ class UserWordService:
             return True
 
         except BaseException as e:
-            logger.info(f"[UPLOAD USER WORD] ERROR: {e}")
+            user_service_logger.error(f"[UPLOAD USER WORD] ERROR: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[CREATE FREQ]", description=str(e)
@@ -449,7 +446,7 @@ class UserWordService:
             return True
 
         except BaseException as e:
-            logger.info(f"[UPLOAD USER WORDS] ERROR: {e}")
+            user_service_logger.error(f"[UPLOAD USER WORDS] ERROR: {e}")
 
             error = ErrorCreate(
                 user_id=user_id, message="[CREATE FREQ]", description=str(e)

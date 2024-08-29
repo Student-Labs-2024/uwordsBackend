@@ -1,13 +1,9 @@
 import aiohttp
-import logging
 from urllib.parse import urlencode
 
 from src.config.instance import METRIC_TOKEN
 from src.schemes.user_schemas import UserMetric
-
-
-logger = logging.getLogger("[METRIC UTILS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import metric_utils_logger
 
 
 async def send_user_data(data: dict, server_url: str):
@@ -19,14 +15,14 @@ async def send_user_data(data: dict, server_url: str):
                 json=data,
             ) as response:
                 if response.status == 200:
-                    logger.info(f"Successfully sent data to server")
+                    metric_utils_logger.info(f"Successfully sent data to server")
                 else:
                     response_text = await response.text()
-                    logger.error(
+                    metric_utils_logger.error(
                         f"Failed to send data to server. Status code: {response.status}. Response: {response_text}"
                     )
         except aiohttp.ClientError as e:
-            logger.error(f"Request exception occurred: {e}")
+            metric_utils_logger.error(f"Request exception occurred: {e}")
 
 
 async def get_user_data(uwords_uid: str, server_url: str) -> dict:
@@ -41,16 +37,18 @@ async def get_user_data(uwords_uid: str, server_url: str) -> dict:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    logger.info(f"Successfully retrieved additional user data: {data}")
+                    metric_utils_logger.info(
+                        f"Successfully retrieved additional user data: {data}"
+                    )
                     return data
                 else:
                     response_text = await response.text()
-                    logger.error(
+                    metric_utils_logger.error(
                         f"Failed to retrieve additional user data. Status code: {response.status}. Response: {response_text}"
                     )
                     return None
         except aiohttp.ClientError as e:
-            logger.error(f"Request exception occurred: {e}")
+            metric_utils_logger.error(f"Request exception occurred: {e}")
             return None
 
 

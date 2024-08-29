@@ -11,19 +11,16 @@ from src.config.instance import (
     ALLOWED_ICON_MIME_TYPES,
 )
 from src.database.models import User
-
-
-logger = logging.getLogger("[HELPERS]")
-logging.basicConfig(level=logging.INFO)
+from src.utils.logger import helpers_utils_logger
 
 
 async def check_mime_type(filename: str) -> bool:
-    logger.info(f"[MIMETYPE AUDIO] Filename: {filename}")
+    helpers_utils_logger.info(f"[MIMETYPE AUDIO] Filename: {filename}")
 
     mime_type = mimetypes.guess_type(filename)[0]
 
     if mime_type not in ALLOWED_AUDIO_MIME_TYPES:
-        logger.info(
+        helpers_utils_logger.error(
             f"[MIMETYPE AUDIO] Error: Invalid file extension: {mime_type!r}. Expected: {ALLOWED_AUDIO_MIME_TYPES!r}"
         )
         raise HTTPException(
@@ -37,12 +34,12 @@ async def check_mime_type(filename: str) -> bool:
 
 
 async def check_mime_type_icon(filename: str) -> str:
-    logger.info(f"[MIMETYPE ICON] Filename: {filename}")
+    helpers_utils_logger.info(f"[MIMETYPE ICON] Filename: {filename}")
 
     mime_type = mimetypes.guess_type(filename)[0]
 
     if mime_type not in ALLOWED_ICON_MIME_TYPES:
-        logger.info(
+        helpers_utils_logger.error(
             f"[MIMETYPE ICON] Error: Invalid file extension: {mime_type!r}. Expected: {ALLOWED_ICON_MIME_TYPES!r}"
         )
         raise HTTPException(
@@ -57,13 +54,13 @@ async def check_mime_type_icon(filename: str) -> str:
 
 async def check_youtube_link(link: str) -> bool:
 
-    logger.info(f"[YOUTUBE] Link: {link}")
+    helpers_utils_logger.info(f"[YOUTUBE] Link: {link}")
 
     for pattern in ALLOWED_YOUTUBE_LINK_PATTERNS:
         if re.match(pattern, link):
             return True
 
-    logger.info(f"[YOUTUBE] Error: Invalid URL: {link}")
+    helpers_utils_logger.error(f"[YOUTUBE] Error: Invalid URL: {link}")
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, detail={"msg": "Invalid URL"}
     )
@@ -128,3 +125,10 @@ async def get_allowed_iterations_and_metric_data(
         user_data = None
 
     return allowed_iterations, user_data, metric_data
+
+
+async def generate_object_name(word: str, annotation_value: str = "") -> str:
+    base_name = "_".join(word.lower().split())
+    if annotation_value:
+        return f"{annotation_value}-{base_name}.jpg"
+    return f"{base_name}.jpg"
