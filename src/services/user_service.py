@@ -82,7 +82,9 @@ class UserService:
 
     async def get_users(self) -> List[User]:
         try:
-            return await self.repo.get_all_by_filter(filters=[User.is_active == True])
+            return await self.repo.get_all_by_filter(
+                filters=[User.is_active == True], order=User.id.asc()
+            )
         except Exception as e:
             user_service_logger.error(f"[GET USERS] Error: {e}")
             return None

@@ -8,7 +8,9 @@ from src.config.instance import (
 from src.database.models import User, UserAchievement, Achievement
 from src.schemes.achievement_schemas import (
     AchievementCreate,
+    AchievementDump,
     UserAchievementCreate,
+    UserAchievementDump,
     UserAchievementsCategory,
 )
 from src.utils.repository import AbstractRepository
@@ -60,19 +62,49 @@ class UserAchievementService:
         words, learned, audio, video = [], [], [], []
 
         for user_achievement in user_achievements:
-            if user_achievement.achievement.category == ACHIEVEMENT_WORDS:
-                words.append(user_achievement)
-            elif user_achievement.achievement.category == ACHIEVEMENT_LEARNED:
-                learned.append(user_achievement)
-            elif user_achievement.achievement.category == ACHIEVEMENT_AUDIO:
-                audio.append(user_achievement)
-            elif user_achievement.achievement.category == ACHIEVEMENT_VIDEO:
-                video.append(user_achievement)
 
-        words = sorted(words, key=lambda x: x.progress_percent, reverse=True)
-        learned = sorted(learned, key=lambda x: x.progress_percent, reverse=True)
-        audio = sorted(audio, key=lambda x: x.progress_percent, reverse=True)
-        video = sorted(video, key=lambda x: x.progress_percent, reverse=True)
+            user_achievement_dump = UserAchievementDump(
+                id=user_achievement.id,
+                user_id=user_id,
+                progress=user_achievement.progress,
+                progress_percent=user_achievement.progress_percent,
+                is_completed=user_achievement.is_completed,
+                achievement=AchievementDump(
+                    id=user_achievement.achievement.id,
+                    title=user_achievement.achievement.title,
+                    description=user_achievement.achievement.description,
+                    pictureLink=(
+                        user_achievement.achievement.pictureLinkComplete
+                        if user_achievement.is_completed
+                        else user_achievement.achievement.pictureLink
+                    ),
+                    category=user_achievement.achievement.category,
+                    stage=user_achievement.achievement.stage,
+                    target=user_achievement.achievement.target,
+                ),
+            )
+
+            if user_achievement.achievement.category == ACHIEVEMENT_WORDS:
+                words.append(user_achievement_dump)
+            elif user_achievement.achievement.category == ACHIEVEMENT_LEARNED:
+                learned.append(user_achievement_dump)
+            elif user_achievement.achievement.category == ACHIEVEMENT_AUDIO:
+                audio.append(user_achievement_dump)
+            elif user_achievement.achievement.category == ACHIEVEMENT_VIDEO:
+                video.append(user_achievement_dump)
+
+        words: List[UserAchievementDump] = sorted(
+            words, key=lambda x: x.progress_percent, reverse=True
+        )
+        learned: List[UserAchievementDump] = sorted(
+            learned, key=lambda x: x.progress_percent, reverse=True
+        )
+        audio: List[UserAchievementDump] = sorted(
+            audio, key=lambda x: x.progress_percent, reverse=True
+        )
+        video: List[UserAchievementDump] = sorted(
+            video, key=lambda x: x.progress_percent, reverse=True
+        )
 
         return [
             UserAchievementsCategory(title="Словарь", achievements=words),

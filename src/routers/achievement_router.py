@@ -72,7 +72,7 @@ async def add_achievement(
     name=doc_data.ACHIEVEMENT_ICON_TITLE,
     description=doc_data.ACHIEVEMENT_ICON_DESCRIPTION,
 )
-async def upload_subtopic_icon(
+async def upload_achievement_icon(
     achievement_id: int,
     achievement_icon: Annotated[
         UploadFile, File(description="A file read as UploadFile")
@@ -117,6 +117,60 @@ async def upload_subtopic_icon(
 
     return await achievement_service.update_one(
         achievement_id=achievement_id, update_data={"pictureLink": picture_link}
+    )
+
+
+@achievement_router_v1.post(
+    "/icon-complete",
+    response_model=AchievementDump,
+    name=doc_data.ACHIEVEMENT_ICON_COMPLETE_TITLE,
+    description=doc_data.ACHIEVEMENT_ICON_COMPLETE_DESCRIPTION,
+)
+async def upload_achievement_complete_icon(
+    achievement_id: int,
+    achievement_icon: Annotated[
+        UploadFile, File(description="A file read as UploadFile")
+    ],
+    achievement_service: Annotated[
+        AchievementService, Depends(achievement_service_fabric)
+    ],
+    user: User = Depends(auth_utils.get_admin_user),
+):
+
+    achievement = await achievement_service.get([Achievement.id == achievement_id])
+
+    if not achievement:
+        raise AchievementNotFoundException()
+
+    mimetype = await helper_utils.check_mime_type_icon(
+        filename=achievement_icon.filename
+    )
+
+    filename: str = achievement.title
+
+    object_name = f"{filename.replace(' ', '_')}_complete.svg"
+
+    filedata = await achievement_icon.read()
+
+    bytes_file = BytesIO(filedata)
+    bytes_file.seek(0)
+
+    found_subtopic_icon_bucket = mc.bucket_exists(MINIO_BUCKET_ACHIEVEMENT_ICONS)
+    if not found_subtopic_icon_bucket:
+        await MinioUploader.create_bucket(MINIO_BUCKET_ACHIEVEMENT_ICONS)
+
+    await MinioUploader.upload_object(
+        bucket_name=MINIO_BUCKET_ACHIEVEMENT_ICONS,
+        object_name=object_name,
+        data=bytes_file,
+        lenght=bytes_file.getbuffer().nbytes,
+        type=mimetype,
+    )
+
+    picture_link = f"{MINIO_HOST}/{MINIO_BUCKET_ACHIEVEMENT_ICONS}/{object_name}"
+
+    return await achievement_service.update_one(
+        achievement_id=achievement_id, update_data={"pictureLinkComplete": picture_link}
     )
 
 
