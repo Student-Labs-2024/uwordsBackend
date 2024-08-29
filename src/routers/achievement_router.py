@@ -23,6 +23,7 @@ from src.utils.exceptions import (
     AchievementNotFoundException,
     AchievementDoesNotExistException,
 )
+from src.utils.logger import achievement_router_logger
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.achievement_service_fabric import achievement_service_fabric
 from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric

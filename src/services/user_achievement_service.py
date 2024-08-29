@@ -1,4 +1,10 @@
 from typing import Dict, List, Union
+from src.config.instance import (
+    ACHIEVEMENT_AUDIO,
+    ACHIEVEMENT_LEARNED,
+    ACHIEVEMENT_VIDEO,
+    ACHIEVEMENT_WORDS,
+)
 from src.database.models import User, UserAchievement, Achievement
 from src.schemes.achievement_schemas import (
     AchievementCreate,
@@ -17,6 +23,16 @@ class UserAchievementService:
 
     async def get(self, title) -> Union[UserAchievement, None]:
         return await self.repo.get_one(title)
+
+    async def get_one_by_achievement_id(
+        self, user_id: int, achievement_id: int
+    ) -> UserAchievement:
+        return await self.repo.get_one(
+            filters=[
+                UserAchievement.achievement_id == achievement_id,
+                UserAchievement.user_id == user_id,
+            ]
+        )
 
     async def get_all(self) -> list[UserAchievement]:
         return await self.repo.get_all_by_filter()
@@ -44,13 +60,13 @@ class UserAchievementService:
         words, learned, audio, video = [], [], [], []
 
         for user_achievement in user_achievements:
-            if user_achievement.achievement.category == "added_words":
+            if user_achievement.achievement.category == ACHIEVEMENT_WORDS:
                 words.append(user_achievement)
-            elif user_achievement.achievement.category == "learned_words":
+            elif user_achievement.achievement.category == ACHIEVEMENT_LEARNED:
                 learned.append(user_achievement)
-            elif user_achievement.achievement.category == "speech_seconds":
+            elif user_achievement.achievement.category == ACHIEVEMENT_AUDIO:
                 audio.append(user_achievement)
-            elif user_achievement.achievement.category == "video_seconds":
+            elif user_achievement.achievement.category == ACHIEVEMENT_VIDEO:
                 video.append(user_achievement)
 
         words = sorted(words, key=lambda x: x.progress_percent, reverse=True)
