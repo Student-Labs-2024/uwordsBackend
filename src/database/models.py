@@ -161,6 +161,7 @@ class Achievement(Base):
     title = Column(String, nullable=False)
     description = Column(String)
     pictureLink = Column(String, nullable=True)
+    pictureLinkComplete = Column(String, nullable=True)
     category = Column(String)
     stage = Column(Integer)
     target = Column(Integer, nullable=False)

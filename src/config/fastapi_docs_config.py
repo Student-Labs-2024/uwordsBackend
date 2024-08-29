@@ -485,6 +485,14 @@ ACHIEVEMENT_ICON_DESCRIPTION = """\
 Метод добавления иконки к достижению\
 """
 
+ACHIEVEMENT_ICON_COMPLETE_TITLE = """\
+Добавить иконку к достижению на случай прохождения\
+"""
+
+ACHIEVEMENT_ICON_COMPLETE_DESCRIPTION = """\
+Метод добавления иконки к достижению на случай прохождения\
+"""
+
 ACHIEVEMENT_GET_TITLE = """\
 Получить достижение\
 """
