@@ -92,7 +92,9 @@ async def upload_subtopic_icon(
         filename=achievement_icon.filename
     )
 
-    object_name = f"{achievement.title}.svg"
+    filename: str = achievement.title
+
+    object_name = f"{filename.replace(' ', '_')}.svg"
 
     filedata = await achievement_icon.read()
 
