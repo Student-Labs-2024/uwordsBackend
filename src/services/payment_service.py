@@ -1,5 +1,4 @@
-from typing import Union
-from sqlalchemy import Tuple
+from typing import Tuple
 from yoomoney import Client, Quickpay
 from uuid import uuid4
 
