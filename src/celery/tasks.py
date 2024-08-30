@@ -85,7 +85,7 @@ async def process_youtube(
     )
 
     return await general_process_audio(
-        file_path=file_path, type="video", title=title, user_id=user_id
+        file_path=file_path.__str__(), type="video", title=title, user_id=user_id
     )
 
 
