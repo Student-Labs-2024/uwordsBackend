@@ -154,8 +154,10 @@ class TextService:
                     translated[0], skip_special_tokens=True
                 )
 
+                translated_text = translated_text.replace(".", "")
+
                 data = {
-                    "ruValue": translated_text.replace(".", "").capitalize(),
+                    "ruValue": translated_text.capitalize(),
                     "enValue": word.capitalize(),
                     "frequency": words[word],
                 }
@@ -194,8 +196,10 @@ class TextService:
                     translated[0], skip_special_tokens=True
                 )
 
+                translated_text = translated_text.replace(".", "")
+
                 data = {
-                    "ruValue": word.replace(".", "").capitalize(),
+                    "ruValue": word.capitalize(),
                     "enValue": translated_text.capitalize(),
                     "frequency": words[word],
                 }
