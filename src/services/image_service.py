@@ -27,11 +27,13 @@ class ImageDownloader:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    url=f"{DOWNLOADER_URL}/api/v1/pixabay/download",
-                    params={"word": word},
+                    url=f"{DOWNLOADER_URL}/api/v1/pixabay/download?word={word}",
                     headers={"Authorization": f"Bearer {DOWNLOADER_TOKEN}"},
                 ) as response:
                     if response.status != 200:
+                        image_service_logger.error(
+                            f"[DOWNLOAD] Error: {response.text()}"
+                        )
                         return None
                     return await response.read()
 

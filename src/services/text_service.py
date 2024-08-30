@@ -154,17 +154,15 @@ class TextService:
                     translated[0], skip_special_tokens=True
                 )
 
-                text_service_logger.info(
-                    f"[TRANSLATE] EN: {word.capitalize()} -> RU: {translated_text.capitalize()}"
-                )
+                data = {
+                    "ruValue": translated_text.replace(".", "").capitalize(),
+                    "enValue": word.capitalize(),
+                    "frequency": words[word],
+                }
 
-                translated_words.append(
-                    {
-                        "ruValue": translated_text.replace(".", "").capitalize(),
-                        "enValue": word.capitalize(),
-                        "frequency": words[word],
-                    }
-                )
+                translated_words.append(data)
+
+                text_service_logger.info(f"[TRANSLATE] EN -> RU: {data}")
 
             except Exception as e:
                 text_service_logger.error(f"[TRANSLATE] Error: {e}")
@@ -196,17 +194,15 @@ class TextService:
                     translated[0], skip_special_tokens=True
                 )
 
-                text_service_logger.info(
-                    f"[TRANSLATE] RU: {word.capitalize()} -> EN: {translated_text.capitalize()}"
-                )
+                data = {
+                    "ruValue": word.replace(".", "").capitalize(),
+                    "enValue": translated_text.capitalize(),
+                    "frequency": words[word],
+                }
 
-                translated_words.append(
-                    {
-                        "ruValue": word.replace(".", "").capitalize(),
-                        "enValue": translated_text.capitalize(),
-                        "frequency": words[word],
-                    }
-                )
+                translated_words.append(data)
+
+                text_service_logger.info(f"[TRANSLATE] RU -> EN: {data}")
 
             except Exception as e:
                 text_service_logger.error(f"[TRANSLATE] Error: {e}")
