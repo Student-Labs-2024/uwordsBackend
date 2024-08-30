@@ -26,12 +26,12 @@ payment_router_v1 = APIRouter(prefix="/api/payment", tags=["Payment"])
     description=doc_data.FORM_PAYMENT_DESCRIPTION,
 )
 async def get_payment_form(
-    sub_type,
+    sub_type: str,
     sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
     payment_service: Annotated[PaymentService, Depends(payment_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    sub: Subscription = await sub_service.get_sub(sub_type)
+    sub: Subscription = await sub_service.get_sub(name=sub_type)
     if not sub:
         raise HTTPException(
             detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
@@ -63,7 +63,7 @@ async def check_payment_form(
     sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    sub_id = await payment_service.check_payment(PAYMENT_TOKEN, str(pay_id))
+    sub_id = await payment_service.check_payment(token=PAYMENT_TOKEN, label_id=pay_id)
     if sub_id:
         now = datetime.now()
         subscription = await sub_service.get_sub_by_id(id=sub_id)
