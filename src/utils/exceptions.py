@@ -135,3 +135,10 @@ class SubTopicNotFoundException(HTTPException):
         super().__init__(
             detail="Subtopic do not exist", status_code=status.HTTP_400_BAD_REQUEST
         )
+
+
+class SubscriptionNotFoundException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
+        )
