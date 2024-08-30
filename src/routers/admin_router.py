@@ -1,5 +1,6 @@
-import logging
 from typing import Annotated
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from fastapi.security import HTTPBearer
 from fastapi import APIRouter, Depends
@@ -8,12 +9,14 @@ from src.database.models import User
 from src.schemes.admin_schemas import AdminCreate, AdminEmailLogin
 
 from src.schemes.enums.enums import Providers
-from src.schemes.user_schemas import UserDump
+from src.schemes.user_schemas import UserData, UserDump
 from src.schemes.util_schemas import TokenInfo, CustomResponse
 
+from src.services.subscription_service import SubscriptionService
 from src.services.user_service import UserService
 
 from src.utils import auth as auth_utils
+from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 
 from src.config.instance import (
@@ -24,7 +27,12 @@ from src.config.instance import (
     METRIC_URL,
 )
 from src.config import fastapi_docs_config as doc_data
-from src.utils.exceptions import AdminAlreadyExistsException, IncorrectAdminKeyException
+from src.utils.exceptions import (
+    AdminAlreadyExistsException,
+    IncorrectAdminKeyException,
+    SubscriptionNotFoundException,
+    UserNotFoundException,
+)
 from src.utils.metric import get_user_metric
 from src.utils.logger import admin_router_logger
 
@@ -136,4 +144,42 @@ async def reset_user_limits(
 
     return CustomResponse(
         status_code=200, message=f"Limits for user {user_id} reseted succesfully"
+    )
+
+
+@admin_router_v1.get(
+    "/{user_id}/sub",
+    response_model=UserData,
+    name=doc_data.USER_SUB_TITLE,
+    description=doc_data.USER_SUB_DESCRIPTION,
+)
+async def give_user_sub(
+    user_id: int,
+    sub_id: int,
+    user_service: Annotated[UserService, Depends(user_service_fabric)],
+    sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
+    user: User = Depends(auth_utils.get_admin_user),
+):
+    user = await user_service.get_user_by_id(user_id=user_id)
+    if not user:
+        raise UserNotFoundException()
+
+    subscription = await sub_service.get_sub_by_id(id=sub_id)
+    if not subscription:
+        raise SubscriptionNotFoundException()
+
+    now = datetime.now()
+
+    expired_at = now + relativedelta(months=subscription.months)
+
+    if subscription.free_period_days:
+        expired_at += relativedelta(days=subscription.free_period_days)
+
+    return await user_service.update_user(
+        user_id=user.id,
+        user_data={
+            "subscription_acquisition": now,
+            "subscription_expired": expired_at,
+            "subscription_type": sub_id,
+        },
     )

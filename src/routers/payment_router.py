@@ -15,6 +15,7 @@ from src.utils.dependenes.payment_service_fabric import payment_service_fabric
 from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.config import fastapi_docs_config as doc_data
+from src.utils.exceptions import SubscriptionNotFoundException
 
 payment_router_v1 = APIRouter(prefix="/api/payment", tags=["Payment"])
 
@@ -67,6 +68,8 @@ async def check_payment_form(
     if sub_id:
         now = datetime.now()
         subscription = await sub_service.get_sub_by_id(id=sub_id)
+        if not subscription:
+            raise SubscriptionNotFoundException()
 
         expired_at = now + relativedelta(months=subscription.months)
 

@@ -169,8 +169,21 @@ class UserEmailLogin(BaseModel):
 
 class UserData(BaseModel):
     id: int = Field(examples=[1])
+    uwords_uid: Optional[str] = Field(examples=["3f61564..."], default=None)
     email: Optional[EmailStr] = Field(examples=["mail@uwords.ru"], default=None)
     username: Optional[str] = Field(examples=["uwords"], default=None)
     firstname: Optional[str] = Field(examples=["Uwords"], default=None)
     lastname: Optional[str] = Field(examples=["English App"], default=None)
+    subscription_type: Optional[int] = Field(examples=[1])
+    subscription_acquisition: Optional[datetime] = Field(
+        examples=["2023-05-05 10:30:45.999999"]
+    )
+    subscription_expired: Optional[datetime] = Field(
+        examples=["2023-05-05 10:30:45.999999"]
+    )
+    allowed_audio_seconds: Optional[int] = Field(examples=[1800])
+    allowed_video_seconds: Optional[int] = Field(examples=[900])
+    energy: Optional[int] = Field(examples=[100])
+    is_feedback_complete: Optional[bool] = Field(examples=[False], default=False)
     is_onboarding_complete: Optional[bool] = Field(examples=[False], default=False)
+    created_at: datetime = Field(examples=["2024-07-18 10:30:45.999999"])
