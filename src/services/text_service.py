@@ -148,7 +148,9 @@ class TextService:
             try:
                 inputs = tokenizer_en_ru(word, return_tensors="pt", padding=True)
 
-                translated = model_en_ru.generate(**inputs)
+                translated = model_en_ru.generate(
+                    **inputs, max_length=50, num_beams=5, no_repeat_ngram_size=2
+                )
 
                 translated_text: str = tokenizer_en_ru.decode(
                     translated[0], skip_special_tokens=True
@@ -190,7 +192,9 @@ class TextService:
             try:
                 inputs = tokenizer_ru_en(word, return_tensors="pt", padding=True)
 
-                translated = model_ru_en.generate(**inputs)
+                translated = model_ru_en.generate(
+                    **inputs, max_length=50, num_beams=5, no_repeat_ngram_size=2
+                )
 
                 translated_text: str = tokenizer_ru_en.decode(
                     translated[0], skip_special_tokens=True
