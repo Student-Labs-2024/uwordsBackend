@@ -5,7 +5,14 @@ from deep_translator.google import GoogleTranslator
 
 from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
-from src.services.services_config import ma, STOPWORDS
+from src.services.services_config import (
+    ma,
+    STOPWORDS,
+    model_en_ru,
+    model_ru_en,
+    tokenizer_en_ru,
+    tokenizer_ru_en,
+)
 from langdetect import detect
 from src.utils.logger import text_service_logger
 
@@ -118,22 +125,99 @@ class TextService:
         )
 
         if text_language == "ru":
-            translated_words = await TextService.translate(
-                words=freq_dict,
-                from_lang="russian",
-                to_lang="english",
-                error_service=error_service,
-                user_id=user_id,
+            translated_words = await TextService.translate_ru_en(
+                words=freq_dict, error_service=error_service, user_id=user_id
             )
 
         else:
-            translated_words = await TextService.translate(
-                words=freq_dict,
-                from_lang="english",
-                to_lang="russian",
-                error_service=error_service,
-                user_id=user_id,
+            translated_words = await TextService.translate_en_ru(
+                words=freq_dict, error_service=error_service, user_id=user_id
             )
+
+        return translated_words
+
+    @staticmethod
+    async def translate_en_ru(
+        words: Dict[str, int],
+        error_service: ErrorService,
+        user_id: int,
+    ) -> List[Dict[str, Union[str, int]]]:
+        translated_words = []
+
+        for word in words:
+            try:
+                inputs = tokenizer_en_ru(word, return_tensors="pt", padding=True)
+
+                translated = model_en_ru.generate(**inputs)
+
+                translated_text: str = tokenizer_en_ru.decode(
+                    translated[0], skip_special_tokens=True
+                )
+
+                text_service_logger.info(
+                    f"[TRANSLATE] EN: {word.capitalize()} -> RU: {translated_text.capitalize()}"
+                )
+
+                translated_words.append(
+                    {
+                        "ruValue": translated_text.replace(".", "").capitalize(),
+                        "enValue": word.capitalize(),
+                        "frequency": words[word],
+                    }
+                )
+
+            except Exception as e:
+                text_service_logger.error(f"[TRANSLATE] Error: {e}")
+
+                error = ErrorCreate(
+                    user_id=user_id, message="[TRANSLATE]", description=str(e)
+                )
+
+                await error_service.add_one(error=error)
+                continue
+
+        return translated_words
+
+    @staticmethod
+    async def translate_ru_en(
+        words: Dict[str, int],
+        error_service: ErrorService,
+        user_id: int,
+    ) -> List[Dict[str, Union[str, int]]]:
+        translated_words = []
+
+        for word in words:
+            try:
+                inputs = tokenizer_ru_en(word, return_tensors="pt", padding=True)
+
+                translated = model_ru_en.generate(**inputs)
+
+                translated_text: str = tokenizer_ru_en.decode(
+                    translated[0], skip_special_tokens=True
+                )
+
+                text_service_logger.info(
+                    f"[TRANSLATE] RU: {word.capitalize()} -> EN: {translated_text.capitalize()}"
+                )
+
+                translated_words.append(
+                    {
+                        "ruValue": word.replace(".", "").capitalize(),
+                        "enValue": translated_text.capitalize(),
+                        "frequency": words[word],
+                    }
+                )
+
+            except Exception as e:
+                text_service_logger.error(f"[TRANSLATE] Error: {e}")
+
+                error = ErrorCreate(
+                    user_id=user_id, message="[TRANSLATE]", description=str(e)
+                )
+
+                await error_service.add_one(error=error)
+                continue
+
         return translated_words
 
     @staticmethod

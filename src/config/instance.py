@@ -84,6 +84,7 @@ IMAGE_SAFETY_SCALE: List[str] = [
     "VERY_LIKELY",
 ]
 
+SUBTOPIC_COUNT_WORDS = 8
 DEFAULT_SUBTOPIC: str = "Unsorted"
 DEFAULT_SUBTOPIC_ICON: str = (
     f"{MINIO_HOST}/{MINIO_BUCKET_SUBTOPIC_ICONS}/Default Subtopic.svg"
@@ -92,6 +93,11 @@ DEFAULT_SUBTOPIC_ICON: str = (
 ALLOWED_AUDIO_SECONDS: int = 1800
 ALLOWED_VIDEO_SECONDS: int = 900
 DEFAULT_ENERGY: int = 100
+
+ACHIEVEMENT_WORDS: str = "added_words"
+ACHIEVEMENT_LEARNED: str = "learned_words"
+ACHIEVEMENT_AUDIO: str = "speech_seconds"
+ACHIEVEMENT_VIDEO: str = "video_seconds"
 
 # TOKEN SETTINGS
 JWT_ALGORITHM: str = "HS256"
@@ -136,13 +142,10 @@ PAYMENT_TOKEN: str = os.environ.get("PAYMENT_TOKEN")
 WALLET_ID: str = os.environ.get("WALLET_ID")
 
 # HUGGINGFACE
+TRANSLATION_RU_EN: str = "Helsinki-NLP/opus-mt-ru-en"
+TRANSLATION_EN_RU: str = "Helsinki-NLP/opus-mt-en-ru"
+
 HUGGING_FACE_URL: str = (
     "https://api-inference.huggingface.co/models/openai/whisper-large-v2"
 )
 HUGGING_FACE_TOKEN: str = os.environ.get("HUGGING_FACE_TOKEN")
-SUBTOPIC_COUNT_WORDS = 8
-
-ACHIEVEMENT_WORDS: str = "added_words"
-ACHIEVEMENT_LEARNED: str = "learned_words"
-ACHIEVEMENT_AUDIO: str = "speech_seconds"
-ACHIEVEMENT_VIDEO: str = "video_seconds"
