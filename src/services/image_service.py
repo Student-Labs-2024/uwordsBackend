@@ -31,9 +31,8 @@ class ImageDownloader:
                     headers={"Authorization": f"Bearer {DOWNLOADER_TOKEN}"},
                 ) as response:
                     if response.status != 200:
-                        image_service_logger.error(
-                            f"[DOWNLOAD] Error: {response.text()}"
-                        )
+                        error_text = await response.text()
+                        image_service_logger.error(f"[DOWNLOAD] Error: {error_text}")
                         return None
                     return await response.read()
 
