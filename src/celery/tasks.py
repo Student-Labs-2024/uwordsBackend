@@ -122,11 +122,20 @@ async def general_process_audio(
         files_paths = [file_path]
         user = await user_service.get_user_by_id(user_id=user_id)
 
-        converted_file = await AudioService.convert_audio(
-            path=file_path, title=title, error_service=error_service, user_id=user_id
-        )
+        extension = file_path.split(".")[-1]
 
-        files_paths.append(converted_file)
+        if extension != "wav":
+            converted_file = await AudioService.convert_audio(
+                path=file_path,
+                title=title,
+                error_service=error_service,
+                user_id=user_id,
+            )
+
+            files_paths.append(converted_file)
+
+        else:
+            converted_file = file_path
 
         duration = get_duration(path=converted_file)
 
