@@ -240,41 +240,40 @@ class UserService:
     async def update_learning_days(self, uid):
         user = await self.get_user_by_id(uid)
         now = datetime.now()
-
         today = datetime(now.year, now.month, now.day)
 
         if user.latest_study:
-            if user.latest_study >= today:
-                days = 0
+            latest_study_day = datetime(
+                user.latest_study.year, user.latest_study.month, user.latest_study.day
+            )
+
+            days_delta = (today - latest_study_day).days
+
+            if days_delta == 0:
+                return
+            elif days_delta == 1:
+                days = user.days + 1
             else:
                 days = 1
-
         else:
             days = 1
 
-        try:
-            user_days_delta = (
-                datetime.date(datetime.now()) - user.latest_study.date()
-            ).days
-        except:
-            user_days_delta = None
-        if not user_days_delta or (user_days_delta == 1):
-            await self.update_user(
-                user.id, {"latest_study": datetime.now(), "days": user.days + days}
-            )
-        if user_days_delta and user_days_delta >= 2:
-            await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
+        await self.update_user(user.id, {"latest_study": today, "days": days})
 
     async def update_user_state(self, uid):
         user = await self.get_user_by_id(uid)
+        today = datetime.now()
+
         try:
-            user_days_delta = (
-                datetime.date(datetime.now()) - user.latest_study.date()
-            ).days
-        except:
+            latest_study_day = datetime(
+                user.latest_study.year, user.latest_study.month, user.latest_study.day
+            )
+            user_days_delta = (today - latest_study_day).days
+        except AttributeError:
             user_days_delta = None
+
         if user_days_delta and user_days_delta >= 2:
-            await self.update_user(user.id, {"latest_study": datetime.now(), "days": 1})
+            await self.update_user(user.id, {"latest_study": datetime.now(), "days": 0})
 
     async def check_user_achievemets(
         self,

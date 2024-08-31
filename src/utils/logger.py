@@ -5,7 +5,7 @@ def setup_logger(
     name: str, level: int = logging.INFO, file: str = None
 ) -> logging.Logger:
     logger = logging.getLogger(name)
-    
+
     if logger.hasHandlers():
         return logger
 

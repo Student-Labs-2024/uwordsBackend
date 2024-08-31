@@ -1,8 +1,9 @@
-from typing import Tuple
-from yoomoney import Client, Quickpay
 from uuid import uuid4
+from typing import Tuple
+from yoomoney import Client, Quickpay, History, Operation
 
 from src.database.models import Bill
+from src.config.instance import PAYMENT_TOKEN
 from src.utils.repository import AbstractRepository
 
 
@@ -27,21 +28,25 @@ class PaymentService:
         )
         return quick_pay.redirected_url, label_id
 
-    async def check_payment(self, token: str, label_id: str) -> int:
-        client = Client(token)
-        history = client.operation_history(label=label_id)
-        bill: Bill = await self.repo.get_one({Bill.label == label_id})
-        try:
-            operation = history.operations[0]
-            if operation.status == "success" and not bill.success:
-                await self.repo.update_one({Bill.id == bill.id}, {"success": True})
-                return bill.sub_type
-        except:
-            return 0
-        return 0
+    async def check_payment(self, label_id: str) -> bool:
+        client = Client(token=PAYMENT_TOKEN)
+        history: History = client.operation_history(label=label_id)
 
-    async def get_bill(self, pay_id):
+        if len(history.operations) != 0:
+            operation: Operation = history.operations[0]
+
+            if operation.status == "success":
+                return True
+
+        return False
+
+    async def get_bill(self, pay_id) -> Bill:
         return await self.repo.get_one({Bill.label == pay_id})
+
+    async def update_bill_success(self, bill_id: int) -> Bill:
+        return await self.repo.update_one(
+            filters=[Bill.id == bill_id], values={"success": True}
+        )
 
     async def get_all_bills(self):
         return await self.repo.get_all_by_filter()

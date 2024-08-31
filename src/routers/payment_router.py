@@ -1,21 +1,30 @@
-from datetime import datetime
 from typing import Annotated
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.config.instance import WALLET_ID
+from src.config import fastapi_docs_config as doc_data
+
+from src.celery.tasks import auto_check_payment_task
+
 from src.schemes.util_schemas import Bill
-from src.utils import auth as auth_utils
-from src.config.instance import WALLET_ID, PAYMENT_TOKEN
 from src.database.models import User, Subscription
+
+from src.services.user_service import UserService
 from src.services.payment_service import PaymentService
 from src.services.subscription_service import SubscriptionService
-from src.services.user_service import UserService
-from src.utils.dependenes.payment_service_fabric import payment_service_fabric
+
+from src.utils import auth as auth_utils
 from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
-from src.config import fastapi_docs_config as doc_data
-from src.utils.exceptions import SubscriptionNotFoundException
+from src.utils.dependenes.payment_service_fabric import payment_service_fabric
+from src.utils.exceptions import (
+    BillNotFoundException,
+    BillNotPaidException,
+    SubscriptionNotFoundException,
+)
 
 payment_router_v1 = APIRouter(prefix="/api/payment", tags=["Payment"])
 
@@ -48,6 +57,11 @@ async def get_payment_form(
         amount=price, receiver_id=WALLET_ID, sub_id=sub.id
     )
 
+    auto_check_payment_task.apply_async(
+        kwargs={"user_id": user.id, "pay_id": pay_id},
+        countdown=1,
+    )
+
     return url, pay_id
 
 
@@ -64,28 +78,40 @@ async def check_payment_form(
     sub_service: Annotated[SubscriptionService, Depends(sub_service_fabric)],
     user: User = Depends(auth_utils.get_active_current_user),
 ):
-    sub_id = await payment_service.check_payment(token=PAYMENT_TOKEN, label_id=pay_id)
-    if sub_id:
-        now = datetime.now()
-        subscription = await sub_service.get_sub_by_id(id=sub_id)
-        if not subscription:
-            raise SubscriptionNotFoundException()
+    if not await payment_service.check_payment(label_id=pay_id):
+        raise BillNotPaidException()
 
-        expired_at = now + relativedelta(months=subscription.months)
+    bill = await payment_service.get_bill(pay_id=pay_id)
 
-        if subscription.free_period_days:
-            expired_at += relativedelta(days=subscription.free_period_days)
+    if not bill:
+        raise BillNotFoundException()
 
-        await user_service.update_user(
-            user_id=user.id,
-            user_data={
-                "subscription_acquisition": now,
-                "subscription_expired": expired_at,
-                "subscription_type": sub_id,
-            },
-        )
+    if bill.success:
         return True
-    return False
+
+    subscription = await sub_service.get_sub_by_id(id=bill.sub_type)
+
+    if not subscription:
+        raise SubscriptionNotFoundException()
+
+    await payment_service.update_bill_success(bill_id=bill.id)
+
+    now = datetime.now()
+    expired_at = now + relativedelta(months=subscription.months)
+
+    if subscription.free_period_days:
+        expired_at += relativedelta(days=subscription.free_period_days)
+
+    await user_service.update_user(
+        user_id=user.id,
+        user_data={
+            "subscription_acquisition": now,
+            "subscription_expired": expired_at,
+            "subscription_type": bill.sub_type,
+        },
+    )
+
+    return True
 
 
 @payment_router_v1.get(

@@ -1,8 +1,6 @@
 import string
-import logging
 from typing import Union, List, Dict
 from deep_translator.google import GoogleTranslator
-
 from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.services.services_config import (
@@ -153,7 +151,9 @@ class TextService:
                 )
 
                 translated_text: str = tokenizer_en_ru.decode(
-                    translated[0], skip_special_tokens=True
+                    translated[0],
+                    skip_special_tokens=True,
+                    clean_up_tokenization_spaces=True,
                 )
 
                 translated_text = translated_text.replace(".", "")
@@ -166,7 +166,9 @@ class TextService:
 
                 translated_words.append(data)
 
-                text_service_logger.info(f"[TRANSLATE] EN -> RU: {data}")
+                text_service_logger.info(
+                    f"[TRANSLATE] EN: {word} -> RU: {translated_text}"
+                )
 
             except Exception as e:
                 text_service_logger.error(f"[TRANSLATE] Error: {e}")
@@ -197,7 +199,9 @@ class TextService:
                 )
 
                 translated_text: str = tokenizer_ru_en.decode(
-                    translated[0], skip_special_tokens=True
+                    translated[0],
+                    skip_special_tokens=True,
+                    clean_up_tokenization_spaces=True,
                 )
 
                 translated_text = translated_text.replace(".", "")
@@ -210,7 +214,9 @@ class TextService:
 
                 translated_words.append(data)
 
-                text_service_logger.info(f"[TRANSLATE] RU -> EN: {data}")
+                text_service_logger.info(
+                    f"[TRANSLATE] RU: {word} -> EN: {translated_text}"
+                )
 
             except Exception as e:
                 text_service_logger.error(f"[TRANSLATE] Error: {e}")
