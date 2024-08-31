@@ -142,3 +142,17 @@ class SubscriptionNotFoundException(HTTPException):
         super().__init__(
             detail="Subscription do not exist", status_code=status.HTTP_400_BAD_REQUEST
         )
+
+
+class BillNotFoundException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            detail="Bill do not exist", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class BillNotPaidException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            detail="Bill not paid", status_code=status.HTTP_400_BAD_REQUEST
+        )

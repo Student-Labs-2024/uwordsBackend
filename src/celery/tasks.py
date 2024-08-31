@@ -1,7 +1,8 @@
 import os
-import logging
+from typing import Dict
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
-from langdetect import detect
 from librosa import get_duration
 from asgiref.sync import async_to_sync
 from concurrent.futures import ThreadPoolExecutor
@@ -16,20 +17,24 @@ from src.services.text_service import TextService
 from src.services.audio_service import AudioService
 from src.services.email_service import EmailService
 from src.services.error_service import ErrorService
+from src.services.payment_service import PaymentService
+from src.services.subscription_service import SubscriptionService
 
 from src.services.user_service import UserService
-from src.services.user_word_stop_list_service import UserWordStopListService
 from src.services.word_service import WordService
 from src.services.topic_service import TopicService
 from src.services.user_word_service import UserWordService
 from src.services.user_achievement_service import UserAchievementService
+from src.services.user_word_stop_list_service import UserWordStopListService
 
 from src.utils.metric import send_user_data
 from src.utils.helpers import get_allowed_iterations_and_metric_data
+from src.utils.dependenes.sub_service_fabric import sub_service_fabric
 from src.utils.dependenes.user_service_fabric import user_service_fabric
 from src.utils.dependenes.word_service_fabric import word_service_fabric
 from src.utils.dependenes.error_service_fabric import error_service_fabric
 from src.utils.dependenes.user_word_fabric import user_word_service_fabric
+from src.utils.dependenes.payment_service_fabric import payment_service_fabric
 from src.utils.dependenes.chroma_service_fabric import subtopic_service_fabric
 from src.utils.dependenes.user_achievement_fabric import user_achievement_service_fabric
 from src.utils.dependenes.user_word_stop_list_service_fabric import (
@@ -41,8 +46,29 @@ from src.utils.logger import celery_tasks_logger
 @app.task(bind=True, name="Email_send", max_retries=2)
 def send_email_task(self, email: str, code: str):
     EmailService.send_email(
-        email=email, theme="Uwords - Confirantion Code", text=f"Your code is {code}"
+        email=email, theme="Uwords - Confirmation Code", text=f"Your code is {code}"
     )
+
+
+@app.task(bind=True, name="check_payment", max_retries=1440)
+def auto_check_payment_task(self, user_id: int, pay_id: str):
+    try:
+        result = async_to_sync(auto_check_payment)(user_id=user_id, pay_id=pay_id)
+
+        status = result.get("status")
+        message = result.get("message")
+
+        if status == 200:
+            return "Подписка оплачена!"
+
+        elif status == 202:
+            raise self.retry(countdown=60)
+
+        else:
+            return message
+
+    except MaxRetriesExceededError:
+        return "Время действия ссылки истёк!"
 
 
 @app.task(bind=True, name="process_youtube", max_retries=2)
@@ -52,6 +78,9 @@ def process_youtube_task(self, link: str, user_id: int):
 
         if not result:
             raise self.retry(countdown=1)
+
+        if result == "Not found":
+            return "Счёт не найден"
 
         return "Загрузка видео окончена"
 
@@ -73,6 +102,54 @@ def process_text_task(self, text: str, user_id: int):
         return "Возникла ошибка загрузки текста"
 
 
+async def auto_check_payment(
+    user_id: int,
+    pay_id: str,
+    user_service: UserService = user_service_fabric(),
+    payment_service: PaymentService = payment_service_fabric(),
+    sub_service: SubscriptionService = sub_service_fabric(),
+) -> Dict[str, int]:
+    user = await user_service.get_user_by_id(user_id=user_id)
+
+    if not user:
+        return {"status": 404, "message": "User not found"}
+
+    if not await payment_service.check_payment(label_id=pay_id):
+        return {"status": 202, "message": "Waiting"}
+
+    bill = await payment_service.get_bill(pay_id=pay_id)
+
+    if not bill:
+        return {"status": 404, "message": "Bill not found"}
+
+    if bill.success:
+        return {"status": 200, "message": "Success"}
+
+    subscription = await sub_service.get_sub_by_id(id=bill.sub_type)
+
+    if not subscription:
+        return {"status": 404, "message": "Sub not found"}
+
+    await payment_service.update_bill_success(bill_id=bill.id)
+
+    now = datetime.now()
+    expired_at = now + relativedelta(months=subscription.months)
+
+    if subscription.free_period_days:
+        expired_at += relativedelta(days=subscription.free_period_days)
+
+    await user_service.update_user(
+        user_id=user.id,
+        user_data={
+            "subscription_acquisition": now,
+            "subscription_expired": expired_at,
+            "subscription_type": bill.sub_type,
+        },
+    )
+
+    return {"status": 200, "message": "Success"}
+
+
 async def process_youtube(
     link: str,
     user_id: int,
@@ -91,6 +168,7 @@ async def process_youtube(
 
 @app.task(bind=True, name="process_audio", max_retries=2)
 def process_audio_task(self, path: str, title: str, user_id: int):
+    celery_tasks_logger.info(f"[PROCESS AUDIO TASK] Processing file at path: {path}")
     try:
         result = async_to_sync(general_process_audio)(
             file_path=path, type="audio", title=title, user_id=user_id
@@ -118,6 +196,10 @@ async def general_process_audio(
     user_achievement_service: UserAchievementService = user_achievement_service_fabric(),
     user_word_stop_list_service: UserWordStopListService = user_word_stop_list_service_fabric(),
 ):
+    celery_tasks_logger.info(
+        f"[GENERAL PROCESS AUDIO] Processing file at path: {file_path}"
+    )
+
     try:
         files_paths = [file_path]
         user = await user_service.get_user_by_id(user_id=user_id)
@@ -136,6 +218,11 @@ async def general_process_audio(
 
         else:
             converted_file = file_path
+
+        celery_tasks_logger.info(f"[GENERAL PROCESS AUDIO] files_paths: {files_paths}")
+        celery_tasks_logger.info(
+            f"[GENERAL PROCESS AUDIO] converted_file: {converted_file}"
+        )
 
         duration = get_duration(path=converted_file)
 
@@ -197,10 +284,16 @@ async def general_process_audio(
 
                 await error_service.add_one(error=error)
 
-        if len(" ".join(results_ru)) > len(" ".join(results_en)):
-            text = " ".join(results_ru)
+        text_ru = " ".join(result for result in results_ru if result.strip())
+        text_en = " ".join(result for result in results_en if result.strip())
+
+        if len(text_ru) == 0 and len(text_en) == 0:
+            return False
+
+        if len(text_ru) > len(text_en):
+            text = text_ru
         else:
-            text = " ".join(results_en)
+            text = text_en
 
         celery_tasks_logger.info(f"[GENERAL PROCESS AUDIO] Recognized text: {text}")
 

@@ -59,6 +59,9 @@ auth_router_v1 = APIRouter(prefix="/api/users", tags=["Users"])
 async def register_user(
     user_data: UserCreateEmail,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user_achievements_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
+    ],
 ):
     if await user_service.get_user_by_provider(
         unique=user_data.email, provider=Providers.email.value, user_field=User.email
@@ -77,6 +80,15 @@ async def register_user(
         server_url=METRIC_URL,
     )
 
+    await user_service.check_user_achievemets(
+        user_id=user.id,
+        user_achievement_service=user_achievements_service,
+    )
+
+    user.achievements = await user_achievements_service.get_user_achievements_dump(
+        user_id=user.id
+    )
+
     return user
 
 
@@ -89,6 +101,9 @@ async def register_user(
 async def register_vk_user(
     user_data: UserCreateVk,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user_achievements_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
+    ],
     stat=Depends(auth_utils.validate_vk_token),
 ):
     if stat["response"]["success"] == 1:
@@ -116,6 +131,15 @@ async def register_vk_user(
             server_url=METRIC_URL,
         )
 
+        await user_service.check_user_achievemets(
+            user_id=user.id,
+            user_achievement_service=user_achievements_service,
+        )
+
+        user.achievements = await user_achievements_service.get_user_achievements_dump(
+            user_id=user.id
+        )
+
         return user
 
 
@@ -128,6 +152,9 @@ async def register_vk_user(
 async def register_google_user(
     user_data: UserCreateGoogle,
     user_service: Annotated[UserService, Depends(user_service_fabric)],
+    user_achievements_service: Annotated[
+        UserAchievementService, Depends(user_achievement_service_fabric)
+    ],
 ):
     if await user_service.get_user_by_provider(
         unique=user_data.google_id,
@@ -149,6 +176,15 @@ async def register_google_user(
         user_days=user.days,
         uwords_uid=user.uwords_uid,
         server_url=METRIC_URL,
+    )
+
+    await user_service.check_user_achievemets(
+        user_id=user.id,
+        user_achievement_service=user_achievements_service,
+    )
+
+    user.achievements = await user_achievements_service.get_user_achievements_dump(
+        user_id=user.id
     )
 
     return user
@@ -233,11 +269,6 @@ async def get_user_me(
         user_days=user.days,
         uwords_uid=user.uwords_uid,
         server_url=METRIC_URL,
-    )
-
-    await user_service.check_user_achievemets(
-        user_id=user.id,
-        user_achievement_service=user_achievements_service,
     )
 
     user.achievements = await user_achievements_service.get_user_achievements_dump(
