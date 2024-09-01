@@ -142,10 +142,10 @@ PAYMENT_TOKEN: str = os.environ.get("PAYMENT_TOKEN")
 WALLET_ID: str = os.environ.get("WALLET_ID")
 
 # HUGGINGFACE
-TRANSLATION_RU_EN: str = "Helsinki-NLP/opus-mt-ru-en"
-TRANSLATION_EN_RU: str = "Helsinki-NLP/opus-mt-en-ru"
-
-HUGGING_FACE_URL: str = (
-    "https://api-inference.huggingface.co/models/openai/whisper-large-v2"
-)
+TRANSLATION_RU_EN_NAME: str = "Helsinki-NLP/opus-mt-ru-en"
+TRANSLATION_EN_RU_NAME: str = "Helsinki-NLP/opus-mt-en-ru"
+SPEECH_RECOGNITION_NAME: str = "openai/whisper-large-v3"
+TRANSLATION_RU_EN: Path = BASE_DIR / "models" / "translate" / "helsinki_ru_en"
+TRANSLATION_EN_RU: Path = BASE_DIR / "models" / "translate" / "helsinki_en_ru"
+SPEECH_RECOGNITION: Path = BASE_DIR / "models" / "recognition" / "whisper_large"
 HUGGING_FACE_TOKEN: str = os.environ.get("HUGGING_FACE_TOKEN")

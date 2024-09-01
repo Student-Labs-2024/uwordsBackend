@@ -15,6 +15,13 @@ services:
     depends_on:
       - db
       - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   db:
     image: postgres:latest
@@ -45,6 +52,13 @@ services:
       - app
       - redis
       - worker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   worker:
     build: .
@@ -57,6 +71,13 @@ services:
       - db
       - app
       - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   scheduler:
     build: .
@@ -69,6 +90,13 @@ services:
       - db
       - app
       - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   minio:
     image: minio/minio:latest

@@ -5,6 +5,7 @@ from src.schemes.error_schemas import ErrorCreate
 from src.services.error_service import ErrorService
 from src.services.services_config import (
     ma,
+    device,
     STOPWORDS,
     model_en_ru,
     model_ru_en,
@@ -144,7 +145,7 @@ class TextService:
 
         for word in words:
             try:
-                inputs = tokenizer_en_ru(word, return_tensors="pt", padding=True)
+                inputs = tokenizer_en_ru(word, return_tensors="pt", padding=True).to(device)
 
                 translated = model_en_ru.generate(
                     **inputs, max_length=50, num_beams=5, no_repeat_ngram_size=2
@@ -192,7 +193,7 @@ class TextService:
 
         for word in words:
             try:
-                inputs = tokenizer_ru_en(word, return_tensors="pt", padding=True)
+                inputs = tokenizer_ru_en(word, return_tensors="pt", padding=True).to(device)
 
                 translated = model_ru_en.generate(
                     **inputs, max_length=50, num_beams=5, no_repeat_ngram_size=2

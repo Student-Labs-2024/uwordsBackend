@@ -206,25 +206,25 @@ async def general_process_audio(
 
         extension = file_path.split(".")[-1]
 
-        if extension != "wav":
-            converted_file = await AudioService.convert_audio(
-                path=file_path,
-                title=title,
-                error_service=error_service,
-                user_id=user_id,
-            )
+        # if extension != "wav":
+        #     converted_file = await AudioService.convert_audio(
+        #         path=file_path,
+        #         title=title,
+        #         error_service=error_service,
+        #         user_id=user_id,
+        #     )
 
-            files_paths.append(converted_file)
+        #     files_paths.append(converted_file)
 
-        else:
-            converted_file = file_path
+        # else:
+        #     converted_file = file_path
 
         celery_tasks_logger.info(f"[GENERAL PROCESS AUDIO] files_paths: {files_paths}")
-        celery_tasks_logger.info(
-            f"[GENERAL PROCESS AUDIO] converted_file: {converted_file}"
-        )
+        # celery_tasks_logger.info(
+        #     f"[GENERAL PROCESS AUDIO] converted_file: {converted_file}"
+        # )
 
-        duration = get_duration(path=converted_file)
+        duration = get_duration(path=file_path)
 
         allowed_iterations, user_data, metric_data = (
             await get_allowed_iterations_and_metric_data(
@@ -246,62 +246,64 @@ async def general_process_audio(
             celery_tasks_logger.info("[GENERAL PROCESS AUDIO] Seconds limits ran out")
             return True
 
-        cutted_files = await AudioService.cut_audio(
-            path=converted_file,
-            error_service=error_service,
-            user_id=user_id,
-            duration=duration,
-            allowed_iterations=allowed_iterations,
-        )
+        # cutted_files = await AudioService.cut_audio(
+        #     path=converted_file,
+        #     error_service=error_service,
+        #     user_id=user_id,
+        #     duration=duration,
+        #     allowed_iterations=allowed_iterations,
+        # )
 
-        files_paths += cutted_files
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            try:
-                results_ru = list(
-                    executor.map(AudioService.speech_to_text_ru, cutted_files)
-                )
-            except Exception as e:
-                celery_tasks_logger.error(f"[STT RU] Error {e}")
+        # files_paths += cutted_files
+        # with ThreadPoolExecutor(max_workers=20) as executor:
+        #     try:
+        #         results_ru = list(
+        #             executor.map(AudioService.speech_to_text_ru, cutted_files)
+        #         )
+        #     except Exception as e:
+        #         celery_tasks_logger.error(f"[STT RU] Error {e}")
 
-                error = ErrorCreate(
-                    user_id=user_id, message="[STT RU] ERROR", description=str(e)
-                )
+        #         error = ErrorCreate(
+        #             user_id=user_id, message="[STT RU] ERROR", description=str(e)
+        #         )
 
-                await error_service.add_one(error=error)
+        #         await error_service.add_one(error=error)
 
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            try:
-                results_en = list(
-                    executor.map(AudioService.speech_to_text_en, cutted_files)
-                )
+        # with ThreadPoolExecutor(max_workers=20) as executor:
+        #     try:
+        #         results_en = list(
+        #             executor.map(AudioService.speech_to_text_en, cutted_files)
+        #         )
 
-            except Exception as e:
-                celery_tasks_logger.error(f"[STT EN] Error {e}")
+        #     except Exception as e:
+        #         celery_tasks_logger.error(f"[STT EN] Error {e}")
 
-                error = ErrorCreate(
-                    user_id=user_id, message="[STT EN] ERROR", description=str(e)
-                )
+        #         error = ErrorCreate(
+        #             user_id=user_id, message="[STT EN] ERROR", description=str(e)
+        #         )
 
-                await error_service.add_one(error=error)
+        #         await error_service.add_one(error=error)
 
-        text_ru = " ".join(result for result in results_ru if result.strip())
-        text_en = " ".join(result for result in results_en if result.strip())
+        # text_ru = " ".join(result for result in results_ru if result.strip())
+        # text_en = " ".join(result for result in results_en if result.strip())
 
-        if len(text_ru) == 0 and len(text_en) == 0:
-            return False
+        # if len(text_ru) == 0 and len(text_en) == 0:
+        #     return False
 
-        if len(text_ru) > len(text_en):
-            text = text_ru
-        else:
-            text = text_en
+        # if len(text_ru) > len(text_en):
+        #     text = text_ru
+        # else:
+        #     text = text_en
+
+        text = await AudioService.speech_to_text(filepath=file_path)
 
         celery_tasks_logger.info(f"[GENERAL PROCESS AUDIO] Recognized text: {text}")
 
-        for file_path in files_paths:
-            try:
-                os.remove(path=file_path)
-            except:
-                continue
+        # for file_path in files_paths:
+        #     try:
+        #         os.remove(path=file_path)
+        #     except:
+        #         continue
 
         translated_words = await TextService.get_translated_clear_text(
             text, error_service, user_id

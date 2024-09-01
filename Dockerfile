@@ -4,6 +4,10 @@ WORKDIR /backend
 
 COPY requirements.txt .
 
-RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg --fix-missing && pip3 install --upgrade pip && pip3 install -r requirements.txt && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg --fix-missing 
+
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt 
+RUN pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
 
 COPY . .

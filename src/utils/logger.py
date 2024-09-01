@@ -45,6 +45,7 @@ text_service_logger = setup_logger("[SERVICES TEXT]", logging.INFO)
 topic_service_logger = setup_logger("[SERVICES TOPICS]", logging.INFO)
 user_service_logger = setup_logger("[SERVICES USER]", logging.INFO)
 user_word_service_logger = setup_logger("[SERVICES WORDS]", logging.INFO)
+services_config_logger = setup_logger("[SERVICES CONFIG]", logging.INFO)
 user_word_stop_list_service_logger = setup_logger(
     "[SERVICES USER WORD STOP LIST]", logging.INFO
 )

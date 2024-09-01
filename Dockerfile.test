@@ -1,0 +1,53 @@
+# Новый образ для использования CUDA ядер
+FROM nvidia/cuda:12.6.0-cudnn-devel-ubuntu20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Установка необходимых системных пакетов
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    libffi-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libsqlite3-dev \
+    zlib1g-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libtk8.6 \
+    libgdbm-dev \
+    libnss3-dev \
+    libssl-dev \
+    tk-dev \
+    wget \
+    git \
+    ffmpeg \
+    && ln -fs /usr/share/zoneinfo/UTC /etc/localtime && dpkg-reconfigure --frontend noninteractive tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка python
+RUN curl https://pyenv.run | bash
+ENV PATH="/root/.pyenv/bin:${PATH}"
+
+ENV LDFLAGS="-L/usr/local/lib"
+ENV CPPFLAGS="-I/usr/local/include"
+ENV LD_RUN_PATH="/usr/local/lib"
+
+RUN pyenv install 3.11
+RUN pyenv global 3.11
+RUN pyenv rehash
+
+# Обновление pip
+RUN pyenv exec python -m ensurepip
+RUN pyenv exec pip install --upgrade pip
+
+# Назначение рабочей директории
+WORKDIR /backend
+
+# Установка зависимостей
+COPY requirements.txt .
+RUN pyenv exec pip install -r requirements.txt
+RUN pyenv exec pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
+
+COPY . .

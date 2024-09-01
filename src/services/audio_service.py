@@ -12,14 +12,13 @@ from typing import Optional, Union, Tuple, List
 from speech_recognition import AudioFile
 
 from src.schemes.error_schemas import ErrorCreate
-from src.services.services_config import sr
+from src.services.services_config import sr, speech_pipe
 from src.services.error_service import ErrorService
 from src.services.minio_uploader import MinioUploader
 from src.utils.logger import audio_service_logger
 
 from src.config.instance import (
     HUGGING_FACE_TOKEN,
-    HUGGING_FACE_URL,
     MINIO_BUCKET_VOICEOVER,
     MINIO_HOST,
     UPLOAD_DIR,
@@ -103,23 +102,8 @@ class AudioService:
     @staticmethod
     def speech_to_text(filepath: str) -> str:
         try:
-            with open(file=filepath, mode="rb") as audio:
-                audio_data = audio.read()
-
-            response = requests.post(
-                url=HUGGING_FACE_URL,
-                headers={
-                    "Authorization": f"Bearer {HUGGING_FACE_TOKEN}",
-                },
-                data=audio_data,
-            )
-
-            if response.status_code != 200:
-                audio_service_logger.error(f"[STT HF] Error: {response.text}")
-
-            data: dict = json.loads(response.text)
-
-            return data.get("text")
+            result = speech_pipe(filepath)
+            return result["text"]
 
         except Exception as e:
             audio_service_logger.error(f"[STT HF] Error: {e}")

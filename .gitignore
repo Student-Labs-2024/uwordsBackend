@@ -8,7 +8,6 @@ keys.json
 **.mp3
 
 # chroma
-**.bin
 chroma.sqlite3
 chroma_db/chroma.sqlite3
 
@@ -28,3 +27,5 @@ celerybeat-schedule
 **.conf
 docker-compose.yml
 google_credentials.json
+
+models/
