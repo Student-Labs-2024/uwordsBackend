@@ -225,7 +225,7 @@ class UserWordService:
             filters = [UserWord.user_id == user_id]
 
             words_for_pictures = await self.repo.get_all_by_filter(filters=filters)
-            words_pictures = [user_word.word.pictureLink for user_word in user_words]
+            words_pictures = [word_for_pictures.word.pictureLink for word_for_pictures in words_for_pictures]
 
             if topic_title:
                 filters.append(UserWord.word.has(Word.topic == topic_title))
