@@ -224,6 +224,9 @@ class UserWordService:
         try:
             filters = [UserWord.user_id == user_id]
 
+            words_for_pictures = await self.repo.get_all_by_filter(filters=filters)
+            words_pictures = [user_word.word.pictureLink for user_word in user_words]
+
             if topic_title:
                 filters.append(UserWord.word.has(Word.topic == topic_title))
 
@@ -233,27 +236,23 @@ class UserWordService:
             user_words: List[UserWord] = await self.repo.get_all_by_filter(
                 filters=filters, order=UserWord.progress.desc()
             )
-            words_pictures = [word.word.pictureLink for word in user_words]
-            if len(user_words) < STUDY_RANDOM_PIC:
-                additional_words: List[UserWord] = await self.repo.get_all_by_filter(
-                    filters=[UserWord.user_id == user_id]
-                )
-                additional_words_pictures = [
-                    word.word.pictureLink for word in additional_words
-                ]
-                while len(words_pictures) < STUDY_RANDOM_PIC and len(
-                    words_pictures
-                ) < len(additional_words):
-                    for additional_words_picture in additional_words_pictures:
-                        if additional_words_picture not in words_pictures:
-                            words_pictures.append(additional_words_picture)
+
             if subtopic_title == DEFAULT_SUBTOPIC:
                 user_words = await self.get_unsorted_user_words(user_words=user_words)
 
             words_for_study = await self.filter_words_for_study(user_words=user_words)
             words_for_study = [word.__dict__ for word in words_for_study]
+
             for word in words_for_study:
-                word["additional_pictures"] = random.sample(words_pictures, 3)
+                filtered_pictures = [
+                    pic for pic in words_pictures if pic != word["word"].pictureLink
+                ]
+
+                if len(filtered_pictures) < 3:
+                    word["additional_pictures"] = filtered_pictures
+                else:
+                    word["additional_pictures"] = random.sample(filtered_pictures, 3)
+
             return words_for_study
 
         except BaseException as e:
@@ -320,7 +319,7 @@ class UserWordService:
         subtopic_service: TopicService,
         error_service: ErrorService,
         user_word_stop_list_service: UserWordStopListService,
-    ) -> bool:
+    ) -> Union[int, int]:
         try:
             time_now = datetime.now()
 
@@ -328,13 +327,16 @@ class UserWordService:
             ru_value = new_word.get("ruValue", None)
             frequency = new_word.get("frequency", 0)
 
+            is_new_global = 0
+            is_new_user = 0
+
             if CensoreFilter.is_censore(text=ru_value):
                 user_service_logger.info(f"[UPLOAD WORD] CENSORE: {ru_value}")
-                return None
+                return 0, 0
 
             if CensoreFilter.is_censore(text=en_value):
                 user_service_logger.info(f"[UPLOAD WORD] CENSORE: {en_value}")
-                return None
+                return 0, 0
 
             word = await word_service.get_word(en_value=en_value)
 
@@ -345,7 +347,7 @@ class UserWordService:
 
                 if stop_word_list:
                     if time_now < stop_word_list.delete_at + relativedelta(months=1):
-                        return False
+                        return 0, 0
 
                     else:
                         await user_word_stop_list_service.delete_one(
@@ -365,7 +367,9 @@ class UserWordService:
                 )
 
                 if not word:
-                    return False
+                    return 0, 0
+
+                is_new_global = 1
 
             user_word = await self.get_user_word_by_word_id(
                 user_id=user_id, word_id=word.id
@@ -374,6 +378,7 @@ class UserWordService:
                 await self.repo.add_one(
                     {"word_id": word.id, "user_id": user_id, "frequency": frequency}
                 )
+                is_new_user = 1
             else:
                 user_word_frequency = user_word.frequency + frequency
                 await self.repo.update_one(
@@ -383,7 +388,7 @@ class UserWordService:
                     },
                 )
 
-            return True
+            return is_new_global, is_new_user
 
         except BaseException as e:
             user_service_logger.error(f"[UPLOAD USER WORD] ERROR: {e}")
@@ -411,10 +416,10 @@ class UserWordService:
             await MinioUploader.check_buckets()
 
             add_words_amount = 0
-            add_userwords_amount = len(user_words)
+            add_userwords_amount = 0
 
             for user_word in user_words:
-                is_new = await self.upload_user_word(
+                is_new_global, is_new_user = await self.upload_user_word(
                     new_word=user_word,
                     user_id=user_id,
                     word_service=word_service,
@@ -422,8 +427,8 @@ class UserWordService:
                     error_service=error_service,
                     user_word_stop_list_service=user_word_stop_list_service,
                 )
-                if is_new:
-                    add_words_amount += 1
+                add_words_amount += is_new_global
+                add_userwords_amount += is_new_user
 
             data = {
                 "uwords_uid": uwords_uid,
