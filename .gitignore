@@ -28,3 +28,4 @@ celerybeat-schedule
 **.conf
 docker-compose.yml
 google_credentials.json
+models/
