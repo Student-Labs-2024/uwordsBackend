@@ -297,11 +297,11 @@ async def general_process_audio(
 
         celery_tasks_logger.info(f"[GENERAL PROCESS AUDIO] Recognized text: {text}")
 
-        for file_path in files_paths:
-            try:
-                os.remove(path=file_path)
-            except:
-                continue
+        # for file_path in files_paths:
+        #     try:
+        #         os.remove(path=file_path)
+        #     except:
+        #         continue
 
         translated_words = await TextService.get_translated_clear_text(
             text, error_service, user_id
